@@ -42,11 +42,13 @@ namespace AramBuddy.MainCore.Logics
             {
                 if (ObjectsManager.NearestEnemy != null)
                 {
+                    Program.Moveto = "NearestEnemy";
                     Position = ObjectsManager.NearestEnemy.PredictPosition();
                     return;
                 }
                 if (ObjectsManager.NearestEnemyMinion != null)
                 {
+                    Program.Moveto = "NearestEnemyMinion";
                     Position = ObjectsManager.NearestEnemyMinion.PredictPosition();
                     return;
                 }
