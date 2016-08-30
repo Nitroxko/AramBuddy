@@ -1205,11 +1205,12 @@ namespace GenesisSpellLibrary.Spells
 
         public Kled()
         {
-            this.Q = new Spell.Skillshot(SpellSlot.Q, 1000, SkillShotType.Linear, 250, 1000, 70) { AllowedCollisionCount = 0 };
+            this.Q = new Spell.Skillshot(SpellSlot.Q, 600, SkillShotType.Linear, 250, 1000, 70) { AllowedCollisionCount = 0 };
             this.W = new Spell.Active(SpellSlot.W);
-            this.E = new Spell.Skillshot(SpellSlot.E, 1000, SkillShotType.Linear);
+            this.E = new Spell.Skillshot(SpellSlot.E, 600, SkillShotType.Linear);
             this.R = new Spell.Skillshot(SpellSlot.R, 2000, SkillShotType.Linear);
             this.QisCC = true;
+            this.EisDash = true;
             this.RisCC = true;
             this.RDontWaste = true;
         }

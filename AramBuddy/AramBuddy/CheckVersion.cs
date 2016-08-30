@@ -36,7 +36,7 @@ namespace AramBuddy
                         {
                             Drawing.OnEndScene += delegate
                                 {
-                                    text.Position = new Vector2(Camera.ScreenPosition.X, Camera.ScreenPosition.Y + 75);
+                                    text.Position = new Vector2(Drawing.Width * 0.01f, Drawing.Height * 0.1f);
                                     text.Draw();
                                 };
                             Outdated = true;

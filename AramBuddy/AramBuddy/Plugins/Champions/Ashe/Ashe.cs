@@ -25,7 +25,7 @@ namespace AramBuddy.Plugins.Champions.Ashe
 
             Q = new Spell.Active(SpellSlot.Q, 600);
             W = new Spell.Skillshot(SpellSlot.W, 1200, SkillShotType.Linear, 0, int.MaxValue, 60);
-            R = new Spell.Skillshot(SpellSlot.R, 4500, SkillShotType.Linear, 250, 1600, 100) { AllowedCollisionCount = 0 };
+            R = new Spell.Skillshot(SpellSlot.R, 3000, SkillShotType.Linear, 250, 1600, 100) { AllowedCollisionCount = 0 };
             SpellList.Add(Q);
             SpellList.Add(W);
             SpellList.Add(R);
@@ -57,7 +57,7 @@ namespace AramBuddy.Plugins.Champions.Ashe
 
         private static void Interrupter_OnInterruptableSpell(Obj_AI_Base sender, Interrupter.InterruptableSpellEventArgs e)
         {
-            if (sender == null || !sender.IsEnemy || !sender.IsKillable(1000) || !R.IsReady() || !AutoMenu.CheckBoxValue("IntR"))
+            if (sender == null || !sender.IsEnemy || e.DangerLevel < DangerLevel.Medium || !sender.IsKillable(1000) || !R.IsReady() || !AutoMenu.CheckBoxValue("IntR"))
                 return;
             R.Cast(sender);
         }
@@ -88,14 +88,24 @@ namespace AramBuddy.Plugins.Champions.Ashe
                 else
                 {
                     var skillshot = spell as Spell.Skillshot;
-                    skillshot.Cast(target, HitChance.Medium);
+                    if (skillshot == R)
+                    {
+                        if (user.HealthPercent <= 35)
+                        {
+                            skillshot?.Cast(target, HitChance.Medium);
+                        }
+                    }
+                    else
+                    {
+                        skillshot?.Cast(target, HitChance.Medium);
+                    }
                 }
             }
         }
 
         public override void Harass()
         {
-            foreach (var spell in SpellList.Where(s => s.IsReady() && HarassMenu.CheckBoxValue(s.Slot) && HarassMenu.CompareSlider(s.Slot + "mana", user.ManaPercent)))
+            foreach (var spell in SpellList.Where(s => s.IsReady() && s != R && HarassMenu.CheckBoxValue(s.Slot) && HarassMenu.CompareSlider(s.Slot + "mana", user.ManaPercent)))
             {
                 var target = TargetSelector.GetTarget(W.Range, DamageType.Physical);
                 if (target == null || !target.IsKillable(spell.Range))

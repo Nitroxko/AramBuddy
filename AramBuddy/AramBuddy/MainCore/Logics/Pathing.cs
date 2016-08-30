@@ -8,7 +8,7 @@ using SharpDX;
 using static AramBuddy.MainCore.Utility.Misc;
 using static AramBuddy.Config;
 
-namespace AramBuddy.MainCore.Logics // Test Commit
+namespace AramBuddy.MainCore.Logics
 {
     internal class Pathing
     {
@@ -184,7 +184,7 @@ namespace AramBuddy.MainCore.Logics // Test Commit
                 if (ObjectsManager.NearestAlly != null)
                 {
                     Program.Moveto = "NearestEnemyToNearestAlly";
-                    Position = ObjectsManager.NearestEnemy.PredictPosition().Extend(ObjectsManager.NearestAlly.PredictPosition(), KiteDistance(ObjectsManager.NearestEnemy)).To3D();
+                    Position = ObjectsManager.NearestEnemy.PredictPosition().Extend(ObjectsManager.SafestAllyToFollow.PredictPosition(), KiteDistance(ObjectsManager.NearestEnemy)).To3D();
                     return true;
                 }
                 // if there is a TeamFight move from NearestEnemy to AllySpawn.
@@ -337,7 +337,7 @@ namespace AramBuddy.MainCore.Logics // Test Commit
                 if (ObjectsManager.NearestAlly != null)
                 {
                     Program.Moveto = "NearestEnemyToNearestAlly";
-                    Position = ObjectsManager.NearestEnemy.PredictPosition().Extend(ObjectsManager.NearestAlly.PredictPosition(), KiteDistance(ObjectsManager.NearestEnemy)).To3D();
+                    Position = ObjectsManager.NearestEnemy.PredictPosition().Extend(ObjectsManager.SafestAllyToFollow2.PredictPosition(), KiteDistance(ObjectsManager.NearestEnemy)).To3D();
                     return true;
                 }
                 // if there is a TeamFight move from NearestEnemy to AllySpawn.

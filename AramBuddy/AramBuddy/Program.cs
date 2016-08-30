@@ -35,6 +35,10 @@ namespace AramBuddy
                 Hacks.DisableTextures = true;
                 ManagedTexture.OnLoad += delegate (OnLoadTextureEventArgs texture) { texture.Process = false; };
             }
+
+            // Checks for updates
+            CheckVersion.Init();
+
             Loading.OnLoadingComplete += Loading_OnLoadingComplete;
         }
 
@@ -51,10 +55,7 @@ namespace AramBuddy
                 
                 // Inits KappaEvade
                 KappaEvade.KappaEvade.Init();
-
-                // Checks for updates
-                CheckVersion.Init();
-
+                
                 // Initialize the AutoShop.
                 AutoShop.Setup.Init();
 
@@ -63,16 +64,34 @@ namespace AramBuddy
                     File.Create(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\temp123.dat");
                 }
 
+                try
+                {
+                    if ((Base)Activator.CreateInstance(null, "AramBuddy.Plugins.Champions." + Player.Instance.Hero + "." + Player.Instance.Hero).Unwrap() != null)
+                    {
+                        CustomChamp = true;
+                        Logger.Send("Loaded Custom Champion " + Player.Instance.Hero, Logger.LogLevel.Info);
+                    }
+                }
+                catch (Exception)
+                {
+                    CustomChamp = false;
+                    Logger.Send("There Is No Custom Plugin For " + Player.Instance.Hero, Logger.LogLevel.Warn);
+                }
+
+                /*
                 Chat.OnInput += delegate (ChatInputEventArgs msg)
                 {
                     if (msg.Input.Equals("Load Custom", StringComparison.CurrentCultureIgnoreCase) && !CustomChamp)
                     {
                         var Instance = (Base)Activator.CreateInstance(null, "AramBuddy.Plugins.Champions." + Player.Instance.Hero + "." + Player.Instance.Hero).Unwrap();
-                        CustomChamp = true;
-                        msg.Process = false;
-                        Logger.Send("Loaded Custom Champion " + Player.Instance.Hero, Logger.LogLevel.Info);
+                        if (Instance != null)
+                        {
+                            CustomChamp = true;
+                            msg.Process = false;
+                            Logger.Send("Loaded Custom Champion " + Player.Instance.Hero, Logger.LogLevel.Info);
+                        }
                     }
-                };
+                };*/
 
                 Timer = Game.Time;
                 Game.OnTick += Game_OnTick;

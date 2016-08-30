@@ -48,6 +48,8 @@ namespace AramBuddy.Plugins.Champions.Amumu
             AutoMenu.CreateCheckBox("GapR", "Anti-GapCloser R");
             AutoMenu.CreateCheckBox("IntR", "Interrupter R");
 
+            ComboMenu.CreateSlider("RAOE", "R AOE hit cunt {0}", 3, 1, 5);
+
             Gapcloser.OnGapcloser += Gapcloser_OnGapcloser;
             Interrupter.OnInterruptableSpell += Interrupter_OnInterruptableSpell;
             Dash.OnDash += Dash_OnDash;
@@ -79,7 +81,7 @@ namespace AramBuddy.Plugins.Champions.Amumu
                 Q.Cast(sender, HitChance.Low);
                 return;
             }
-            if (R.IsReady() && AutoMenu.CheckBoxValue("IntR") && sender.IsKillable(R.Range))
+            if (R.IsReady() && AutoMenu.CheckBoxValue("IntR") && e.DangerLevel > DangerLevel.Low && sender.IsKillable(R.Range))
             {
                 R.Cast();
             }
@@ -110,16 +112,93 @@ namespace AramBuddy.Plugins.Champions.Amumu
         {
             var target = TargetSelector.GetTarget(Q.Range, DamageType.Magical);
             if (target == null || !target.IsKillable(Q.Range))
+            {
+                if (W.Handle.ToggleState == 2)
+                {
+                    W.Cast();
+                }
                 return;
+            }
 
+            if (ComboMenu.CheckBoxValue(SpellSlot.Q) && Q.IsReady())
+            {
+                Q.Cast(target, HitChance.Medium);
+            }
+            if (ComboMenu.CheckBoxValue(SpellSlot.W) && W.IsReady())
+            {
+                if (target.IsKillable(W.Range) && W.Handle.ToggleState == 1)
+                {
+                    W.Cast();
+                }
+                else
+                {
+                    W.Cast();
+                }
+            }
+            if (ComboMenu.CheckBoxValue(SpellSlot.E) && E.IsReady() && target.IsKillable(E.Range))
+            {
+                E.Cast();
+            }
+
+            if (ComboMenu.CheckBoxValue(SpellSlot.R) && R.IsReady() && target.IsKillable(R.Range))
+            {
+                RAOE(ComboMenu.SliderValue("RAOE"));
+            }
         }
 
         public override void Harass()
         {
+            var target = TargetSelector.GetTarget(Q.Range, DamageType.Magical);
+            if (target == null || !target.IsKillable(Q.Range))
+            {
+                if (W.Handle.ToggleState == 2)
+                {
+                    W.Cast();
+                }
+                return;
+            }
+
+            if (HarassMenu.CheckBoxValue(SpellSlot.Q) && Q.IsReady() && HarassMenu.CompareSlider(Q.Slot + "mana", user.ManaPercent))
+            {
+                Q.Cast(target, HitChance.Medium);
+            }
+            if (HarassMenu.CheckBoxValue(SpellSlot.W) && W.IsReady() && HarassMenu.CompareSlider(W.Slot + "mana", user.ManaPercent))
+            {
+                if (target.IsKillable(W.Range) && W.Handle.ToggleState == 1)
+                {
+                    W.Cast();
+                }
+                else
+                {
+                    W.Cast();
+                }
+            }
+            if (HarassMenu.CheckBoxValue(SpellSlot.E) && E.IsReady() && target.IsKillable(E.Range) && HarassMenu.CompareSlider(E.Slot + "mana", user.ManaPercent))
+            {
+                E.Cast();
+            }
         }
 
         public override void LaneClear()
         {
+            foreach (var target in EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => m != null && m.IsValidTarget()))
+            {
+                if (W.IsReady() && target.IsKillable(W.Range) && LaneClearMenu.CheckBoxValue(SpellSlot.W) && LaneClearMenu.CompareSlider(W.Slot + "mana", user.ManaPercent))
+                {
+                    if (target.IsKillable(W.Range) && W.Handle.ToggleState == 1)
+                    {
+                        W.Cast();
+                    }
+                    else
+                    {
+                        W.Cast();
+                    }
+                }
+                if (E.IsReady() && target.IsKillable(E.Range) && LaneClearMenu.CheckBoxValue(SpellSlot.E) && LaneClearMenu.CompareSlider(E.Slot + "mana", user.ManaPercent))
+                {
+                    E.Cast();
+                }
+            }
         }
 
         public override void Flee()
@@ -128,6 +207,25 @@ namespace AramBuddy.Plugins.Champions.Amumu
 
         public override void KillSteal()
         {
+            foreach (var target in EntityManager.Heroes.Enemies.Where(e => e != null && e.IsValidTarget()))
+            {
+                if (Q.IsReady() && target.IsKillable(Q.Range) && Q.WillKill(target) && KillStealMenu.CheckBoxValue(SpellSlot.Q))
+                {
+                    Q.Cast();
+                }
+                if (W.IsReady() && target.IsKillable(W.Range) && W.WillKill(target) && KillStealMenu.CheckBoxValue(SpellSlot.W))
+                {
+                    W.Cast();
+                }
+                if (E.IsReady() && target.IsKillable(E.Range) && E.WillKill(target) && KillStealMenu.CheckBoxValue(SpellSlot.E))
+                {
+                    E.Cast();
+                }
+                if (R.IsReady() && target.IsKillable(R.Range) && R.WillKill(target) && KillStealMenu.CheckBoxValue(SpellSlot.R))
+                {
+                    R.Cast();
+                }
+            }
         }
 
         private static void RAOE(int HitCount)

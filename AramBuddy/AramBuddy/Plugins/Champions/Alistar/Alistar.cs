@@ -46,6 +46,7 @@ namespace AramBuddy.Plugins.Champions.Alistar
             AutoMenu.CreateCheckBox("IntQ", "Interrupter Q");
             AutoMenu.CreateCheckBox("GapW", "Anti-GapCloser W");
             AutoMenu.CreateCheckBox("IntW", "Interrupter W");
+
             Interrupter.OnInterruptableSpell += Interrupter_OnInterruptableSpell;
             Gapcloser.OnGapcloser += Gapcloser_OnGapcloser;
         }
@@ -55,7 +56,7 @@ namespace AramBuddy.Plugins.Champions.Alistar
             if (sender == null || !sender.IsEnemy)
                 return;
             if(sender.IsKillable(Q.Range) && Q.IsReady() && AutoMenu.CheckBoxValue("GapQ"))
-            Q.Cast();
+                Q.Cast();
 
             if (sender.IsKillable(W.Range) && W.IsReady() && AutoMenu.CheckBoxValue("GapW"))
                 W.Cast(sender);

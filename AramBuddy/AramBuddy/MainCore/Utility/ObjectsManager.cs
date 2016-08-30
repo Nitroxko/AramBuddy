@@ -294,7 +294,7 @@ namespace AramBuddy.MainCore.Utility
             get
             {
                 return BestAlliesToFollow.OrderByDescending(a => Misc.TeamTotal(a.PredictPosition()) - Misc.TeamTotal(a.PredictPosition(), true))
-                        .FirstOrDefault(a => a.CountAlliesInRange(SafeValue) >= a.CountEnemiesInRange(SafeValue));
+                        .FirstOrDefault(a => a.CountAlliesInRange(SafeValue) + 1 >= a.CountEnemiesInRange(SafeValue));
             }
         }
 
