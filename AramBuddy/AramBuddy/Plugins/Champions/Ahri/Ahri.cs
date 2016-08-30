@@ -8,7 +8,7 @@ using static AramBuddy.MainCore.Utility.Misc;
 
 namespace AramBuddy.Plugins.Champions.Ahri
 {
-    class Ahri : Base
+    internal class Ahri : Base
     {
         private static Spell.Skillshot Q { get; }
         private static Spell.Active W { get; }
@@ -36,10 +36,13 @@ namespace AramBuddy.Plugins.Champions.Ahri
             foreach (var spell in SpellList)
             {
                 ComboMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
-                HarassMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
-                HarassMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
-                LaneClearMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
-                LaneClearMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
+                if (spell != R)
+                {
+                    HarassMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
+                    HarassMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
+                    LaneClearMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
+                    LaneClearMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
+                }
                 KillStealMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
             }
             AutoMenu.CreateCheckBox("GapE", "Anti-GapCloser E");
@@ -120,10 +123,11 @@ namespace AramBuddy.Plugins.Champions.Ahri
                 {
                     W.Cast();
                 }
+                /* Save E
                 if (E.IsReady() && target.IsKillable(E.Range) && LaneClearMenu.CheckBoxValue(SpellSlot.E) && LaneClearMenu.CompareSlider(E.Slot + "mana", user.ManaPercent))
                 {
                     E.Cast(target, HitChance.Medium);
-                }
+                }*/
             }
         }
 

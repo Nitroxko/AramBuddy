@@ -8,7 +8,7 @@ using static AramBuddy.MainCore.Utility.Misc;
 
 namespace AramBuddy.Plugins.Champions.TwistedFate
 {
-    class TwistedFate : Base
+    internal class TwistedFate : Base
     {
         private static bool Selecting;
         private static int lastcasted;

@@ -8,7 +8,7 @@ using static AramBuddy.MainCore.Utility.Misc;
 
 namespace AramBuddy.Plugins.Champions.Gangplank
 {
-    class Gangplank : Base
+    internal class Gangplank : Base
     {
         private static readonly List<Obj_AI_Minion> BarrelsList = new List<Obj_AI_Minion>();
         private static Spell.Targeted Q { get; }

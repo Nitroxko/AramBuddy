@@ -43,10 +43,13 @@ namespace AramBuddy.Plugins.Champions.Caitlyn
             foreach (var spell in SpellList)
             {
                 ComboMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
-                HarassMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
-                HarassMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
-                LaneClearMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
-                LaneClearMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
+                if (spell != R)
+                {
+                    HarassMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
+                    HarassMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
+                    LaneClearMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
+                    LaneClearMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
+                }
                 KillStealMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
             }
 

@@ -7,7 +7,7 @@ using static AramBuddy.MainCore.Utility.Misc;
 
 namespace AramBuddy.Plugins.Champions.Akali
 {
-    class Akali : Base
+    internal class Akali : Base
     {
         private static Spell.Targeted Q { get; }
         private static Spell.Skillshot W { get; }
@@ -35,8 +35,11 @@ namespace AramBuddy.Plugins.Champions.Akali
             foreach (var spell in SpellList)
             {
                 ComboMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
-                HarassMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
-                LaneClearMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
+                if (spell != R)
+                {
+                    HarassMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
+                    LaneClearMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
+                }
                 KillStealMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
             }
         }

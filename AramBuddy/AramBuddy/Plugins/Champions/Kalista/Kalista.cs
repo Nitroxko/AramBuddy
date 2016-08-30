@@ -8,7 +8,7 @@ using EloBuddy.SDK.Menu;
 
 namespace AramBuddy.Plugins.Champions.Kalista
 {
-    class Kalista : Base
+    internal class Kalista : Base
     {
         public static Spell.Skillshot Q { get; }
         public static Spell.Skillshot W { get; }

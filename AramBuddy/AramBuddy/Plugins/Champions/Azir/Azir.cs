@@ -8,7 +8,7 @@ using static AramBuddy.MainCore.Utility.Misc;
 
 namespace AramBuddy.Plugins.Champions.Azir
 {
-    class Azir : Base
+    internal class Azir : Base
     {
         internal static bool Ehit(Obj_AI_Base target)
         {

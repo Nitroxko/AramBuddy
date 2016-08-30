@@ -8,7 +8,7 @@ using static AramBuddy.MainCore.Utility.Misc;
 
 namespace AramBuddy.Plugins.Champions.Taliyah
 {
-    class Taliyah : Base
+    internal class Taliyah : Base
     {
         private static Spell.Skillshot Q { get; }
         private static Spell.Skillshot W { get; }

@@ -43,8 +43,11 @@ namespace AramBuddy.Plugins.Champions.Garen
             foreach (var spell in SpellList)
             {
                 ComboMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
-                HarassMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
-                LaneClearMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
+                if (spell != R)
+                {
+                    HarassMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
+                    LaneClearMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
+                }
                 KillStealMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
             }
 

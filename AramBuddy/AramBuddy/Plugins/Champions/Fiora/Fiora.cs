@@ -12,7 +12,7 @@ using Collision = AramBuddy.KappaEvade.Collision;
 
 namespace AramBuddy.Plugins.Champions.Fiora
 {
-    class Fiora : Base
+    internal class Fiora : Base
     {
         private static Spell.Skillshot Q { get; }
         private static Spell.Skillshot W { get; }
@@ -39,10 +39,13 @@ namespace AramBuddy.Plugins.Champions.Fiora
             foreach (var spell in SpellList)
             {
                 ComboMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
-                HarassMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
-                HarassMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
-                LaneClearMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
-                LaneClearMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
+                if (spell != R)
+                {
+                    HarassMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
+                    HarassMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
+                    LaneClearMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
+                    LaneClearMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
+                }
                 KillStealMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
             }
             Events.OnIncomingDamage += Events_OnIncomingDamage;

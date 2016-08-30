@@ -8,7 +8,7 @@ using static AramBuddy.MainCore.Utility.Misc;
 
 namespace AramBuddy.Plugins.Champions.Alistar
 {
-    class Alistar : Base
+    internal class Alistar : Base
     {
         private static Spell.Active Q { get; }
         private static Spell.Targeted W { get; }
@@ -36,11 +36,14 @@ namespace AramBuddy.Plugins.Champions.Alistar
             foreach (var spell in SpellList)
             {
                 ComboMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
-                HarassMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
-                HarassMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
-                LaneClearMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
-                LaneClearMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
-                KillStealMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
+                if (spell != R && spell != E)
+                {
+                    HarassMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
+                    HarassMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
+                    LaneClearMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
+                    LaneClearMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
+                    KillStealMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
+                }
             }
             AutoMenu.CreateCheckBox("GapQ", "Anti-GapCloser Q");
             AutoMenu.CreateCheckBox("IntQ", "Interrupter Q");

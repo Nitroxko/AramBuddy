@@ -9,7 +9,7 @@ using static AramBuddy.MainCore.Utility.Misc;
 
 namespace AramBuddy.Plugins.Champions.Orianna
 {
-    class Orianna : Base
+    internal class Orianna : Base
     {
         private static Obj_AI_Base OriannaBall;
 
