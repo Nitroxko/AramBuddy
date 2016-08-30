@@ -1,156 +1,309 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Enumerations;
 using EloBuddy.SDK.Menu;
+using EloBuddy.SDK.Menu.Values;
+using SharpDX;
 using static AramBuddy.MainCore.Utility.Misc;
 
 namespace AramBuddy.Plugins.Champions.Gangplank
 {
+    using static BarrelsManager;
     internal class Gangplank : Base
     {
-        private static readonly List<Obj_AI_Minion> BarrelsList = new List<Obj_AI_Minion>();
-        private static Spell.Targeted Q { get; }
-        private static Spell.Active W { get; }
-        private static Spell.Skillshot E { get; }
-        private static Spell.Skillshot R { get; }
+        internal static int ConnectionRange = 675;
+
+        public static Spell.Targeted Q { get; }
+        public static Spell.Active W { get; }
+        public static Spell.Skillshot E { get; }
+        public static Spell.Skillshot R { get; }
+
+        private static float Rdamage(Obj_AI_Base target)
+        {
+            return user.HasBuff("GangplankRUpgrade2") ? user.GetSpellDamage(target, SpellSlot.R) * 3F : 0;
+        }
 
         static Gangplank()
         {
-            BarrelsList.Clear();
-            MenuIni = MainMenu.AddMenu(MenuName, MenuName);
-            AutoMenu = MenuIni.AddSubMenu("Auto");
-            ComboMenu = MenuIni.AddSubMenu("Combo");
-            HarassMenu = MenuIni.AddSubMenu("Harass");
-            LaneClearMenu = MenuIni.AddSubMenu("LaneClear");
-            KillStealMenu = MenuIni.AddSubMenu("KillSteal");
+            Init();
 
             Q = new Spell.Targeted(SpellSlot.Q, 625);
             W = new Spell.Active(SpellSlot.W);
-            E = new Spell.Skillshot(SpellSlot.E, 1000, SkillShotType.Circular, 250, int.MaxValue, 350);
-            R = new Spell.Skillshot(SpellSlot.R, int.MaxValue, SkillShotType.Circular, 250, int.MaxValue, 600);
+            E = new Spell.Skillshot(SpellSlot.E, 1000, SkillShotType.Circular, 500, int.MaxValue, 325);
+            R = new Spell.Skillshot(SpellSlot.R, int.MaxValue, SkillShotType.Circular, 500, int.MaxValue, 600);
+
+            MenuIni = MainMenu.AddMenu(MenuName, MenuName);
+            AutoMenu = MenuIni.AddSubMenu("Auto");
+            ComboMenu = MenuIni.AddSubMenu("Combo");
+            //HarassMenu = MenuIni.AddSubMenu("Harass");
+            LaneClearMenu = MenuIni.AddSubMenu("LaneClear");
+            KillStealMenu = MenuIni.AddSubMenu("KillSteal");
             SpellList.Add(Q);
             SpellList.Add(E);
+            SpellList.Add(R);
 
-            foreach (var spell in SpellList)
+            SpellList.ForEach(
+                i =>
+                {
+                    ComboMenu.CreateCheckBox(i.Slot, "Use " + i.Slot);
+                    if (i != R)
+                    {
+                        //HarassMenu.CreateCheckBox(i.Slot, "Use " + i.Slot);
+                        //HarassMenu.AddSeparator(0);
+                        LaneClearMenu.CreateCheckBox(i.Slot, "Use " + i.Slot);
+                        LaneClearMenu.AddSeparator(0);
+                        if (i != E)
+                        {
+                            //HarassMenu.CreateSlider(i.Slot + "mana", i.Slot + " Mana Manager {0}%", 60);
+                            LaneClearMenu.CreateSlider(i.Slot + "mana", i.Slot + " Mana Manager {0}%", 60);
+                        }
+                    }
+                    KillStealMenu.CreateCheckBox(i.Slot, i.Slot + " KillSteal");
+                });
+
+            MenuIni.AddGroupLabel("For W CC Cleaner Check Activator > Qss");
+            //AutoMenu.CreateCheckBox("CC", "Auto W CC Buffs");
+            AutoMenu.CreateCheckBox("AutoQ", "Auto Q Barrels", false);
+            AutoMenu.CreateCheckBox("Qunk", "Auto Q UnKillable Minions");
+
+            ComboMenu.CreateCheckBox("FB", "Place First Barrel");
+            ComboMenu.CreateSlider("RAOE", "R AoE Hit {0}", 3, 1, 6);
+
+            KillStealMenu.CreateCheckBox("RSwitch", "Use Only Upgrades Damage");
+            KillStealMenu.CreateSlider("Rdmg", "Multipy R Damage By X{0}", 3, 1, 12);
+
+            LaneClearMenu.CreateCheckBox("QLH", "LastHit Mode Q");
+            LaneClearMenu.CreateSlider("EKill", "Minions Kill Count {0}", 2, 0, 10);
+            LaneClearMenu.CreateSlider("EHits", "Minions To Hit With E {0}", 3, 0, 10);
+
+            Orbwalker.OnUnkillableMinion += Orbwalker_OnUnkillableMinion;
+            Spellbook.OnCastSpell += Spellbook_OnCastSpell;
+        }
+
+        private static void Orbwalker_OnUnkillableMinion(Obj_AI_Base target, Orbwalker.UnkillableMinionArgs args)
+        {
+            if (target.IsKillable(Q.Range) && Q.IsReady() && Q.WillKill(target) && AutoMenu.CheckBoxValue("Qunk") && !Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Combo))
             {
-                ComboMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
-                HarassMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
-                HarassMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
-                LaneClearMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
-                LaneClearMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
-                KillStealMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
+                Q.Cast(target);
             }
+        }
 
-            ComboMenu.CreateCheckBox("R", "Use R");
-            ComboMenu.CreateSlider("RAOE", "R AOE HIT {0}", 2, 1, 5);
+        private static void Spellbook_OnCastSpell(Spellbook sender, SpellbookCastSpellEventArgs args)
+        {
+            if (sender.Owner.IsMe && Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Combo))
+            {
+                if (BarrelsList.All(b => b?.Barrel.NetworkId != args.Target?.NetworkId)) return;
 
-            KillStealMenu.CreateCheckBox("R", "Use R");
+                var target =
+                    EntityManager.Heroes.Enemies.FirstOrDefault(e => e.IsKillable() &&
+                    BarrelsList.Any(b => b.Barrel.IsValidTarget(Q.Range) && (KillableBarrel(b)?.Distance(e) <= E.Width || BarrelsList.Any(a => KillableBarrel(b)?.Distance(a.Barrel) <= ConnectionRange && e.Distance(b.Barrel) <= E.Width))))
+                    ?? TargetSelector.GetTarget(E.Range, DamageType.Physical);
+                var position = Vector3.Zero;
+                var startposition = Vector3.Zero;
+                if (args.Slot == SpellSlot.Q && E.IsReady())
+                {
+                    var barrel = BarrelsList.FirstOrDefault(b => b.Barrel.NetworkId == args.Target.NetworkId);
+                    var Secondbarrel = BarrelsList.FirstOrDefault(b => b.Barrel.NetworkId != barrel?.Barrel.NetworkId && b.Barrel.Distance(args.Target) <= ConnectionRange);
+                    if (barrel != null)
+                    {
+                        startposition = Secondbarrel?.Barrel.ServerPosition ?? barrel.Barrel.ServerPosition;
+                    }
+                    if (startposition != Vector3.Zero)
+                    {
+                        if (target != null && target.IsKillable(E.Range + E.Radius))
+                        {
+                            if (target.Distance(startposition) <= ConnectionRange + E.Radius && target.Distance(startposition) > E.Width - 75)
+                            {
+                                var extended = startposition.Extend(E.GetPrediction(target).CastPosition, ConnectionRange).To3D();
+                                position = !E.IsInRange(extended) ? E.GetPrediction(target).CastPosition : extended;
+                            }
+                        }
+                        else
+                        {
+                            target = EntityManager.Heroes.Enemies.OrderBy(e => e.Distance(Game.CursorPos)).FirstOrDefault(e => e.IsKillable(E.Range));
+                            if (target != null)
+                            {
+                                var extended = startposition.Extend(E.GetPrediction(target).CastPosition, ConnectionRange).To3D();
+                                position = !E.IsInRange(extended) ? E.GetPrediction(target).CastPosition : extended;
+                            }
+                        }
+                        if (position != Vector3.Zero)
+                        {
+                            if (BarrelsList.Count(b => b.Barrel.Distance(position) <= E.Width) < 1)
+                            {
+                                E.Cast(position);
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         public override void Active()
         {
-            foreach (var barrel in ObjectManager.Get<Obj_AI_Minion>().Where(o => !o.IsDead && o.HasBuff("GangplankEBarrelActive") && o.GetBuff("GangplankEBarrelActive").Caster.IsMe))
+            if (AutoMenu.CheckBoxValue("AutoQ") && Q.IsReady())
             {
-                if (!BarrelsList.Contains(barrel))
+                var target =
+                    EntityManager.Heroes.Enemies.OrderByDescending(TargetSelector.GetPriority).FirstOrDefault(e => e.IsKillable() &&
+                    BarrelsList.Any(b => b.Barrel.IsValidTarget(Q.Range) && (KillableBarrel(b)?.Distance(e) <= E.Width || BarrelsList.Any(a => KillableBarrel(b)?.Distance(a.Barrel) <= ConnectionRange && e.Distance(b.Barrel) <= E.Width))))
+                    ?? TargetSelector.GetTarget(E.Range, DamageType.Physical);
+                if (target == null) return;
+                foreach (var A in BarrelsList.OrderBy(b => b.Barrel.Distance(target)))
                 {
-                    BarrelsList.Add(barrel);
-                }
-            }
-            BarrelsList.RemoveAll(o => o.IsDead || o.Health <= 0);
+                    if (KillableBarrel(A) != null && KillableBarrel(A).IsValidTarget(Q.Range))
+                    {
+                        if (target.IsInRange(KillableBarrel(A), E.Width))
+                        {
+                            Q.Cast(KillableBarrel(A));
+                        }
 
-            if (user.IsCC() && user.HealthPercent <= 80)
-            {
-                W.Cast();
+                        var Secondbarrel = BarrelsList.OrderBy(b => b.Barrel.Distance(target)).FirstOrDefault(b => b.Barrel.NetworkId != KillableBarrel(A).NetworkId && b.Barrel.Distance(KillableBarrel(A)) <= ConnectionRange);
+                        if (Secondbarrel != null)
+                        {
+                            if (target.IsInRange(Secondbarrel.Barrel, E.Width))
+                            {
+                                Q.Cast(KillableBarrel(A));
+                            }
+                            if (BarrelsList.OrderBy(b => b.Barrel.Distance(target)).Any(b => b.Barrel.NetworkId != Secondbarrel.Barrel.NetworkId && b.Barrel.Distance(Secondbarrel.Barrel) <= ConnectionRange && b.Barrel.CountEnemiesInRange(E.Width) > 0))
+                            {
+                                Q.Cast(KillableBarrel(A));
+                            }
+                        }
+                    }
+                }
             }
         }
 
         public override void Combo()
         {
-            if (R.IsReady() && ComboMenu.CheckBoxValue(R.Slot))
+            Orbwalker.ForcedTarget = null;
+            if (R.IsReady() && ComboMenu.CheckBoxValue(SpellSlot.R))
             {
-                foreach (var enemy in EntityManager.Heroes.Enemies.Where(e => e != null && e.IsKillable(4500)))
-                {
-                    if (ComboMenu.CompareSlider("RAOE", enemy.CountEnemiesInRange(R.Width)))
-                    {
-                        R.Cast(enemy);
-                    }
-                }
+                R.CastAOE(ComboMenu.SliderValue("RAOE"), 3000);
             }
 
-            var target = TargetSelector.GetTarget(Q.Range, DamageType.Magical);
-            if (target == null || !target.IsKillable(Q.Range))
+            var target =
+                EntityManager.Heroes.Enemies.OrderByDescending(TargetSelector.GetPriority).FirstOrDefault(e => e.IsKillable() &&
+                BarrelsList.Any(b => b.Barrel.IsValidTarget(Q.Range) && (KillableBarrel(b)?.Distance(e) <= E.Width || BarrelsList.Any(a => KillableBarrel(b)?.Distance(a.Barrel) <= ConnectionRange && e.Distance(b.Barrel) <= E.Width))))
+                ?? TargetSelector.GetTarget(E.Range, DamageType.Physical);
+            if (target == null || !target.IsKillable()) return;
+
+            var pred = target.PredictPosition();
+            var castpos = E.GetPrediction(target).CastPosition;
+
+            if (AABarrel(target) != null)
+            {
+                var extended = AABarrel(target).ServerPosition.Extend(pred, ConnectionRange).To3D();
+                castpos = !E.IsInRange(extended) ? pred : extended;
+                Orbwalker.ForcedTarget = AABarrel(target);
+                if (E.IsReady() && ComboMenu.CheckBoxValue(SpellSlot.E))
+                {
+                    if (BarrelsList.Count(b => b.Barrel.Distance(user) <= Q.Range) > 0 && BarrelsList.Count(b => b.Barrel.Distance(castpos) <= E.Width) < 1)
+                    {
+                        E.Cast(castpos);
+                    }
+                }
+                Player.IssueOrder(GameObjectOrder.AttackUnit, AABarrel(target));
                 return;
-
-            if (Q.IsReady() && ComboMenu.CheckBoxValue(Q.Slot))
-            {
-                foreach (var barrel in BarrelsList.OrderByDescending(b => b.CountEnemiesInRange(E.Width)).Where(b => b.IsInRange(target, E.Width)))
-                {
-                    var bhealt = Prediction.Health.GetPrediction(barrel, (int)((Player.Instance.Distance(barrel) / 2600) * 1000) + Q.CastDelay);
-                    if (bhealt <= 1)
-                    {
-                        Q.Cast(barrel);
-                    }
-                }
-
-                if (target.IsKillable(Q.Range))
-                {
-                    Q.Cast(target);
-                }
             }
 
-            if (E.IsReady() && Q.IsReady() && target.IsValidTarget(E.Range) && ComboMenu.CheckBoxValue(E.Slot))
+            if (Q.IsReady())
             {
-                E.Cast(target, HitChance.Low);
-            }
-        }
-
-        public override void Harass()
-        {
-            var target = TargetSelector.GetTarget(Q.Range, DamageType.Magical);
-            if (target == null || !target.IsKillable(Q.Range))
-                return;
-
-            if (Q.IsReady() && HarassMenu.CheckBoxValue(Q.Slot) && HarassMenu.CompareSlider(Q.Slot + "mana", user.ManaPercent))
-            {
-                foreach (var barrel in BarrelsList.OrderByDescending(b => b.CountEnemiesInRange(E.Width)).Where(b => b.IsInRange(target, E.Width) && b.Health <= 1))
+                if (ComboMenu.CheckBoxValue(SpellSlot.Q))
                 {
-                    Q.Cast(barrel);
-                }
-
-                if (target.IsKillable(Q.Range))
-                {
-                    Q.Cast(target);
-                }
-            }
-
-            if (E.IsReady() && Q.IsReady() && target.IsValidTarget(E.Range) && HarassMenu.CheckBoxValue(E.Slot) && HarassMenu.CompareSlider(E.Slot + "mana", user.ManaPercent))
-            {
-                E.Cast(target, HitChance.Low);
-            }
-        }
-
-        public override void LaneClear()
-        {
-            foreach (var target in EntityManager.MinionsAndMonsters.EnemyMinions.Where(e => e != null && e.IsKillable(Q.Range)))
-            {
-                if (Q.IsReady() && LaneClearMenu.CheckBoxValue(Q.Slot) && LaneClearMenu.CompareSlider(Q.Slot + "mana", user.ManaPercent))
-                {
-                    foreach (var barrel in BarrelsList.OrderByDescending(b => b.CountEnemyMinionsInRange(E.Width)).Where(b => b.IsInRange(target, E.Width) && b.Health <= 1))
-                    {
-                        Q.Cast(barrel);
-                    }
-
-                    if (target.IsKillable(Q.Range))
+                    if (((BarrelsList.Count(b => b.Barrel.IsInRange(target, E.Radius + ConnectionRange)) < 1 && (!E.IsReady() || E.Handle.Ammo < 1)) || Q.WillKill(target)) && target.IsKillable(Q.Range))
                     {
                         Q.Cast(target);
                     }
-                }
 
-                if (E.IsReady() && Q.IsReady() && target.IsValidTarget(E.Range) && LaneClearMenu.CheckBoxValue(E.Slot) && LaneClearMenu.CompareSlider(E.Slot + "mana", user.ManaPercent))
+                    foreach (var A in BarrelsList.OrderBy(b => b.Barrel.Distance(target)))
+                    {
+                        if (KillableBarrel(A) != null && KillableBarrel(A).IsValidTarget(Q.Range))
+                        {
+                            if (pred.IsInRange(KillableBarrel(A), E.Width))
+                            {
+                                Q.Cast(KillableBarrel(A));
+                            }
+
+                            var Secondbarrel = BarrelsList.OrderBy(b => b.Barrel.Distance(target)).FirstOrDefault(b => b.Barrel.NetworkId != KillableBarrel(A).NetworkId && b.Barrel.Distance(KillableBarrel(A)) <= ConnectionRange);
+                            if (Secondbarrel != null)
+                            {
+                                if (pred.IsInRange(Secondbarrel.Barrel, E.Width))
+                                {
+                                    Q.Cast(KillableBarrel(A));
+                                }
+                                if (BarrelsList.OrderBy(b => b.Barrel.Distance(target)).Any(b => b.Barrel.NetworkId != Secondbarrel.Barrel.NetworkId && b.Barrel.Distance(Secondbarrel.Barrel) <= ConnectionRange && b.Barrel.CountEnemiesInRange(E.Width) > 0))
+                                {
+                                    Q.Cast(KillableBarrel(A));
+                                }
+                            }
+                            else
+                            {
+                                if (BarrelsList.OrderBy(b => b.Barrel.Distance(target)).Any(b => b.Barrel.NetworkId != KillableBarrel(A).NetworkId && b.Barrel.Distance(KillableBarrel(A)) <= ConnectionRange && b.Barrel.CountEnemiesInRange(E.Width) > 0))
+                                {
+                                    Q.Cast(KillableBarrel(A));
+                                }
+                            }
+                        }
+                    }
+                }
+                if (E.IsReady() && ComboMenu.CheckBoxValue(SpellSlot.E))
                 {
-                    E.Cast(target, HitChance.Low);
+                    if (BarrelsList.OrderBy(b => b.Barrel.Distance(target)).Count(b => b.Barrel.IsInRange(target, E.Width)) < 1)
+                    {
+                        if (BarrelsList.OrderBy(b => b.Barrel.Distance(target)).Count(b => b.Barrel.IsInRange(target, E.Radius + ConnectionRange)) > 0)
+                        {
+                            var targetbarrel = BarrelsList.OrderBy(b => b.Barrel.Distance(target)).FirstOrDefault(b => KillableBarrel(b) != null && (b.Barrel.IsValidTarget(Q.Range) || b.Barrel.IsValidTarget(user.GetAutoAttackRange())) && b.Barrel.IsInRange(target, E.Radius + ConnectionRange));
+                            if (KillableBarrel(targetbarrel) != null)
+                            {
+                                var Secondbarrel = BarrelsList.OrderBy(b => b.Barrel.Distance(target)).FirstOrDefault(b => b.Barrel.NetworkId != targetbarrel?.Barrel.NetworkId && b.Barrel.Distance(targetbarrel?.Barrel) <= ConnectionRange);
+
+                                if (Secondbarrel != null)
+                                {
+                                    var extended = Secondbarrel.Barrel.ServerPosition.Extend(pred, ConnectionRange).To3D();
+                                    castpos = !E.IsInRange(extended) ? pred : extended;
+                                }
+                                if ((castpos.Distance(KillableBarrel(targetbarrel)) <= ConnectionRange || Secondbarrel?.Barrel.Distance(castpos) <= ConnectionRange) && E.IsInRange(castpos))
+                                {
+                                    E.Cast(castpos);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (E.Handle.Ammo > 1 && ComboMenu.CheckBoxValue("FB"))
+                            {
+                                if (Q.IsInRange(castpos))
+                                {
+                                    if (HPTiming() <= 1000 || target.IsCC())
+                                    {
+                                        E.Cast(castpos);
+                                    }
+                                }
+                                else
+                                {
+                                    if (E.IsInRange(castpos))
+                                    {
+                                        E.Cast(castpos.Extend(user, ConnectionRange - 300).To3D());
+                                    }
+                                }
+
+                                var circle = new Geometry.Polygon.Circle(castpos, ConnectionRange);
+                                foreach (var point in circle.Points)
+                                {
+                                    circle = new Geometry.Polygon.Circle(point, E.Width);
+                                    var grass = circle.Points.OrderBy(p => p.Distance(castpos)).FirstOrDefault(p => p.IsGrass() && Q.IsInRange(p.To3D()) && p.Distance(castpos) <= ConnectionRange);
+                                    if (grass != null)
+                                    {
+                                        E.Cast(grass.To3D());
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -159,33 +312,230 @@ namespace AramBuddy.Plugins.Champions.Gangplank
         {
         }
 
-        public override void KillSteal()
+        public override void Harass()
         {
-            foreach (var target in EntityManager.Heroes.Enemies.Where(e => e != null))
+        }
+
+        public override void LaneClear()
+        {
+            Orbwalker.ForcedTarget = null;
+            if (Q.IsReady())
             {
-                if (Q.IsReady() && target.IsKillable(Q.Range) && KillStealMenu.CheckBoxValue(Q.Slot))
+                if (E.IsReady() && LaneClearMenu.CheckBoxValue(SpellSlot.E))
                 {
-                    foreach (var barrel in BarrelsList.OrderByDescending(b => b.CountEnemiesInRange(E.Width)).Where(b => b.IsInRange(target, E.Width) && b.Health <= 1 && E.WillKill(target)))
+                    foreach (var minion in EntityManager.MinionsAndMonsters.EnemyMinions.OrderBy(m => m.Health).Where(m => m.IsKillable(E.Range)))
                     {
-                        Q.Cast(barrel);
-                    }
-
-                    if (target.IsKillable(Q.Range) && Q.WillKill(target))
-                    {
-                        Q.Cast(target);
+                        var pred = E.GetPrediction(minion);
+                        if (EntityManager.MinionsAndMonsters.EnemyMinions.Count(e => e.Distance(pred.CastPosition) <= E.Width && BarrelKill(e)) >= LaneClearMenu.SliderValue("EKill"))
+                        {
+                            if (BarrelsList.Count(b => b.Barrel.IsInRange(pred.CastPosition, E.Width)) < 1
+                                || (BarrelsList.Count(b => b.Barrel.IsInRange(pred.CastPosition, ConnectionRange)) > 0 && BarrelsList.Count(b => b.Barrel.IsInRange(pred.CastPosition, E.Width)) < 1))
+                            {
+                                E.Cast(pred.CastPosition);
+                                return;
+                            }
+                        }
                     }
                 }
-
-                if (E.IsReady() && Q.IsReady() && target.IsValidTarget(E.Range) && E.WillKill(target) && KillStealMenu.CheckBoxValue(E.Slot))
+                if (LaneClearMenu.CheckBoxValue(SpellSlot.Q))
                 {
-                    E.Cast(target, HitChance.Low);
-                }
-
-                if (R.IsReady() && KillStealMenu.CheckBoxValue(R.Slot) && R.WillKill(target, 2))
-                {
-                    R.Cast(target);
+                    var barrel = BarrelsList.OrderByDescending(b => b.Barrel.CountEnemyMinionsInRange(E.Width)).FirstOrDefault(m => KillableBarrel(m) != null && m.Barrel.CountEnemyMinionsInRange(E.Width) > 0 && (KillableBarrel(m).IsValidTarget(Q.Range) || KillableBarrel(m).IsInRange(user, user.GetAutoAttackRange())));
+                    if (barrel != null)
+                    {
+                        var EkillMinions = EntityManager.MinionsAndMonsters.EnemyMinions.Count(m => BarrelKill(m) && BarrelsList.Any(b => b.Barrel.IsInRange(m, E.Width)) && m.IsValidTarget())
+                                           >= LaneClearMenu.SliderValue("EKill");
+                        var EHitMinions = EntityManager.MinionsAndMonsters.EnemyMinions.Count(m => BarrelsList.Any(b => b.Barrel.IsInRange(m, E.Width)) && m.IsValidTarget())
+                                           >= LaneClearMenu.SliderValue("EHits");
+                        if (KillableBarrel(barrel).IsValidTarget(user.GetAutoAttackRange()))
+                        {
+                            Orbwalker.ForcedTarget = KillableBarrel(barrel);
+                        }
+                        else
+                        {
+                            if (KillableBarrel(barrel).IsValidTarget(Q.Range) && (EkillMinions || EHitMinions))
+                            {
+                                Q.Cast(barrel.Barrel);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (LaneClearMenu.CompareSlider("Qmana", user.ManaPercent))
+                        {
+                            foreach (var minion in EntityManager.MinionsAndMonsters.EnemyMinions.OrderByDescending(m => m.Distance(user)).Where(m => m.IsKillable(Q.Range) && Q.WillKill(m) && !BarrelsList.Any(b => b.Barrel.Distance(m) <= E.Width)))
+                            {
+                                Q.Cast(minion);
+                            }
+                        }
+                    }
                 }
             }
+        }
+
+        public override void KillSteal()
+        {
+            foreach (var enemy in EntityManager.Heroes.Enemies.Where(e => e.IsKillable()))
+            {
+                if (Q.IsReady() && Q.WillKill(enemy) && enemy.IsKillable(Q.Range) && KillStealMenu.CheckBoxValue(SpellSlot.Q))
+                {
+                    Q.Cast(enemy);
+                }
+                if (R.IsReady() && enemy.CountEnemiesInRange(1000) >= enemy.CountAlliesInRange(1000) && enemy.Distance(user) >= Q.Range + 1000 && KillStealMenu.CheckBoxValue(SpellSlot.R))
+                {
+                    if (KillStealMenu.CheckBoxValue("RSwitch") && Rdamage(enemy) > 0 ? Rdamage(enemy) >= enemy.TotalShieldHealth() : R.WillKill(enemy, KillStealMenu.SliderValue("Rdmg"), Rdamage(enemy)))
+                    {
+                        if (KillStealMenu.CheckBoxValue("RSwitch") && Rdamage(enemy) > 0)
+                        {
+                            Player.CastSpell(SpellSlot.R, enemy.PredictPosition());
+                        }
+                        else
+                        {
+                            R.CastAOE(1, R.Range);
+                        }
+                    }
+                }
+                if (KillStealMenu.CheckBoxValue(SpellSlot.E))
+                {
+                    foreach (var a in BarrelsList)
+                    {
+                        if (BarrelKill(enemy))
+                        {
+                            if (KillableBarrel(a) != null)
+                            {
+                                if (KillableBarrel(a)?.Distance(enemy) <= E.Width)
+                                {
+                                    Q.Cast(KillableBarrel(a));
+                                }
+                                if (BarrelsList.Any(b => b.Barrel.Distance(KillableBarrel(a)) <= ConnectionRange && enemy.Distance(b.Barrel) <= E.Width))
+                                {
+                                    Q.Cast(KillableBarrel(a));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    internal class BarrelsManager
+    {
+        internal static readonly List<Barrels> BarrelsList = new List<Barrels>();
+
+        internal static void Init()
+        {
+            Game.OnTick += Game_OnTick;
+        }
+
+        private static float BarrelDamage(Obj_AI_Base target)
+        {
+            var Elvl = Gangplank.E.Level - 1;
+            var floats = new float[] { 0, 0, 0, 0, 0 };
+            if (target is AIHeroClient)
+            {
+                floats = new float[] { 60f, 90f, 120f, 150f, 180f };
+            }
+            return Player.Instance.CalculateDamageOnUnit(target, DamageType.Physical, Player.Instance.TotalAttackDamage + floats[Elvl]);
+        }
+
+        internal static bool BarrelKill(AIHeroClient target)
+        {
+            //Chat.Print(BarrelDamage(target));
+            return BarrelDamage(target) >= Prediction.Health.GetPrediction(target, Game.Ping);
+        }
+
+        internal static bool BarrelKill(Obj_AI_Base target)
+        {
+            //Chat.Print(BarrelDamage(target));
+            return BarrelDamage(target) >= Prediction.Health.GetPrediction(target, Game.Ping);
+        }
+
+        private static void Game_OnTick(EventArgs args)
+        {
+            foreach (var barrel in ObjectManager.Get<Obj_AI_Minion>().Where(o => o.Buffs.Any(b => b.DisplayName.Equals("GangplankEBarrelActive") && b.Caster.IsMe)))
+            {
+                if (BarrelsList.All(b => b.Barrel.NetworkId != barrel.NetworkId))
+                {
+                    var newbarrel = new Barrels(barrel, Core.GameTickCount);
+                    BarrelsList.Add(newbarrel);
+                }
+            }
+            BarrelsList.RemoveAll(b => b?.Barrel == null || b.Barrel.IsDead || !b.Barrel.IsValid || b.Barrel.Health <= 0);
+        }
+
+        internal class Barrels
+        {
+            public Obj_AI_Minion Barrel;
+            public float StartTick;
+
+            public Barrels(Obj_AI_Minion barrel, float tick)
+            {
+                this.Barrel = barrel;
+                this.StartTick = tick;
+            }
+        }
+
+        internal static Obj_AI_Minion KillableBarrel(Barrels b)
+        {
+            if (b == null)
+            {
+                return null;
+            }
+            if (Prediction.Health.GetPrediction(b.Barrel, (int)QTravelTime(b.Barrel)) < 2)
+            {
+                return b.Barrel;
+            }
+
+            //Chat.Print(Core.GameTickCount - b.StartTick);
+            if (!b.Barrel.IsValidTarget(Player.Instance.GetAutoAttackRange() + 25) && b.Barrel.IsValidTarget(Gangplank.Q.Range))
+            {
+                if (Core.GameTickCount - (b.StartTick + HPTiming() - QTravelTime(b.Barrel)) >= 0)
+                {
+                    return b.Barrel;
+                }
+            }
+            return null;
+        }
+
+        internal static int HPTiming()
+        {
+            if (Player.Instance.Level < 7)
+            {
+                return 4000;
+            }
+
+            return Player.Instance.Level < 13 ? 2000 : 1000;
+        }
+
+        internal static float QTravelTime(Obj_AI_Base Target)
+        {
+            return Player.Instance.Distance(Target) / (Player.Instance.Crit < 0.05f ? 2600f : 3000f) * 1000 + 250 + Game.Ping / 2f;
+        }
+
+        internal static Obj_AI_Minion AABarrel(Obj_AI_Base target)
+        {
+            foreach (var A in BarrelsList)
+            {
+                if (KillableBarrel(A) != null && KillableBarrel(A).IsValidTarget(Player.Instance.GetAutoAttackRange()))
+                {
+                    if (target.IsInRange(KillableBarrel(A), Gangplank.E.Width))
+                    {
+                        return KillableBarrel(A);
+                    }
+
+                    var Secondbarrel = BarrelsList.FirstOrDefault(b => b.Barrel.NetworkId != KillableBarrel(A).NetworkId && b.Barrel.Distance(KillableBarrel(A)) <= Gangplank.ConnectionRange && b.Barrel.Distance(target) <= Gangplank.E.Width);
+                    if (Secondbarrel != null)
+                    {
+                        return BarrelsList.Any(b => b.Barrel.NetworkId != Secondbarrel.Barrel.NetworkId && b.Barrel.Distance(Secondbarrel.Barrel) <= Gangplank.ConnectionRange && b.Barrel.CountEnemiesInRange(Gangplank.E.Width) > 0) ? KillableBarrel(A) : KillableBarrel(A);
+                    }
+
+                    if (BarrelsList.Any(b => b.Barrel.NetworkId != KillableBarrel(A).NetworkId && b.Barrel.Distance(KillableBarrel(A)) <= Gangplank.ConnectionRange && b.Barrel.CountEnemiesInRange(Gangplank.E.Width) > 0))
+                    {
+                        return KillableBarrel(A);
+                    }
+                }
+            }
+            return BarrelsList.FirstOrDefault(b => KillableBarrel(b) != null && b.Barrel.IsValidTarget(Player.Instance.GetAutoAttackRange()) && target.IsInRange(KillableBarrel(b), Gangplank.E.Width))?.Barrel;
         }
     }
 }

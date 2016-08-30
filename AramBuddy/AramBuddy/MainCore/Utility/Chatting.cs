@@ -33,10 +33,12 @@ namespace AramBuddy.MainCore.Utility
             {
                 Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\Chat\\");
             }
+
             if (!File.Exists(startfile))
             {
                 File.Create(startfile);
             }
+
             if (!File.Exists(endfile))
             {
                 File.Create(endfile);

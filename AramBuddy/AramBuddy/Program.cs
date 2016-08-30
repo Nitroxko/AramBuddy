@@ -35,10 +35,7 @@ namespace AramBuddy
                 Hacks.DisableTextures = true;
                 ManagedTexture.OnLoad += delegate (OnLoadTextureEventArgs texture) { texture.Process = false; };
             }
-
-            // Checks for updates
-            CheckVersion.Init();
-
+            
             Loading.OnLoadingComplete += Loading_OnLoadingComplete;
         }
 
@@ -52,7 +49,10 @@ namespace AramBuddy
                     Chat.Print(Game.MapId + " IS NOT Supported By AramBuddy !");
                     return;
                 }
-                
+
+                // Checks for updates
+                CheckVersion.Init();
+
                 // Inits KappaEvade
                 KappaEvade.KappaEvade.Init();
                 
@@ -148,8 +148,9 @@ namespace AramBuddy
                 var DisableSpells = MenuIni.CreateCheckBox("DisableSpells", "Disable Built-in Casting Logic", false);
                 var quit = MenuIni.CreateCheckBox("quit", "Quit On Game End");
                 var stealhr = MenuIni.CreateCheckBox("stealhr", "Dont Steal Health Relics From Allies", false);
-                var chat = MenuIni.CreateCheckBox("chat", "Send Start / End msg In-Game Chat");
+                var chat = MenuIni.CreateCheckBox("chat", "Send Start / End msg In-Game Chat", false);
                 var texture = MenuIni.CreateCheckBox("texture", "Disable In-Game Texture (Less RAM/CPU)", false);
+
                 MenuIni.AddSeparator(0);
                 var Safe = MenuIni.CreateSlider("Safe", "Safe Slider (Recommended 1250)", 1250, 0, 2500);
                 MenuIni.AddLabel("More Safe Value = more defensive playstyle");

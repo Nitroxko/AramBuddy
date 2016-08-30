@@ -112,6 +112,7 @@
     <Compile Include="MainCore\Utility\Misc.cs" />
     <Compile Include="MainCore\Utility\ObjectsManager.cs" />
     <Compile Include="MainCore\Logics\Pathing.cs" />
+    <Compile Include="Plugins\Champions\Viktor\Viktor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

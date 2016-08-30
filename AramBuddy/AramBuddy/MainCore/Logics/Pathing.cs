@@ -36,7 +36,7 @@ namespace AramBuddy.MainCore.Logics
             {
                 LastTeamFight = Core.GameTickCount;
             }
-
+            
             // If player is Zombie moves follow nearest Enemy.
             if (Player.Instance.IsZombie())
             {
@@ -128,6 +128,13 @@ namespace AramBuddy.MainCore.Logics
                 return;
             }
 
+            if (ObjectsManager.DravenAxe != null)
+            {
+                Program.Moveto = "DravenAxe";
+                Position = ObjectsManager.DravenAxe.Position;
+                return;
+            }
+
             // Moves to the Farthest Ally if the bot has Autsim
             if (Brain.Alone() && ObjectsManager.FarthestAllyToFollow != null && Player.Instance.Distance(ObjectsManager.AllySpawn) <= 3000)
             {
@@ -181,7 +188,7 @@ namespace AramBuddy.MainCore.Logics
                 && (ObjectsManager.NearestEnemy.PredictPosition().UnderEnemyTurret() && SafeToDive || !ObjectsManager.NearestEnemy.PredictPosition().UnderEnemyTurret()))
             {
                 // if there is a TeamFight move from NearestEnemy to nearestally.
-                if (ObjectsManager.NearestAlly != null)
+                if (ObjectsManager.SafestAllyToFollow != null)
                 {
                     Program.Moveto = "NearestEnemyToNearestAlly";
                     Position = ObjectsManager.NearestEnemy.PredictPosition().Extend(ObjectsManager.SafestAllyToFollow.PredictPosition(), KiteDistance(ObjectsManager.NearestEnemy)).To3D();
@@ -334,7 +341,7 @@ namespace AramBuddy.MainCore.Logics
                 && (ObjectsManager.NearestEnemy.PredictPosition().UnderEnemyTurret() && SafeToDive || !ObjectsManager.NearestEnemy.PredictPosition().UnderEnemyTurret()))
             {
                 // if there is a TeamFight move from NearestEnemy to nearestally.
-                if (ObjectsManager.NearestAlly != null)
+                if (ObjectsManager.SafestAllyToFollow2 != null)
                 {
                     Program.Moveto = "NearestEnemyToNearestAlly";
                     Position = ObjectsManager.NearestEnemy.PredictPosition().Extend(ObjectsManager.SafestAllyToFollow2.PredictPosition(), KiteDistance(ObjectsManager.NearestEnemy)).To3D();
@@ -469,18 +476,13 @@ namespace AramBuddy.MainCore.Logics
         }
 
         /// <summary>
-        ///     Returns last move time for the bot.
-        /// </summary>
-        private static float lastmove;
-
-        /// <summary>
         ///     Sends movement commands.
         /// </summary>
         public static void MoveTo(Vector3 pos)
         {
             // This to prevent the bot from spamming unnecessary movements.
-            var rnddis = new Random().Next(50, 100);
-            if (!Player.Instance.Path.LastOrDefault().IsInRange(pos, rnddis) && !Player.Instance.IsInRange(pos, rnddis) && Core.GameTickCount - lastmove >= new Random().Next(200 + Game.Ping, 900 + Game.Ping))
+            var rnddis = new Random().Next(45, 75);
+            if (!Player.Instance.Path.LastOrDefault().IsInRange(pos, rnddis) && !Player.Instance.IsInRange(pos, rnddis) /*&& Core.GameTickCount - lastmove >= new Random().Next(100 + Game.Ping, 600 + Game.Ping)*/)
             {
                 // This to prevent diving.
                 if (pos.UnderEnemyTurret() && !SafeToDive)
@@ -503,9 +505,6 @@ namespace AramBuddy.MainCore.Logics
                 {
                     Orbwalker.OrbwalkTo(pos);
                 }
-
-                // Returns last movement time.
-                lastmove = Core.GameTickCount;
             }
         }
     }

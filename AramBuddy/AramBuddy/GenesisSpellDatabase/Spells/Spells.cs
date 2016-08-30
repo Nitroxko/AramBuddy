@@ -1754,7 +1754,7 @@ namespace GenesisSpellLibrary.Spells
             this.Q = new Spell.Skillshot(SpellSlot.Q, 1025, SkillShotType.Linear, 0, 750, 210) { AllowedCollisionCount = 0 };
             this.W = new Spell.Active(SpellSlot.W, 2100);
             this.E = new Spell.Targeted(SpellSlot.E, 675);
-            this.R = null;
+            this.EDontWaste = true;
             this.EisCC = true;
             this.EisDangerDash = true;
         }

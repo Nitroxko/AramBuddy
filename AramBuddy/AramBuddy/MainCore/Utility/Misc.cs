@@ -338,9 +338,46 @@ namespace AramBuddy.MainCore.Utility
         /// <summary>
         ///     Returns true if the spell will kill the target.
         /// </summary>
-        public static bool WillKill(this Spell.SpellBase spell, Obj_AI_Base target, int MultiplyDmgBy = 1)
+        public static bool WillKill(this Spell.SpellBase spell, Obj_AI_Base target, float MultiplyDmgBy = 1, float ExtraDamage = 0, DamageType ExtraDamageType = DamageType.True)
         {
-            return Player.Instance.GetSpellDamage(target, spell.Slot) * MultiplyDmgBy >= target.Health;
+            return Player.Instance.GetSpellDamage(target, spell.Slot) * MultiplyDmgBy + Player.Instance.CalculateDamageOnUnit(target, ExtraDamageType, ExtraDamage) >= Prediction.Health.GetPrediction(target, spell.CastDelay + Game.Ping);
+        }
+
+        /// <summary>
+        ///     Attemtps To Cast the spell AoE.
+        /// </summary>
+        public static bool CastAOE(this Spell.Skillshot spell, int hitcount, float CustomRange = -1, AIHeroClient target = null)
+        {
+            var range = CustomRange.Equals(-1) ? spell.Range : CustomRange;
+            if (spell.Type == SkillShotType.Circular)
+            {
+                foreach (var enemy in EntityManager.Heroes.Enemies.Where(e => e.IsKillable(range)))
+                {
+                    var pred = spell.GetPrediction(enemy);
+                    var circle = new Geometry.Polygon.Circle(pred.CastPosition, spell.Width);
+                    foreach (var point in circle.Points)
+                    {
+                        circle = new Geometry.Polygon.Circle(point, spell.Width);
+                        foreach (var p in circle.Points.OrderBy(a => a.Distance(pred.CastPosition)))
+                        {
+                            if (p.CountEnemiesInRange(spell.Width) >= hitcount)
+                            {
+                                if (target == null)
+                                {
+                                    Player.CastSpell(spell.Slot, p.To3D());
+                                    return true;
+                                }
+                                if (target.ServerPosition.IsInRange(p.To3D(), spell.Width))
+                                {
+                                    Player.CastSpell(spell.Slot, p.To3D());
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
         }
 
         /// <summary>

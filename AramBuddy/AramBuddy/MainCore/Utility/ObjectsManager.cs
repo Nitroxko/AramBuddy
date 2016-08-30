@@ -164,7 +164,7 @@ namespace AramBuddy.MainCore.Utility
         }
 
         /// <summary>
-        ///     Thresh Lantern.
+        ///     Returns Thresh Lantern.
         /// </summary>
         public static Obj_AI_Base ThreshLantern
         {
@@ -180,7 +180,7 @@ namespace AramBuddy.MainCore.Utility
         }
 
         /// <summary>
-        ///     BardChime.
+        ///     Returns BardChime.
         /// </summary>
         public static GameObject BardChime
         {
@@ -192,6 +192,19 @@ namespace AramBuddy.MainCore.Utility
                             l =>
                             l.IsValid && !l.IsDead && Player.Instance.Hero == Champion.Bard && (!l.Position.UnderEnemyTurret() || l.Position.UnderEnemyTurret() && Misc.SafeToDive) && l.IsAlly
                             && (l.CountEnemiesInRange(1000) > 0 && Player.Instance.Distance(l) < 600 || l.CountEnemiesInRange(SafeValue) < 1));
+            }
+        }
+
+        /// <summary>
+        ///     Returns DravenAxe.
+        /// </summary>
+        public static GameObject DravenAxe
+        {
+            get
+            {
+                var axe = ObjectManager.Get<GameObject>().Where(a => a != null && a.IsValid && 1000 > a.Distance(Player.Instance) / Player.Instance.MoveSpeed * 1000 && a.Name.Contains("Draven_Base_Q_reticle"))
+                    .OrderBy(a => Misc.TeamTotal(a.Position)).FirstOrDefault(a => a.CountEnemiesInRange(SafeValue) <= a.CountAlliesInRange(SafeValue));
+                return Player.Instance.Hero == Champion.Draven ? axe : null;
             }
         }
 
