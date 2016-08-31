@@ -260,7 +260,7 @@ namespace AramBuddy.MainCore.Utility
                         .Where(
                             a =>  Player.Instance.HealthPercent > 10 && //!a.Added() &&
                             a.IsValidTarget() && ((a.UnderEnemyTurret() && Misc.SafeToDive) || !a.UnderEnemyTurret()) && a.CountAlliesInRange(SafeValue + 100) > 1 && a.HealthPercent > 10
-                            && !a.IsInFountainRange() && !a.IsDead && !a.IsZombie && !a.IsMe
+                            && !a.IsInFountainRange() && !a.IsDead && !a.IsZombie() && !a.IsMe
                             && (a.Spellbook.IsCharging || a.Spellbook.IsChanneling || a.Spellbook.IsAutoAttacking || a.IsAttackPlayer() || a.Spellbook.IsCastingSpell
                             || (a.Path.LastOrDefault().Distance(a) > 35 && a.IsMoving)));
             }
@@ -284,7 +284,7 @@ namespace AramBuddy.MainCore.Utility
         {
             get
             {
-                return EntityManager.Heroes.Allies.OrderBy(a => a.Distance(Player.Instance)).FirstOrDefault(a => a.Distance(AllySpawn) > 5000 && a.IsValidTarget() && !a.IsMe);
+                return EntityManager.Heroes.Allies.OrderBy(a => a.Distance(AllySpawn)).FirstOrDefault(a => a.Distance(AllySpawn) > 3500 && !a.IsMe && a.Distance(Player.Instance) > 2500 && a.IsValidTarget());
             }
         }
 

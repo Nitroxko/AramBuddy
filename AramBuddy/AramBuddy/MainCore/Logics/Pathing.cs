@@ -27,7 +27,7 @@ namespace AramBuddy.MainCore.Logics
         /// </summary>
         public static void BestPosition()
         {
-            if (ObjectsManager.ClosestAlly != null && ObjectsManager.ClosestAlly.Distance(Player.Instance) > 3000)
+            if (ObjectsManager.ClosestAlly != null && ObjectsManager.ClosestAlly.Distance(Player.Instance) > 2500)
             {
                 Teleport.Cast();
             }

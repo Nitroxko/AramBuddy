@@ -24,7 +24,7 @@ namespace AramBuddy.Plugins.Champions.TwistedFate
             LaneClearMenu = MenuIni.AddSubMenu("LaneClear");
             KillStealMenu = MenuIni.AddSubMenu("KillSteal");
 
-            Q = new Spell.Skillshot(SpellSlot.Q, 1450, SkillShotType.Linear, 0, 1000, 40) { AllowedCollisionCount = int.MaxValue };
+            Q = new Spell.Skillshot(SpellSlot.Q, 1400, SkillShotType.Linear, 0, 1000, 40) { AllowedCollisionCount = int.MaxValue };
             W = new Spell.Active(SpellSlot.W, 750);
             SpellList.Add(Q);
             SpellList.Add(W);

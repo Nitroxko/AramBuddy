@@ -80,7 +80,12 @@ namespace AramBuddy.MainCore
 
             // Ticks for the modes manager.
             ModesManager.OnTick();
-            
+
+            if (!(Program.Moveto.Contains("Enemy") || Program.Moveto.Contains("AllySpawn")) && !(ModesManager.Flee || ModesManager.None) && Player.Instance.IsRanged && ObjectsManager.NearestEnemy != null && Player.Instance.CountEnemiesInRange(Player.Instance.GetAutoAttackRange()) > 1)
+            {
+                Pathing.Position = ObjectsManager.NearestEnemy.Position.Extend(ObjectsManager.AllySpawn, Misc.KiteDistance(ObjectsManager.NearestEnemy)).To3D();
+            }
+
             if (Pathing.Position.UnderEnemyTurret() && !Misc.SafeToDive && ObjectsManager.AllySpawn != null)
             {
                 Pathing.Position = Pathing.Position.Extend(ObjectsManager.AllySpawn.Position, 250).To3D();

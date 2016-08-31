@@ -1213,6 +1213,7 @@ namespace GenesisSpellLibrary.Spells
             this.EisDash = true;
             this.RisCC = true;
             this.RDontWaste = true;
+            this.RisTP = true;
         }
     }
 
