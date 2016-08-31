@@ -63,21 +63,7 @@ namespace AramBuddy
                 {
                     File.Create(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\temp123.dat");
                 }
-
-                try
-                {
-                    if ((Base)Activator.CreateInstance(null, "AramBuddy.Plugins.Champions." + Player.Instance.Hero + "." + Player.Instance.Hero).Unwrap() != null)
-                    {
-                        CustomChamp = true;
-                        Logger.Send("Loaded Custom Champion " + Player.Instance.Hero, Logger.LogLevel.Info);
-                    }
-                }
-                catch (Exception)
-                {
-                    CustomChamp = false;
-                    Logger.Send("There Is No Custom Plugin For " + Player.Instance.Hero, Logger.LogLevel.Warn);
-                }
-
+                
                 /*
                 Chat.OnInput += delegate (ChatInputEventArgs msg)
                 {
@@ -184,6 +170,23 @@ namespace AramBuddy
                 SpellsMenu.Add("Ghost", new CheckBox("Use Ghost"));
                 SpellsMenu.Add("Flash", new CheckBox("Use Flash"));
                 SpellsMenu.Add("Cleanse", new CheckBox("Use Cleanse"));
+
+                if (!DisableSpellsCasting)
+                {
+                    try
+                    {
+                        if ((Base)Activator.CreateInstance(null, "AramBuddy.Plugins.Champions." + Player.Instance.Hero + "." + Player.Instance.Hero).Unwrap() != null)
+                        {
+                            CustomChamp = true;
+                            Logger.Send("Loaded Custom Champion " + Player.Instance.Hero, Logger.LogLevel.Info);
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        CustomChamp = false;
+                        Logger.Send("There Is No Custom Plugin For " + Player.Instance.Hero, Logger.LogLevel.Warn);
+                    }
+                }
 
                 // Sends Start / End Msg
                 Chatting.Init();

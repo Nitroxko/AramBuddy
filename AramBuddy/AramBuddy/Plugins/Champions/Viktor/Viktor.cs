@@ -118,7 +118,7 @@ namespace AramBuddy.Plugins.Champions.Viktor
         public override void Active()
         {
             var target = TargetSelector.GetTarget(1250, DamageType.Magical) ?? EntityManager.Heroes.Enemies.OrderBy(e => e.Distance(Game.CursorPos)).FirstOrDefault(e => e.IsKillable());
-            if (IsCastingR && target != null && Core.GameTickCount - LastCommand > 100)
+            if (IsCastingR && target != null && Core.GameTickCount - LastCommand > 75)
             {
                 R.Cast(target);
                 LastCommand = Core.GameTickCount;

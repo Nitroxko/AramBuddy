@@ -13,6 +13,8 @@ namespace AramBuddy.MainCore.Utility
             Obj_AI_Base.OnLevelUp += Obj_AI_BaseOnOnLevelUp;
         }
 
+        private static int i;
+
         private static void LevelSpells()
         {
             int[] LevelSet = { };
@@ -65,6 +67,29 @@ namespace AramBuddy.MainCore.Utility
                 if (rL < level[3])
                 {
                     Player.LevelSpell(SpellSlot.R);
+                }
+            }
+            
+            if (Player.Instance.EvolvePoints > 0)
+            {
+                switch (i)
+                {
+                    case 0:
+                        Player.EvolveSpell(SpellSlot.Q);
+                        i++;
+                        return;
+                    case 1:
+                        Player.EvolveSpell(SpellSlot.W);
+                        i++;
+                        return;
+                    case 2:
+                        Player.EvolveSpell(SpellSlot.E);
+                        i++;
+                        return;
+                    case 3:
+                        Player.EvolveSpell(SpellSlot.R);
+                        i++;
+                        return;
                 }
             }
         }

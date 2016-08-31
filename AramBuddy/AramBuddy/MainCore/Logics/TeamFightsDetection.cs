@@ -13,10 +13,19 @@ namespace AramBuddy.MainCore.Logics
             {
                 var from = sender as AIHeroClient;
                 var target = args.Target as AIHeroClient;
-                if (from != null && target != null && from.Team != target.Team)
+                if (from != null)
                 {
-                    var lastAttack = new Misc.LastAttack(from, target) { Attacker = from, LastAttackSent = Core.GameTickCount, Target = target };
-                    Misc.AutoAttacks.Add(lastAttack);
+                    if (args.Slot == SpellSlot.R)
+                    {
+                        var lastAttack = new Misc.LastAttack(from, null) { Attacker = from, LastAttackSent = Core.GameTickCount, Target = null };
+                        Misc.AutoAttacks.Add(lastAttack);
+                        return;
+                    }
+                    if (target != null && from.Team != target.Team)
+                    {
+                        var lastAttack = new Misc.LastAttack(from, target) { Attacker = from, LastAttackSent = Core.GameTickCount, Target = target };
+                        Misc.AutoAttacks.Add(lastAttack);
+                    }
                 }
             };
 

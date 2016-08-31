@@ -177,7 +177,7 @@ namespace AramBuddy.MainCore.Utility
         {
             get
             {
-                return EntityManager.Heroes.Allies.Count(a => a.IsAttackPlayer() && a.CountAlliesInRange(1250) > 1 && a.IsValidTarget()) >= 2;
+                return EntityManager.Heroes.Allies.Count(a => a.IsAttackPlayer() && a.CountAlliesInRange(1250) > 1 && a.IsValidTarget() && !a.IsMe && Player.Instance.HealthPercent > 20) >= (Player.Instance.IsRanged ? 2 : 1);
             }
         }
 
@@ -235,7 +235,7 @@ namespace AramBuddy.MainCore.Utility
             if (!Player.Instance.IsMelee)
                 extra = target.BoundingRadius;
 
-            return (Player.Instance.GetAutoAttackRange() * (Player.Instance.IsMelee ? 0.2f : 0.65f)) + extra;
+            return (Player.Instance.GetAutoAttackRange() * (Player.Instance.IsMelee ? 0.2f : 0.7f)) + extra;
         }
         
         public static bool Added(this AIHeroClient target)

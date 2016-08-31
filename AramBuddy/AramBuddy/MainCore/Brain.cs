@@ -61,6 +61,9 @@ namespace AramBuddy.MainCore
         /// </summary>
         public static void Decisions()
         {
+            Orbwalker.DisableAttacking = false;
+            Orbwalker.DisableMovement = false;
+
             // Picks best position for the bot.
             if (Core.GameTickCount - LastUpdate > 75)
             {

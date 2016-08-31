@@ -103,7 +103,7 @@ namespace AramBuddy.MainCore.Logics.Casting
                 return;
             }
 
-            foreach (var spell in ModesManager.Spelllist.Where(s => s.IsCC() && s.IsReady() && s.IsInRange(args.End)))
+            foreach (var spell in ModesManager.Spelllist.Where(s => s != null && s.IsCC() && s.IsReady() && s.IsInRange(args.End)))
             {
                 Casting(spell, sender);
             }
@@ -119,7 +119,7 @@ namespace AramBuddy.MainCore.Logics.Casting
                 return;
             }
 
-            foreach (var spell in ModesManager.Spelllist.Where(s => s.IsCC() && s.IsReady() && s.IsInRange(sender)))
+            foreach (var spell in ModesManager.Spelllist.Where(s => s != null && s.IsCC() && s.IsReady() && s.IsInRange(sender)))
             {
                 Casting(spell, sender);
             }

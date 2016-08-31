@@ -215,7 +215,7 @@ namespace AramBuddy.MainCore.Utility
         {
             get
             {
-                return EntityManager.Heroes.Enemies.OrderBy(e => e.Distance(Player.Instance)).ThenByDescending(e => e.CountAlliesInRange(1250)).FirstOrDefault(e => e.IsValidTarget() && !e.IsDead && !e.IsZombie);
+                return EntityManager.Heroes.Enemies.OrderBy(e => e.Distance(Player.Instance)).ThenByDescending(e => e.CountAlliesInRange(1250)).FirstOrDefault(e => e.IsKillable() && e.CountAlliesInRange(SafeValue) > 1 && !e.IsDead && !e.IsZombie);
             }
         }
 

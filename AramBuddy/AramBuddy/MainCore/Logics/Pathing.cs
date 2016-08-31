@@ -496,15 +496,8 @@ namespace AramBuddy.MainCore.Logics
                     return;
                 }
 
-                // If the bot alone uses IssueOrder.
-                if (Orbwalker.DisableMovement)
-                {
-                    Player.IssueOrder(GameObjectOrder.MoveTo, pos);
-                }
-                else
-                {
-                    Orbwalker.OrbwalkTo(pos);
-                }
+                // Issues Movement Commands.
+                Orbwalker.OrbwalkTo(pos);
             }
         }
     }
