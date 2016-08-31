@@ -194,6 +194,16 @@ namespace AramBuddy.MainCore.Utility
         /// <summary>
         ///     Returns true if you can deal damage to the target.
         /// </summary>
+        public static bool IsKillable(this AIHeroClient target)
+        {
+            return !target.HasBuff("kindredrnodeathbuff") && !target.HasUndyingBuff(true) && !target.Buffs.Any(b => b.Name.ToLower().Contains("fioraw")) && !target.HasBuff("JudicatorIntervention") && !target.IsZombie
+                   && !target.HasBuff("ChronoShift") && !target.HasBuff("UndyingRage") && !target.IsInvulnerable && !target.IsZombie && !target.HasBuff("bansheesveil") && !target.IsDead
+                   && !target.IsPhysicalImmune && target.Health > 0 && !target.HasBuffOfType(BuffType.Invulnerability) && !target.HasBuffOfType(BuffType.PhysicalImmunity) && target.IsValidTarget();
+        }
+
+        /// <summary>
+        ///     Returns true if you can deal damage to the target.
+        /// </summary>
         public static bool IsKillable(this Obj_AI_Base target, float range)
         {
             return !target.HasBuff("kindredrnodeathbuff") && !target.Buffs.Any(b => b.Name.ToLower().Contains("fioraw")) && !target.HasBuff("JudicatorIntervention") && !target.IsZombie

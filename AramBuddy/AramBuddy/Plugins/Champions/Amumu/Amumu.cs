@@ -100,7 +100,7 @@ namespace AramBuddy.Plugins.Champions.Amumu
                 Q.Cast(sender, HitChance.Low);
                 return;
             }
-            if (R.IsReady() && AutoMenu.CheckBoxValue("GapR") && (sender.IsKillable(R.Range) || e.End.IsInRange(user, R.Range)))
+            if (R.IsReady() && AutoMenu.CheckBoxValue("GapR") && sender.IsKillable(R.Range))
             {
                 R.Cast();
             }
@@ -233,7 +233,7 @@ namespace AramBuddy.Plugins.Champions.Amumu
 
         private static void RAOE(int HitCount)
         {
-            if (EntityManager.Heroes.Enemies.Count(e => e.IsKillable() && e.PredictPosition().IsInRange(user, R.Range)) >= HitCount && R.IsReady())
+            if (EntityManager.Heroes.Enemies.Count(e => e.IsKillable(R.Range) && e.PredictPosition().IsInRange(user, R.Range)) >= HitCount && R.IsReady())
             {
                 R.Cast();
             }

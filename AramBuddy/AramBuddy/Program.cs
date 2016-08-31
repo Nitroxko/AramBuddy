@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using AramBuddy.MainCore;
@@ -13,6 +14,7 @@ using EloBuddy.SDK.Menu.Values;
 using EloBuddy.SDK.Rendering;
 using SharpDX;
 using static AramBuddy.Config;
+using Color = SharpDX.Color;
 using Version = System.Version;
 
 namespace AramBuddy
@@ -221,10 +223,23 @@ namespace AramBuddy
             }
         }
 
+        private static readonly float textsize = Drawing.Width <= 400 || Drawing.Height <= 400 ? 10F : 40F;
+        private static readonly Text text = new Text("YOUR ORBWALKER IS DISABLED", new Font("Euphemia", textsize, FontStyle.Bold)) { Color = System.Drawing.Color.White, Position = new Vector2(Drawing.Width * 0.3f, Drawing.Height * 0.2f) };
+        private static readonly Text text2 = new Text("THE BOT WILL NOT WORK", new Font("Euphemia", textsize, FontStyle.Bold)) { Color = System.Drawing.Color.White, Position = new Vector2(Drawing.Width * 0.3f, Drawing.Height * 0.25f) };
+        private static readonly Text text3 = new Text("MAKE SURE TO UNTICK", new Font("Euphemia", textsize, FontStyle.Bold)) { Color = System.Drawing.Color.White, Position = new Vector2(Drawing.Width * 0.3f, Drawing.Height * 0.3f) };
+        private static readonly Text text4 = new Text("DISABLE MOVING TO MOUSE", new Font("Euphemia", textsize, FontStyle.Bold)) { Color = System.Drawing.Color.White, Position = new Vector2(Drawing.Width * 0.3f, Drawing.Height * 0.35f) };
         private static void Drawing_OnEndScene(EventArgs args)
         {
             try
             {
+                if (Orbwalker.DisableMovement)
+                {
+                    text.Draw();
+                    text2.Draw();
+                    text3.Draw();
+                    text4.Draw();
+                }
+
                 if (!EnableDebug) return;
                 var AllyTeamTotal = " | AllyTeamTotal: " + (int)Misc.TeamTotal(Player.Instance.PredictPosition());
                 var EnemyTeamTotal = " | EnemyTeamTotal: " + (int)Misc.TeamTotal(Player.Instance.PredictPosition(), true);

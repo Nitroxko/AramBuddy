@@ -31,6 +31,34 @@ namespace AramBuddy.AutoShop.Sequences
                 // Check if we've reached the end of the build
                 if (build.BuildData.Length < GetIndex() + 1)
                 {
+                    const ItemId Elixir_of_Wrath = ItemId.Elixir_of_Wrath;
+                    const ItemId Elixir_of_Iron = ItemId.Elixir_of_Iron;
+                    const ItemId Elixir_of_Sorcery = ItemId.Elixir_of_Sorcery;
+
+                    // Buy Elixir
+                    if (Player.Instance.Gold >= 500 && !(Player.HasBuff("ElixirOfIron") || Player.HasBuff("ElixirOfSorcery") || Player.HasBuff("ElixirOfWrath")))
+                    {
+                        var itembuy = Elixir_of_Iron;
+                        if (Build.BuildName().Contains("AD"))
+                        {
+                            itembuy = Elixir_of_Wrath;
+                        }
+
+                        if (Build.BuildName().Contains("AP"))
+                        {
+                            itembuy = Elixir_of_Sorcery;
+                        }
+
+                        // Buy the actual item from the shop
+                        Shop.BuyItem(itembuy);
+
+                        // Success
+                        Events.OnOnBuyItem();
+
+                        // Notify the user that the item has been bought and of the value of the item
+                        Logger.Send("Item bought: " + itembuy + " - Item Value: " + new Item(itembuy).ItemInfo.Gold.Total, Logger.LogLevel.Info);
+                    }
+
                     // Notify the user that the build is finished
                     Logger.Send("Build is finished - Cannot buy any more items!", Logger.LogLevel.Info);
 

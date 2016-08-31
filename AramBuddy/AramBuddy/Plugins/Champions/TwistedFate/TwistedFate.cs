@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using AramBuddy.MainCore.Logics;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Enumerations;
@@ -25,7 +26,7 @@ namespace AramBuddy.Plugins.Champions.TwistedFate
             KillStealMenu = MenuIni.AddSubMenu("KillSteal");
 
             Q = new Spell.Skillshot(SpellSlot.Q, 1400, SkillShotType.Linear, 0, 1000, 40) { AllowedCollisionCount = int.MaxValue };
-            W = new Spell.Active(SpellSlot.W, 750);
+            W = new Spell.Active(SpellSlot.W, 800);
             SpellList.Add(Q);
             SpellList.Add(W);
 
@@ -58,23 +59,25 @@ namespace AramBuddy.Plugins.Champions.TwistedFate
 
         private static void SetectCard(Obj_AI_Base target)
         {
+            var card = "Blue";
             if (user.CountEnemiesInRange(1000) > 1 && user.ManaPercent > 10)
             {
-                StartSelecting("Gold");
+                card = "Gold";
             }
-            if (target.CountEnemiesInRange(250) > 1 && user.ManaPercent > 10 && user.HealthPercent > 40)
+            if (target.CountEnemiesInRange(300) > 1 && user.ManaPercent > 10 && user.HealthPercent > 40)
             {
-                StartSelecting("Red");
+                card = "Red";
             }
             if (user.CountEnemiesInRange(1000) <= 1 && user.ManaPercent < 30 && user.HealthPercent > 50)
             {
-                StartSelecting("Blue");
+                card = "Blue";
             }
+            StartSelecting(card);
         }
 
         private static void StartSelecting(string str)
         {
-            if (W.IsReady() && !Selecting && Core.GameTickCount - lastcasted > 500)
+            if (W.IsReady() && !Selecting && Core.GameTickCount - lastcasted > 300)
             {
                 W.Cast();
                 lastcasted = Core.GameTickCount;
@@ -99,6 +102,14 @@ namespace AramBuddy.Plugins.Champions.TwistedFate
 
         public override void Active()
         {
+            if (Selecting && ModesManager.None)
+            {
+                var target = TargetSelector.GetTarget(1000, DamageType.Magical);
+                if (target != null)
+                {
+                    SetectCard(target);
+                }
+            }
         }
 
         public override void Combo()
@@ -127,7 +138,7 @@ namespace AramBuddy.Plugins.Champions.TwistedFate
             {
                 Q.Cast(target, HitChance.Low);
             }
-            if (HarassMenu.CheckBoxValue(W.Slot) && HarassMenu.CompareSlider(W.Slot + "mana", user.ManaPercent) && target.IsKillable(W.Range))
+            if (HarassMenu.CheckBoxValue(W.Slot) && target.IsKillable(W.Range))
             {
                 SetectCard(target);
             }
@@ -141,7 +152,7 @@ namespace AramBuddy.Plugins.Champions.TwistedFate
                 {
                     Q.Cast(target, HitChance.Low);
                 }
-                if (LaneClearMenu.CheckBoxValue(W.Slot) && LaneClearMenu.CompareSlider(W.Slot + "mana", user.ManaPercent) && target.IsKillable(W.Range))
+                if (LaneClearMenu.CheckBoxValue(W.Slot) && target.IsKillable(W.Range))
                 {
                     SetectCard(target);
                 }

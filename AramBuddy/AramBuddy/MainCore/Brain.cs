@@ -61,9 +61,6 @@ namespace AramBuddy.MainCore
         /// </summary>
         public static void Decisions()
         {
-            Orbwalker.DisableAttacking = false;
-            Orbwalker.DisableMovement = false;
-
             // Picks best position for the bot.
             if (Core.GameTickCount - LastUpdate > 75)
             {
@@ -81,7 +78,7 @@ namespace AramBuddy.MainCore
             // Ticks for the modes manager.
             ModesManager.OnTick();
 
-            if (!(Program.Moveto.Contains("Enemy") || Program.Moveto.Contains("AllySpawn")) && !(ModesManager.Flee || ModesManager.None) && Player.Instance.IsRanged && ObjectsManager.NearestEnemy != null && Player.Instance.CountEnemiesInRange(Player.Instance.GetAutoAttackRange()) > 1)
+            if (!(Program.Moveto.Contains("Enemy") || Program.Moveto.Contains("AllySpawn")) && !(ModesManager.Flee || ModesManager.None) && Player.Instance.IsRanged && ObjectsManager.NearestEnemy != null && Pathing.Position.CountEnemiesInRange(Player.Instance.GetAutoAttackRange()) > 1)
             {
                 Pathing.Position = ObjectsManager.NearestEnemy.Position.Extend(ObjectsManager.AllySpawn, Misc.KiteDistance(ObjectsManager.NearestEnemy)).To3D();
             }

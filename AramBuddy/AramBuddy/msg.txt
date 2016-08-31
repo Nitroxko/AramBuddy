@@ -1,1 +1,1 @@
-Fixed Teleporting !
+Added Elixir Shopping !

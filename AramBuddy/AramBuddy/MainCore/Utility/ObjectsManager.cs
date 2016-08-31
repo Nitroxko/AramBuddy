@@ -202,7 +202,7 @@ namespace AramBuddy.MainCore.Utility
         {
             get
             {
-                var axe = ObjectManager.Get<GameObject>().Where(a => a != null && a.IsValid && 1000 > a.Distance(Player.Instance) / Player.Instance.MoveSpeed * 1000 && a.Name.Contains("Draven_Base_Q_reticle"))
+                var axe = ObjectManager.Get<GameObject>().Where(a => a != null && !a.IsDead && a.IsValid && 1000 > a.Distance(Player.Instance) / Player.Instance.MoveSpeed * 1000 && a.Name.Contains("Draven_Base_Q_reticle"))
                     .OrderBy(a => Misc.TeamTotal(a.Position)).FirstOrDefault(a => a.CountEnemiesInRange(SafeValue) <= a.CountAlliesInRange(SafeValue));
                 return Player.Instance.Hero == Champion.Draven ? axe : null;
             }
