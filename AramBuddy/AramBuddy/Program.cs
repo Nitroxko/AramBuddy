@@ -26,6 +26,7 @@ namespace AramBuddy
         public static bool CustomChamp;
         public static bool Loaded;
         public static float Timer;
+        private static float TimeToStart;
         public static string Moveto;
 
         public static Menu MenuIni, SpellsMenu;
@@ -82,6 +83,7 @@ namespace AramBuddy
                 };*/
 
                 Timer = Game.Time;
+                TimeToStart = new Random().Next(7000 + Game.Ping, 17500 + Game.Ping);
                 Game.OnTick += Game_OnTick;
                 Events.OnGameEnd += Events_OnGameEnd;
                 Player.OnPostIssueOrder += Player_OnPostIssueOrder;
@@ -128,6 +130,7 @@ namespace AramBuddy
                 }
 
                 MenuIni = MainMenu.AddMenu("AramBuddy", "AramBuddy");
+                var build = MenuIni.AddSubMenu("Current Build");
                 SpellsMenu = MenuIni.AddSubMenu("Spells");
                 MenuIni.AddGroupLabel("AramBuddy Version: " + version);
                 MenuIni.AddGroupLabel("AramBuddy Settings");
@@ -172,6 +175,13 @@ namespace AramBuddy
                 SpellsMenu.Add("Ghost", new CheckBox("Use Ghost"));
                 SpellsMenu.Add("Flash", new CheckBox("Use Flash"));
                 SpellsMenu.Add("Cleanse", new CheckBox("Use Cleanse"));
+
+                var i = 0;
+                foreach (var item in AutoShop.Setup.CurrentChampionBuild.BuildData)
+                {
+                    i++;
+                    build.AddLabel(i + " - " + item);
+                }
 
                 if (!DisableSpellsCasting)
                 {
@@ -225,19 +235,24 @@ namespace AramBuddy
 
         private static readonly float textsize = Drawing.Width <= 400 || Drawing.Height <= 400 ? 10F : 40F;
         private static readonly Text text = new Text("YOUR ORBWALKER IS DISABLED", new Font("Euphemia", textsize, FontStyle.Bold)) { Color = System.Drawing.Color.White, Position = new Vector2(Drawing.Width * 0.3f, Drawing.Height * 0.2f) };
-        private static readonly Text text2 = new Text("THE BOT WILL NOT WORK", new Font("Euphemia", textsize, FontStyle.Bold)) { Color = System.Drawing.Color.White, Position = new Vector2(Drawing.Width * 0.3f, Drawing.Height * 0.25f) };
-        private static readonly Text text3 = new Text("MAKE SURE TO UNTICK", new Font("Euphemia", textsize, FontStyle.Bold)) { Color = System.Drawing.Color.White, Position = new Vector2(Drawing.Width * 0.3f, Drawing.Height * 0.3f) };
-        private static readonly Text text4 = new Text("DISABLE MOVING TO MOUSE", new Font("Euphemia", textsize, FontStyle.Bold)) { Color = System.Drawing.Color.White, Position = new Vector2(Drawing.Width * 0.3f, Drawing.Height * 0.35f) };
         private static void Drawing_OnEndScene(EventArgs args)
         {
             try
             {
                 if (Orbwalker.DisableMovement)
                 {
+                    text.TextValue = "YOUR ORBWALKER IS DISABLED";
+                    text.Position = new Vector2(Drawing.Width * 0.3f, Drawing.Height * 0.2f);
                     text.Draw();
-                    text2.Draw();
-                    text3.Draw();
-                    text4.Draw();
+                    text.TextValue = "THE BOT WILL NOT WORK";
+                    text.Position = new Vector2(Drawing.Width * 0.3f, Drawing.Height * 0.25f);
+                    text.Draw();
+                    text.TextValue = "MAKE SURE TO UNTICK";
+                    text.Position = new Vector2(Drawing.Width * 0.3f, Drawing.Height * 0.3f);
+                    text.Draw();
+                    text.TextValue = "DISABLE MOVING TO MOUSE";
+                    text.Position = new Vector2(Drawing.Width * 0.3f, Drawing.Height * 0.35f);
+                    text.Draw();
                 }
 
                 if (!EnableDebug) return;
@@ -303,7 +318,7 @@ namespace AramBuddy
             {
                 if (!Loaded)
                 {
-                    if (Game.Time - Timer >= 10)
+                    if ((Game.Time - Timer) * 1000 >= TimeToStart)
                     {
                         Loaded = true;
 
