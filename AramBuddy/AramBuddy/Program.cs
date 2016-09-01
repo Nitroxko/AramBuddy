@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using AramBuddy.MainCore;
@@ -31,7 +32,7 @@ namespace AramBuddy
 
         public static Menu MenuIni, SpellsMenu;
 
-        private static void Main(string[] args)
+        private static void Main()
         {
             if (File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\DisableTexture.dat"))
             {
@@ -83,7 +84,7 @@ namespace AramBuddy
                 };*/
 
                 Timer = Game.Time;
-                TimeToStart = new Random().Next(7000 + Game.Ping, 17500 + Game.Ping);
+                TimeToStart = new Random().Next(10000 + Game.Ping, 20000 + Game.Ping);
                 Game.OnTick += Game_OnTick;
                 Events.OnGameEnd += Events_OnGameEnd;
                 Player.OnPostIssueOrder += Player_OnPostIssueOrder;
@@ -278,7 +279,7 @@ namespace AramBuddy
                     Game.CursorPos.WorldToScreen().X + 50,
                     Game.CursorPos.WorldToScreen().Y,
                     System.Drawing.Color.Goldenrod,
-                    (Misc.TeamTotal(Game.CursorPos) - Misc.TeamTotal(Game.CursorPos, true)).ToString(),
+                    (Misc.TeamTotal(Game.CursorPos) - Misc.TeamTotal(Game.CursorPos, true)).ToString(CultureInfo.CurrentCulture),
                     5);
 
                 foreach (var hr in ObjectsManager.HealthRelics.Where(h => h.IsValid && !h.IsDead))

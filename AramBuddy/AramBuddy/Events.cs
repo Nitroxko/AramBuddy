@@ -44,10 +44,10 @@ namespace AramBuddy
             }
             public InComingDamageEventArgs(Obj_AI_Base sender, AIHeroClient target, float Damage, Type type)
             {
-                Sender = sender;
-                Target = target;
-                InComingDamage = Damage;
-                DamageType = type;
+                this.Sender = sender;
+                this.Target = target;
+                this.InComingDamage = Damage;
+                this.DamageType = type;
             }
         }
 
@@ -143,7 +143,7 @@ namespace AramBuddy
             #region OnGameStart
 
             // When the player object is created
-            Loading.OnLoadingComplete += delegate(EventArgs args)
+            Loading.OnLoadingComplete += delegate
                 {
                     if (Player.Instance.IsInShopRange())
                     {

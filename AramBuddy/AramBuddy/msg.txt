@@ -1,1 +1,1 @@
-Added Elixir Shopping !
+Small improvements !
