@@ -74,7 +74,7 @@ namespace AramBuddy.AutoShop.Sequences
                 var currentprice = theitem.ItemInfo.Gold.Base + ia;
 
                 // Check if we can buy the item
-                if ((item.Value != null) && CanShop && (item.Key != null) && (item.Key != ItemId.Unknown) && item.Value.ValidForPlayer && item.Value.InStore && item.Value.Gold.Purchasable
+                if ((item.Value != null) && CanShop && (item.Key != ItemId.Unknown) && item.Value.ValidForPlayer && item.Value.InStore && item.Value.Gold.Purchasable
                     && item.Value.AvailableForMap && (Player.Instance.Gold >= currentprice))
                 {
                     // Buy the actual item from the shop

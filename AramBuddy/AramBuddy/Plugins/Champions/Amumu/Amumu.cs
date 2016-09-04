@@ -45,13 +45,13 @@ namespace AramBuddy.Plugins.Champions.Amumu
                 }
                 KillStealMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
             }
-            AutoMenu.CreateSlider("RAOE", "R AOE hit cunt {0}", 3, 1, 5);
+            AutoMenu.CreateSlider("RAOE", "R AOE hit count {0}", 3, 1, 5);
             AutoMenu.CreateCheckBox("GapQ", "Anti-GapCloser Q");
             AutoMenu.CreateCheckBox("IntQ", "Interrupter Q");
             AutoMenu.CreateCheckBox("GapR", "Anti-GapCloser R");
             AutoMenu.CreateCheckBox("IntR", "Interrupter R");
 
-            ComboMenu.CreateSlider("RAOE", "R AOE hit cunt {0}", 3, 1, 5);
+            ComboMenu.CreateSlider("RAOE", "R AOE hit count {0}", 3, 1, 5);
 
             Gapcloser.OnGapcloser += Gapcloser_OnGapcloser;
             Interrupter.OnInterruptableSpell += Interrupter_OnInterruptableSpell;
