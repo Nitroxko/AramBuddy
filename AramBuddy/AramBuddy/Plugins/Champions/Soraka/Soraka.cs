@@ -38,6 +38,16 @@ namespace AramBuddy.Plugins.Champions.Soraka
             Interrupter.OnInterruptableSpell += Interrupter_OnInterruptableSpell;
             Gapcloser.OnGapcloser += Gapcloser_OnGapcloser;
             Dash.OnDash += Dash_OnDash;
+            Events.OnIncomingDamage += Events_OnIncomingDamage;
+        }
+
+        private static void Events_OnIncomingDamage(Events.InComingDamageEventArgs args)
+        {
+            if (args.Target.IsAlly &&
+                (args.InComingDamage >= args.Target.Health && AutoMenu.CheckBoxValue("AutoR") && R.IsReady()))
+            {
+                R.Cast();
+            }
         }
 
         private static void Dash_OnDash(Obj_AI_Base sender, Dash.DashEventArgs e)
@@ -88,22 +98,8 @@ namespace AramBuddy.Plugins.Champions.Soraka
 
         public override void Active()
         {
-            var teamHp = new float();
-            foreach (
-                // ReSharper disable once UnusedVariable
-                var ally in
-                    EntityManager.Heroes.Allies.Where(
-                        a => a.HealthPercent < 15 && a.CountEnemiesInRange(600) >= 1 && a.IsKillable())
-                        .Where(ally => AutoMenu.CheckBoxValue("AutoR")))
-            {
-                R.Cast();
-            }
+            var teamHp = EntityManager.Heroes.Allies.Where(a => a.IsKillable()).Sum(a => a.HealthPercent)/5;
 
-            foreach (var ally in EntityManager.Heroes.Allies.Where(a => a.IsKillable()))
-            {
-                teamHp += ally.HealthPercent;
-                teamHp = teamHp/5;
-            }
             if (AutoMenu.CheckBoxValue("AutoRteam") && teamHp <= AutoMenu.SliderValue("AutoRteamHp"))
             {
                 R.Cast();
@@ -112,7 +108,7 @@ namespace AramBuddy.Plugins.Champions.Soraka
             foreach (
                 var ally in
                     EntityManager.Heroes.Allies.Where(
-                        a => a.IsKillable(W.Range) && a.HealthPercent < 40 && user.HealthPercent >= 40)
+                        a => a.IsKillable(W.Range) && a.HealthPercent < 50 && user.HealthPercent >= 40)
                         .Where(ally => AutoMenu.CheckBoxValue("AutoHeal")))
             {
                 W.Cast(ally);
