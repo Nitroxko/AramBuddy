@@ -10,11 +10,6 @@ namespace AramBuddy.Plugins.Champions.Annie
 {
     internal class Annie : Base
     {
-        private static Spell.Targeted Q { get; }
-        private static Spell.Skillshot W { get; }
-        private static Spell.Active E { get; }
-        private static Spell.Skillshot R { get; }
-
         static Annie()
         {
             MenuIni = MainMenu.AddMenu(MenuName, MenuName);
@@ -23,24 +18,6 @@ namespace AramBuddy.Plugins.Champions.Annie
             HarassMenu = MenuIni.AddSubMenu("Harass");
             LaneClearMenu = MenuIni.AddSubMenu("LaneClear");
             KillStealMenu = MenuIni.AddSubMenu("KillSteal");
-
-            Q = new Spell.Targeted(SpellSlot.Q, 625);
-            W = new Spell.Skillshot(SpellSlot.W, 550, SkillShotType.Cone, 300, int.MaxValue, 80);
-            {
-                W.AllowedCollisionCount = int.MaxValue;
-                W.ConeAngleDegrees = 45;
-                W.MinimumHitChance = HitChance.Medium;
-            }
-            E = new Spell.Active(SpellSlot.E);
-            R = new Spell.Skillshot(SpellSlot.R, 625, SkillShotType.Circular, 250, int.MaxValue, 180);
-            {
-                R.AllowedCollisionCount = int.MaxValue;
-                R.MinimumHitChance = HitChance.Medium;
-            }
-            SpellList.Add(Q);
-            SpellList.Add(W);
-            SpellList.Add(E);
-            SpellList.Add(R);
 
             foreach (var spell in SpellList)
             {
@@ -148,7 +125,7 @@ namespace AramBuddy.Plugins.Champions.Annie
 
         public override void Active()
         {
-            R.CastIfItWillHit(ComboMenu.SliderValue("RAOE"));
+            R.SetSkillshot().CastAOE(ComboMenu.SliderValue("RAOE"));
         }
 
         public override void Combo()
@@ -173,7 +150,7 @@ namespace AramBuddy.Plugins.Champions.Annie
 
             if (!ComboMenu.CheckBoxValue(SpellSlot.R) || !R.IsReady() || !target.IsKillable(R.Range)) return;
 
-            if (target.CountEnemiesInRange(R.Width) >= ComboMenu.SliderValue("RAOE"))
+            if (target.CountEnemiesInRange(R.SetSkillshot().Width) >= ComboMenu.SliderValue("RAOE"))
             {
                 R.Cast(target);
             }
@@ -201,15 +178,15 @@ namespace AramBuddy.Plugins.Champions.Annie
         {
             foreach (var target in EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => m != null && m.IsValidTarget()))
             {
+                var lineFarmLoc = EntityManager.MinionsAndMonsters.GetLineFarmLocation(EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => m.IsKillable(W.Range)), W.SetSkillshot().Width, (int)W.Range);
                 if (Q.IsReady() && target.IsKillable(Q.Range) && LaneClearMenu.CheckBoxValue(SpellSlot.Q) && LaneClearMenu.CompareSlider(Q.Slot + "mana", user.ManaPercent) 
                     && Q.WillKill(target))
                 {
                     Q.Cast(target);
                 }
-                if (W.IsReady() && target.IsKillable(W.Range) && LaneClearMenu.CheckBoxValue(SpellSlot.W) && LaneClearMenu.CompareSlider(W.Slot + "mana", user.ManaPercent) 
-                    && target.CountEnemyMinionsInRange(W.Range - user.Distance(target)) >= 3)
+                if (W.IsReady() && lineFarmLoc.HitNumber > 1 && LaneClearMenu.CheckBoxValue(SpellSlot.W) && LaneClearMenu.CompareSlider(W.Slot + "mana", user.ManaPercent))
                 {
-                    W.Cast(target);
+                    W.Cast(lineFarmLoc.CastPosition);
                 }
             }
         }
