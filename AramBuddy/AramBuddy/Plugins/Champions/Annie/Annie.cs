@@ -178,15 +178,15 @@ namespace AramBuddy.Plugins.Champions.Annie
         {
             foreach (var target in EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => m != null && m.IsValidTarget()))
             {
+                var lineFarmLoc = EntityManager.MinionsAndMonsters.GetLineFarmLocation(EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => m.IsKillable(W.Range)), W.SetSkillshot().Width, (int)W.Range);
                 if (Q.IsReady() && target.IsKillable(Q.Range) && LaneClearMenu.CheckBoxValue(SpellSlot.Q) && LaneClearMenu.CompareSlider(Q.Slot + "mana", user.ManaPercent) 
                     && Q.WillKill(target))
                 {
                     Q.Cast(target);
                 }
-                if (W.IsReady() && target.IsKillable(W.Range) && LaneClearMenu.CheckBoxValue(SpellSlot.W) && LaneClearMenu.CompareSlider(W.Slot + "mana", user.ManaPercent) 
-                    && target.CountEnemyMinionsInRange(W.Range - user.Distance(target)) >= 3)
+                if (W.IsReady() && lineFarmLoc.HitNumber > 1 && LaneClearMenu.CheckBoxValue(SpellSlot.W) && LaneClearMenu.CompareSlider(W.Slot + "mana", user.ManaPercent))
                 {
-                    W.Cast(target);
+                    W.Cast(lineFarmLoc.CastPosition);
                 }
             }
         }
