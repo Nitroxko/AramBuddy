@@ -86,6 +86,7 @@
     <Compile Include="Plugins\Champions\Lulu\Lulu.cs" />
     <Compile Include="Plugins\Champions\Lux\Lux.cs" />
     <Compile Include="Plugins\Champions\Orianna\Orianna.cs" />
+    <Compile Include="Plugins\Champions\Soraka\Soraka.cs" />
     <Compile Include="Plugins\Champions\Syndra\Syndra.cs" />
     <Compile Include="Plugins\Champions\Caitlyn\Caitlyn.cs" />
     <Compile Include="Plugins\Champions\Taliyah\Taliyah.cs" />
