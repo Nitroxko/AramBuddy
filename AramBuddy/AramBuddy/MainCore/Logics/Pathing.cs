@@ -434,7 +434,7 @@ namespace AramBuddy.MainCore.Logics
             }
 
             // if NearestEnemyMinion exsists moves to NearestEnemyMinion.
-            if (ObjectsManager.NearestEnemyMinion != null)
+            if (ObjectsManager.NearestEnemyMinion != null && Player.Instance.HealthPercent > 20 && !ModesManager.Flee)
             {
                 Program.Moveto = "NearestEnemyMinion";
                 Position = ObjectsManager.NearestEnemyMinion.PredictPosition().Extend(ObjectsManager.AllySpawn.Position.Random(), KiteDistance(ObjectsManager.NearestEnemyMinion)).To3D();
