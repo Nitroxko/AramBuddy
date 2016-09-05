@@ -10,11 +10,6 @@ namespace AramBuddy.Plugins.Champions.Annie
 {
     internal class Annie : Base
     {
-        private static Spell.Targeted Q { get; }
-        private static Spell.Skillshot W { get; }
-        private static Spell.Active E { get; }
-        private static Spell.Skillshot R { get; }
-
         static Annie()
         {
             MenuIni = MainMenu.AddMenu(MenuName, MenuName);
@@ -23,24 +18,6 @@ namespace AramBuddy.Plugins.Champions.Annie
             HarassMenu = MenuIni.AddSubMenu("Harass");
             LaneClearMenu = MenuIni.AddSubMenu("LaneClear");
             KillStealMenu = MenuIni.AddSubMenu("KillSteal");
-
-            Q = new Spell.Targeted(SpellSlot.Q, 625);
-            W = new Spell.Skillshot(SpellSlot.W, 550, SkillShotType.Cone, 300, int.MaxValue, 80);
-            {
-                W.AllowedCollisionCount = int.MaxValue;
-                W.ConeAngleDegrees = 45;
-                W.MinimumHitChance = HitChance.Medium;
-            }
-            E = new Spell.Active(SpellSlot.E);
-            R = new Spell.Skillshot(SpellSlot.R, 625, SkillShotType.Circular, 250, int.MaxValue, 180);
-            {
-                R.AllowedCollisionCount = int.MaxValue;
-                R.MinimumHitChance = HitChance.Medium;
-            }
-            SpellList.Add(Q);
-            SpellList.Add(W);
-            SpellList.Add(E);
-            SpellList.Add(R);
 
             foreach (var spell in SpellList)
             {
@@ -148,7 +125,7 @@ namespace AramBuddy.Plugins.Champions.Annie
 
         public override void Active()
         {
-            R.CastIfItWillHit(ComboMenu.SliderValue("RAOE"));
+            R.SetSkillshot().CastAOE(ComboMenu.SliderValue("RAOE"));
         }
 
         public override void Combo()
@@ -173,7 +150,7 @@ namespace AramBuddy.Plugins.Champions.Annie
 
             if (!ComboMenu.CheckBoxValue(SpellSlot.R) || !R.IsReady() || !target.IsKillable(R.Range)) return;
 
-            if (target.CountEnemiesInRange(R.Width) >= ComboMenu.SliderValue("RAOE"))
+            if (target.CountEnemiesInRange(R.SetSkillshot().Width) >= ComboMenu.SliderValue("RAOE"))
             {
                 R.Cast(target);
             }
