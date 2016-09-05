@@ -12,12 +12,7 @@ namespace AramBuddy.Plugins.Champions.Orianna
     internal class Orianna : Base
     {
         private static Obj_AI_Base OriannaBall;
-
-        private static Spell.Skillshot Q { get; }
-        private static Spell.Active W { get; }
-        private static Spell.Targeted E { get; }
-        private static Spell.Active R { get; }
-
+        
         static Orianna()
         {
             MenuIni = MainMenu.AddMenu(MenuName, MenuName);
@@ -26,14 +21,7 @@ namespace AramBuddy.Plugins.Champions.Orianna
             HarassMenu = MenuIni.AddSubMenu("Harass");
             LaneClearMenu = MenuIni.AddSubMenu("LaneClear");
             KillStealMenu = MenuIni.AddSubMenu("KillSteal");
-
-            Q = new Spell.Skillshot(SpellSlot.Q, 825, SkillShotType.Linear, 250, 1000, 60);
-            W = new Spell.Active(SpellSlot.W, 250);
-            E = new Spell.Targeted(SpellSlot.E, 1100);
-            R = new Spell.Active(SpellSlot.R, 325);
-            SpellList.Add(Q);
-            SpellList.Add(W);
-
+            
             foreach (var spell in SpellList)
             {
                 ComboMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);

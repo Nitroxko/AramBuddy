@@ -11,11 +11,6 @@ namespace AramBuddy.Plugins.Champions.Garen
 {
     internal class Garen : Base
     {
-        private static Spell.Active Q { get; }
-        private static Spell.Active W { get; }
-        private static Spell.Active E { get; }
-        private static Spell.Targeted R { get; }
-
         static Garen()
         {
             MenuIni = MainMenu.AddMenu(MenuName, MenuName);
@@ -24,17 +19,7 @@ namespace AramBuddy.Plugins.Champions.Garen
             HarassMenu = MenuIni.AddSubMenu("Harass");
             LaneClearMenu = MenuIni.AddSubMenu("LaneClear");
             KillStealMenu = MenuIni.AddSubMenu("KillSteal");
-
-            Q = new Spell.Active(SpellSlot.Q);
-            W = new Spell.Active(SpellSlot.W);
-            E = new Spell.Active(SpellSlot.E, 300);
-            R = new Spell.Targeted(SpellSlot.R, 400);
-
-            SpellList.Add(Q);
-            SpellList.Add(W);
-            SpellList.Add(E);
-            SpellList.Add(R);
-
+            
             AutoMenu.CreateCheckBox("Q", "Flee Q");
             AutoMenu.CreateCheckBox("GapW", "Anti-GapCloser W");
             AutoMenu.CreateCheckBox("IntQ", "Interrupter Q");

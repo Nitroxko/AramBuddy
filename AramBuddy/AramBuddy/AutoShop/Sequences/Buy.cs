@@ -19,6 +19,16 @@ namespace AramBuddy.AutoShop.Sequences
         public static bool CanShop;
 
         /// <summary>
+        ///     Returns Next Item Name.
+        /// </summary>
+        public static string NextItem;
+
+        /// <summary>
+        ///     Returns Next Item Price.
+        /// </summary>
+        public static int NextItemValue;
+
+        /// <summary>
         ///     Attempts to buy the next item, and continues to buy next items until
         ///     it is no longer allowed to do so.
         /// </summary>
@@ -57,6 +67,9 @@ namespace AramBuddy.AutoShop.Sequences
 
                         // Notify the user that the item has been bought and of the value of the item
                         Logger.Send("Item bought: " + itembuy + " - Item Value: " + new Item(itembuy).ItemInfo.Gold.Total, Logger.LogLevel.Info);
+
+                        NextItem = new Item(itembuy).ItemInfo.Name;
+                        NextItemValue = new Item(itembuy).ItemInfo.Gold.Total;
                     }
 
                     // Notify the user that the build is finished
@@ -72,6 +85,8 @@ namespace AramBuddy.AutoShop.Sequences
                 var theitem = new Item(item.Key);
                 var ia = theitem.GetComponents().Where(a => !a.IsOwned(Player.Instance)).Sum(i => i.ItemInfo.Gold.Total);
                 var currentprice = theitem.ItemInfo.Gold.Base + ia;
+                NextItem = theitem.ItemInfo.Name;
+                NextItemValue = currentprice;
 
                 // Check if we can buy the item
                 if ((item.Value != null) && CanShop && (item.Key != ItemId.Unknown) && item.Value.ValidForPlayer && item.Value.InStore && item.Value.Gold.Purchasable
@@ -180,7 +195,7 @@ namespace AramBuddy.AutoShop.Sequences
         ///     Retreives the index from the index file as an integer
         /// </summary>
         /// <returns>The integer stored in the index file.</returns>
-        private static int GetIndex()
+        internal static int GetIndex()
         {
             try
             {

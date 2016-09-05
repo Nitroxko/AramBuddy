@@ -70,27 +70,11 @@ namespace AramBuddy.MainCore.Utility
         }
 
         /// <summary>
-        ///     Zombie heros list.
-        /// </summary>
-        public static List<Champion> ZombieHeros = new List<Champion>
-        {
-            Champion.KogMaw, Champion.Sion
-        };
-
-        /// <summary>
-        ///     Returns true if the hero Has a Zombie form.
-        /// </summary>
-        public static bool IsZombie(this AIHeroClient hero)
-        {
-            return ZombieHeros.Contains(hero.Hero) && hero.IsZombie;
-        }
-
-        /// <summary>
         ///     Cache the Damages to prevent lags.
         /// </summary>
         private static float EnemyTeamDamage;
         private static float AllyTeamDamage;
-        
+
         /// <summary>
         ///     Returns Spells Damage for the Whole Team.
         /// </summary>
@@ -119,6 +103,22 @@ namespace AramBuddy.MainCore.Utility
         }
 
         /// <summary>
+        ///     Zombie heros list.
+        /// </summary>
+        public static List<Champion> ZombieHeros = new List<Champion>
+        {
+            Champion.KogMaw, Champion.Sion
+        };
+
+        /// <summary>
+        ///     Returns true if the hero Has a Zombie form.
+        /// </summary>
+        public static bool IsZombie(this AIHeroClient hero)
+        {
+            return ZombieHeros.Contains(hero.Hero) && hero.IsZombie;
+        }
+        
+        /// <summary>
         ///     Returns true if it's safe to dive.
         /// </summary>
         public static bool SafeToDive
@@ -129,13 +129,13 @@ namespace AramBuddy.MainCore.Utility
                        && (ObjectsManager.EnemyTurret.CountMinions() > 2 || ObjectsManager.EnemyTurret.CountAlliesInRange(825) > 1 || ObjectsManager.EnemyTurret.IsAttackPlayer() && Core.GameTickCount - ObjectsManager.EnemyTurret.LastPlayerAttack() < 1000);
             }
         }
-
+        
         /// <summary>
         ///     Returns true if Obj_AI_Base is UnderEnemyTurret.
         /// </summary>
         public static bool UnderEnemyTurret(this Obj_AI_Base target)
         {
-            return EntityManager.Turrets.AllTurrets.Any(t => !t.IsDead && t.Team != target.Team && t.IsValidTarget() && t.IsInRange(target, 1400 + (target.BoundingRadius * 2)));
+            return EntityManager.Turrets.AllTurrets.Any(t => !t.IsDead && t.Team != target.Team && t.IsValidTarget() && t.IsInRange(target, t.GetAutoAttackRange(target) + (target.BoundingRadius * 2)));
         }
 
         /// <summary>
@@ -143,7 +143,7 @@ namespace AramBuddy.MainCore.Utility
         /// </summary>
         public static bool UnderEnemyTurret(this Vector3 pos)
         {
-            return EntityManager.Turrets.Enemies.Any(t => !t.IsDead && t.IsValidTarget() && t.IsInRange(pos, 1400 + (Player.Instance.BoundingRadius * 2)));
+            return EntityManager.Turrets.Enemies.Any(t => !t.IsDead && t.IsValidTarget() && t.IsInRange(pos, t.GetAutoAttackRange(Player.Instance) + (Player.Instance.BoundingRadius * 2)));
         }
 
         /// <summary>
@@ -177,7 +177,7 @@ namespace AramBuddy.MainCore.Utility
         {
             get
             {
-                return EntityManager.Heroes.Allies.Count(a => a.IsAttackPlayer() && a.CountAlliesInRange(1250) > 1 && a.IsValidTarget() && !a.IsMe && Player.Instance.HealthPercent > 20) >= (Player.Instance.IsRanged ? 2 : 1);
+                return EntityManager.Heroes.Allies.Count(a => a.IsAttackPlayer() && a.CountAlliesInRange(1250) > 1 && a.IsValidTarget() && Player.Instance.HealthPercent > 20) >= 2;
             }
         }
 
@@ -237,6 +237,38 @@ namespace AramBuddy.MainCore.Utility
         }
 
         /// <summary>
+        ///     Casts spell with selected hitchance.
+        /// </summary>
+        public static void Cast(this Spell.SpellBase spell, Obj_AI_Base target, HitChance hitChance)
+        {
+            if (target != null && spell.IsReady() && target.IsKillable(spell.Range))
+            {
+                var pred = spell.GetPrediction(target);
+                if (pred.HitChance >= hitChance || target.IsCC())
+                {
+                    spell.Cast(pred.CastPosition);
+                }
+            }
+        }
+
+        public static bool CastStartToEnd(this Spell.SpellBase spell, Vector3 start, Vector3 end)
+        {
+            var skillshot = spell as Spell.Skillshot;
+            if (skillshot != null)
+            {
+                skillshot.CastStartToEnd(start, end);
+                return true;
+            }
+            return false;
+        }
+
+        public static PredictionResult GetPrediction(this Spell.SpellBase spell, Obj_AI_Base target)
+        {
+            var skillshot = spell as Spell.Skillshot;
+            return skillshot?.GetPrediction(target);
+        }
+
+        /// <summary>
         ///     Distance To Keep from an Object and still be able to attack.
         /// </summary>
         public static float KiteDistance(GameObject target)
@@ -276,17 +308,23 @@ namespace AramBuddy.MainCore.Utility
         /// <summary>
         ///     Casts AoE spell with selected hitchance.
         /// </summary>
-        public static void CastLineAoE(this Spell.Skillshot spell, Obj_AI_Base target, HitChance hitChance, int hits = 2)
+        public static void CastLineAoE(this Spell.SpellBase spell, Obj_AI_Base target, HitChance hitChance, int hits = 2)
         {
-            if (target != null && spell.IsReady() && target.IsKillable(spell.Range))
+            var skillshot = spell as Spell.Skillshot;
+            if (target != null && skillshot != null && skillshot.IsReady() && target.IsKillable(skillshot.Range))
             {
                 var pred = spell.GetPrediction(target);
-                var rect = new Geometry.Polygon.Rectangle(Player.Instance.ServerPosition, Player.Instance.ServerPosition.Extend(pred.CastPosition, spell.Range).To3D(), spell.Width);
-                if (EntityManager.Heroes.Enemies.Count(e => e != null && e.IsKillable(spell.Range) && spell.GetPrediction(e).HitChance >= hitChance && rect.IsInside(spell.GetPrediction(e).CastPosition)) >= hits)
+                var rect = new Geometry.Polygon.Rectangle(Player.Instance.ServerPosition, Player.Instance.ServerPosition.Extend(pred.CastPosition, skillshot.Range).To3D(), skillshot.Width);
+                if (EntityManager.Heroes.Enemies.Count(e => e != null && e.IsKillable(skillshot.Range) && skillshot.GetPrediction(e).HitChance >= hitChance && rect.IsInside(skillshot.GetPrediction(e).CastPosition)) >= hits)
                 {
-                    spell.Cast(pred.CastPosition);
+                    skillshot.Cast(pred.CastPosition);
                 }
             }
+        }
+
+        public static Spell.Skillshot SetSkillshot(this Spell.SpellBase spell)
+        {
+            return spell as Spell.Skillshot;
         }
 
         /// <summary>

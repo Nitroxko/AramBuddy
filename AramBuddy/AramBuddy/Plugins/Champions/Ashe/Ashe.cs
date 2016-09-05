@@ -10,10 +10,6 @@ namespace AramBuddy.Plugins.Champions.Ashe
 {
     internal class Ashe : Base
     {
-        private static Spell.Active Q { get; }
-        private static Spell.Skillshot W { get; }
-        private static Spell.Skillshot R { get; }
-
         static Ashe()
         {
             MenuIni = MainMenu.AddMenu(MenuName, MenuName);
@@ -22,14 +18,7 @@ namespace AramBuddy.Plugins.Champions.Ashe
             HarassMenu = MenuIni.AddSubMenu("Harass");
             LaneClearMenu = MenuIni.AddSubMenu("LaneClear");
             KillStealMenu = MenuIni.AddSubMenu("KillSteal");
-
-            Q = new Spell.Active(SpellSlot.Q, 600);
-            W = new Spell.Skillshot(SpellSlot.W, 1200, SkillShotType.Linear, 0, int.MaxValue, 60);
-            R = new Spell.Skillshot(SpellSlot.R, 3000, SkillShotType.Linear, 250, 1600, 100) { AllowedCollisionCount = 0 };
-            SpellList.Add(Q);
-            SpellList.Add(W);
-            SpellList.Add(R);
-
+            
             AutoMenu.CreateCheckBox("W", "Flee W");
             AutoMenu.CreateCheckBox("GapR", "Anti-GapCloser R");
             AutoMenu.CreateCheckBox("IntR", "Interrupter R");

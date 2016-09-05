@@ -12,12 +12,7 @@ namespace AramBuddy.Plugins.Champions.Syndra
     internal class Syndra : Base
     {
         internal static List<Obj_AI_Minion> BallsList = new List<Obj_AI_Minion>();
-
-        private static Spell.Skillshot Q { get; }
-        private static Spell.Skillshot W { get; }
-        private static Spell.Skillshot E { get; }
-        private static Spell.Targeted R { get; }
-
+        
         static Syndra()
         {
             MenuIni = MainMenu.AddMenu(MenuName, MenuName);
@@ -26,16 +21,7 @@ namespace AramBuddy.Plugins.Champions.Syndra
             HarassMenu = MenuIni.AddSubMenu("Harass");
             LaneClearMenu = MenuIni.AddSubMenu("LaneClear");
             KillStealMenu = MenuIni.AddSubMenu("KillSteal");
-
-            Q = new Spell.Skillshot(SpellSlot.Q, 820, SkillShotType.Circular, 600, int.MaxValue, 125);
-            W = new Spell.Skillshot(SpellSlot.W, 925, SkillShotType.Circular, 350, 1500, 130);
-            E = new Spell.Skillshot(SpellSlot.E, 695, SkillShotType.Cone, 250, 2500, 50);
-            R = new Spell.Targeted(SpellSlot.R, 695);
-            SpellList.Add(Q);
-            SpellList.Add(W);
-            SpellList.Add(E);
-            SpellList.Add(R);
-
+            
             foreach (var spell in SpellList)
             {
                 ComboMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);

@@ -1,7 +1,6 @@
 ﻿using System.Linq;
 using EloBuddy;
 using EloBuddy.SDK;
-using EloBuddy.SDK.Enumerations;
 using EloBuddy.SDK.Events;
 using EloBuddy.SDK.Menu;
 using static AramBuddy.MainCore.Utility.Misc;
@@ -10,10 +9,6 @@ namespace AramBuddy.Plugins.Champions.Taliyah
 {
     internal class Taliyah : Base
     {
-        private static Spell.Skillshot Q { get; }
-        private static Spell.Skillshot W { get; }
-        private static Spell.Skillshot E { get; }
-
         static Taliyah()
         {
             MenuIni = MainMenu.AddMenu(MenuName, MenuName);
@@ -22,14 +17,7 @@ namespace AramBuddy.Plugins.Champions.Taliyah
             HarassMenu = MenuIni.AddSubMenu("Harass");
             LaneClearMenu = MenuIni.AddSubMenu("LaneClear");
             KillStealMenu = MenuIni.AddSubMenu("KillSteal");
-
-            Q = new Spell.Skillshot(SpellSlot.Q, 900, SkillShotType.Linear, 250, 2000, 60) { AllowedCollisionCount = 0 };
-            W = new Spell.Skillshot(SpellSlot.W, 800, SkillShotType.Circular, 250, int.MaxValue, 180);
-            E = new Spell.Skillshot(SpellSlot.E, 700, SkillShotType.Cone, 250, 1000, 120);
-            SpellList.Add(Q);
-            SpellList.Add(W);
-            SpellList.Add(E);
-
+            
             foreach (var spell in SpellList)
             {
                 ComboMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);

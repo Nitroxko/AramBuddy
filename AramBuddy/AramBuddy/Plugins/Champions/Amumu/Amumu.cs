@@ -10,11 +10,6 @@ namespace AramBuddy.Plugins.Champions.Amumu
 {
     internal class Amumu : Base
     {
-        private static Spell.Skillshot Q { get; }
-        private static Spell.Active W { get; }
-        private static Spell.Active E { get; }
-        private static Spell.Active R { get; }
-
         static Amumu()
         {
             MenuIni = MainMenu.AddMenu(MenuName, MenuName);
@@ -23,16 +18,7 @@ namespace AramBuddy.Plugins.Champions.Amumu
             HarassMenu = MenuIni.AddSubMenu("Harass");
             LaneClearMenu = MenuIni.AddSubMenu("LaneClear");
             KillStealMenu = MenuIni.AddSubMenu("KillSteal");
-
-            Q = new Spell.Skillshot(SpellSlot.Q, 1100, SkillShotType.Linear, 250, 2000, 80) { AllowedCollisionCount = 0 };
-            W = new Spell.Active(SpellSlot.W, 300);
-            E = new Spell.Active(SpellSlot.E, 350);
-            R = new Spell.Active(SpellSlot.R, 550);
-            SpellList.Add(Q);
-            SpellList.Add(W);
-            SpellList.Add(E);
-            SpellList.Add(R);
-
+            
             foreach (var spell in SpellList)
             {
                 ComboMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);

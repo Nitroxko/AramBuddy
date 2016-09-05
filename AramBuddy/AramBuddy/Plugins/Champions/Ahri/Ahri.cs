@@ -10,11 +10,6 @@ namespace AramBuddy.Plugins.Champions.Ahri
 {
     internal class Ahri : Base
     {
-        private static Spell.Skillshot Q { get; }
-        private static Spell.Active W { get; }
-        private static Spell.Skillshot E { get; }
-        private static Spell.Skillshot R { get; }
-
         static Ahri()
         {
             MenuIni = MainMenu.AddMenu(MenuName, MenuName);
@@ -23,16 +18,7 @@ namespace AramBuddy.Plugins.Champions.Ahri
             HarassMenu = MenuIni.AddSubMenu("Harass");
             LaneClearMenu = MenuIni.AddSubMenu("LaneClear");
             KillStealMenu = MenuIni.AddSubMenu("KillSteal");
-
-            Q = new Spell.Skillshot(SpellSlot.Q, 900, SkillShotType.Linear, 250, 1750, 100) { AllowedCollisionCount = int.MaxValue };
-            W = new Spell.Active(SpellSlot.W, 750);
-            E = new Spell.Skillshot(SpellSlot.E, 950, SkillShotType.Linear, 250, 1550, 60) { AllowedCollisionCount = 0 };
-            R = new Spell.Skillshot(SpellSlot.R, 600, SkillShotType.Linear, 250, 1550, 60) { AllowedCollisionCount = int.MaxValue };
-            SpellList.Add(Q);
-            SpellList.Add(W);
-            SpellList.Add(E);
-            SpellList.Add(R);
-
+            
             foreach (var spell in SpellList)
             {
                 ComboMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
@@ -113,12 +99,13 @@ namespace AramBuddy.Plugins.Champions.Ahri
 
         public override void LaneClear()
         {
+            var linefarmloc = EntityManager.MinionsAndMonsters.GetLineFarmLocation(EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => m.IsKillable(Q.Range)), Q.SetSkillshot().Width, (int)Q.Range);
+            if (Q.IsReady() && linefarmloc.HitNumber > 1 && LaneClearMenu.CheckBoxValue(SpellSlot.Q) && LaneClearMenu.CompareSlider(Q.Slot + "mana", user.ManaPercent))
+            {
+                Q.Cast(linefarmloc.CastPosition);
+            }
             foreach (var target in EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => m != null && m.IsKillable(Q.Range)))
             {
-                if (Q.IsReady() && LaneClearMenu.CheckBoxValue(SpellSlot.Q) && LaneClearMenu.CompareSlider(Q.Slot + "mana", user.ManaPercent))
-                {
-                    Q.Cast(target, HitChance.Medium);
-                }
                 if (W.IsReady() && target.IsKillable(W.Range) && LaneClearMenu.CheckBoxValue(SpellSlot.W) && LaneClearMenu.CompareSlider(W.Slot + "mana", user.ManaPercent))
                 {
                     W.Cast();

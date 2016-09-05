@@ -20,24 +20,9 @@ namespace AramBuddy.Plugins.Champions.Viktor
                 return user.HasBuff("ViktorChaosStormTimer");
             }
         }
-
-        public static Spell.Targeted Q { get; }
-        public static Spell.Skillshot W { get; }
-        public static Spell.Skillshot E { get; }
-        public static Spell.Skillshot R { get; }
-
-
+        
         static Viktor()
         {
-            Q = new Spell.Targeted(SpellSlot.Q, 670);
-            W = new Spell.Skillshot(SpellSlot.W, 700, SkillShotType.Circular, 500, int.MaxValue, 250) { AllowedCollisionCount = int.MaxValue };
-            E = new Spell.Skillshot(SpellSlot.E, 1225, SkillShotType.Linear, 250, int.MaxValue, 100) { AllowedCollisionCount = int.MaxValue };
-            R = new Spell.Skillshot(SpellSlot.R, 700, SkillShotType.Circular, 250, int.MaxValue, 450) { AllowedCollisionCount = int.MaxValue };
-            SpellList.Add(Q);
-            SpellList.Add(W);
-            SpellList.Add(E);
-            SpellList.Add(R);
-
             MenuIni = MainMenu.AddMenu(MenuName, MenuName);
             AutoMenu = MenuIni.AddSubMenu("Auto");
             ComboMenu = MenuIni.AddSubMenu("Combo");
@@ -154,9 +139,9 @@ namespace AramBuddy.Plugins.Champions.Viktor
                         R.Cast(target);
                     }
 
-                    foreach (var enemy in EntityManager.Heroes.Enemies.Where(e => e.IsKillable(R.Range + R.Width)))
+                    foreach (var enemy in EntityManager.Heroes.Enemies.Where(e => e.IsKillable(R.Range + R.SetSkillshot().Width)))
                     {
-                        if (enemy.CountEnemiesInRange(R.Width) >= ComboMenu.SliderValue("RAOE"))
+                        if (enemy.CountEnemiesInRange(R.SetSkillshot().Width) >= ComboMenu.SliderValue("RAOE"))
                         {
                             R.Cast(enemy);
                         }
@@ -247,7 +232,7 @@ namespace AramBuddy.Plugins.Champions.Viktor
             {
                 var predmobB = Viktor.E.GetPrediction(A);
                 End = Start.Extend(predmobB.CastPosition, 600).To3D();
-                rectlist.Add(new Geometry.Polygon.Rectangle(Start, End, Viktor.E.Width));
+                rectlist.Add(new Geometry.Polygon.Rectangle(Start, End, Viktor.E.SetSkillshot().Width));
             }
 
             var bestpos = rectlist.OrderByDescending(r => EntityManager.Heroes.Enemies.OrderBy(o => o.Health).Count(m => r.IsInside(m) && m.IsKillable(Viktor.E.Range))).FirstOrDefault();
@@ -295,7 +280,7 @@ namespace AramBuddy.Plugins.Champions.Viktor
                 {
                     var predmobB = Viktor.E.GetPrediction(B);
                     End = Start.Extend(predmobB.CastPosition, 600).To3D();
-                    rectlist.Add(new Geometry.Polygon.Rectangle(Start, End, Viktor.E.Width));
+                    rectlist.Add(new Geometry.Polygon.Rectangle(Start, End, Viktor.E.SetSkillshot().Width));
                 }
             }
 

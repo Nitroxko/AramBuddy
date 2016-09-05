@@ -323,7 +323,7 @@ namespace AramBuddy.MainCore.Utility
                         m =>
                         m.CountAlliesInRange(SafeValue) - m.CountEnemiesInRange(SafeValue) >= 0
                         && ((m.UnderEnemyTurret() && Misc.SafeToDive) || !m.UnderEnemyTurret()) && m.IsValidTarget(2500)
-                        && m.IsValid && m.IsHPBarRendered && !m.IsDead && !m.IsZombie && m.HealthPercent > 25
+                        && m.IsValid && m.IsHPBarRendered && !m.IsDead && !m.IsZombie && m.HealthPercent > 20
                         && Misc.TeamTotal(m.PredictPosition()) - Misc.TeamTotal(m.PredictPosition(), true) >= 0);
             }
         }
@@ -352,18 +352,8 @@ namespace AramBuddy.MainCore.Utility
         {
             get
             {
-                return EntityManager.MinionsAndMonsters.EnemyMinions.OrderBy(m => m.Distance(Player.Instance)).FirstOrDefault(m => m.IsKillable() && m.Health > 0);
-            }
-        }
-
-        /// <summary>
-        ///     Returns Nearest Enemy Minion To AllySpawn.
-        /// </summary>
-        public static Obj_AI_Minion EnemyMinion4Push
-        {
-            get
-            {
-                return EntityManager.MinionsAndMonsters.EnemyMinions.OrderBy(m => m.Distance(AllySpawn)).FirstOrDefault(m => m.IsKillable(4000) && m.Health > 0);
+                return EntityManager.MinionsAndMonsters.EnemyMinions.OrderBy(m => m.Distance(Player.Instance))
+                    .FirstOrDefault(m => m.IsKillable() && Misc.TeamTotal(m.PredictPosition()) >= Misc.TeamTotal(m.PredictPosition(), true) && m.CountAllyMinionsInRange(1000) > 0 && m.Health > 0 && (!m.UnderEnemyTurret() || m.UnderEnemyTurret() && Misc.SafeToDive));
             }
         }
 

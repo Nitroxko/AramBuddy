@@ -10,11 +10,6 @@ namespace AramBuddy.Plugins.Champions.Alistar
 {
     internal class Alistar : Base
     {
-        private static Spell.Active Q { get; }
-        private static Spell.Targeted W { get; }
-        private static Spell.Active E { get; }
-        private static Spell.Active R { get; }
-
         static Alistar()
         {
             MenuIni = MainMenu.AddMenu(MenuName, MenuName);
@@ -23,11 +18,7 @@ namespace AramBuddy.Plugins.Champions.Alistar
             HarassMenu = MenuIni.AddSubMenu("Harass");
             LaneClearMenu = MenuIni.AddSubMenu("LaneClear");
             KillStealMenu = MenuIni.AddSubMenu("KillSteal");
-
-            Q = new Spell.Active(SpellSlot.Q, 315);
-            W = new Spell.Targeted(SpellSlot.W, 625);
-            E = new Spell.Active(SpellSlot.E);
-            R = new Spell.Active(SpellSlot.R);
+            
             SpellList.Add(Q);
             SpellList.Add(W);
             SpellList.Add(E);

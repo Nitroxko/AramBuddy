@@ -19,22 +19,7 @@ namespace AramBuddy.Plugins.Champions.Blitzcrank
             HarassMenu = MenuIni.AddSubMenu("Harass");
             LaneClearMenu = MenuIni.AddSubMenu("LaneClear");
             KillStealMenu = MenuIni.AddSubMenu("KillSteal");
-
-            Q = new Spell.Skillshot(SpellSlot.Q, 925, SkillShotType.Linear, 250, 1800, 70);
-            {
-                Q.AllowedCollisionCount = 0;
-            }
-
-            W = new Spell.Active(SpellSlot.W);
-            E = new Spell.Active(SpellSlot.E, 300);
-            R = new Spell.Active(SpellSlot.R, 600);
-
-            SpellList.Add(Q);
-            SpellList.Add(W);
-            SpellList.Add(E);
-            SpellList.Add(R);
-
-
+            
             ComboMenu.CreateCheckBox("UseRaoe", "Use R AOE");
             ComboMenu.CreateSlider("RAOE", "R AOE {0}", 3, 1, 5);
             AutoMenu.CreateCheckBox("DashQ", "Q on dashing Targets");
@@ -67,12 +52,7 @@ namespace AramBuddy.Plugins.Champions.Blitzcrank
             Dash.OnDash += Dash_OnDash;
             Game.OnTick += FuckEmUpUnderTurret;
         }
-
-        private static Spell.Skillshot Q { get; }
-        private static Spell.Active W { get; }
-        private static Spell.Active E { get; }
-        private static Spell.Active R { get; }
-
+        
         private static void FuckEmUpUnderTurret(EventArgs args)
         {
             if (user.IsDead) return;
@@ -108,7 +88,7 @@ namespace AramBuddy.Plugins.Champions.Blitzcrank
             if (sender == null || !sender.IsEnemy || !sender.IsKillable(Q.Range)) return;
             {
                 var col = Prediction.Position.Collision.LinearMissileCollision(sender, user.ServerPosition.To2D(),
-                    e.EndPos.To2D(), Q.Speed, Q.Width, Q.CastDelay, 20);
+                    e.EndPos.To2D(), Q.SetSkillshot().Speed, Q.SetSkillshot().Width, Q.CastDelay, 20);
                 if (AutoMenu.CheckBoxValue("DashQ") && Q.IsReady() &&
                     (e.EndPos.IsInRange(user, Q.Range) && !col))
                 {
@@ -146,7 +126,7 @@ namespace AramBuddy.Plugins.Champions.Blitzcrank
                 if (sender.IsEnemy && sender.IsKillable(1000))
                 {
                     var col = Prediction.Position.Collision.LinearMissileCollision(sender, user.ServerPosition.To2D(),
-                        e.End.To2D(), Q.Speed, Q.Width, Q.CastDelay, 20);
+                        e.End.To2D(), Q.SetSkillshot().Speed, Q.SetSkillshot().Width, Q.CastDelay, 20);
 
                     if (AutoMenu.CheckBoxValue("GapQ") && Q.IsReady() &&
                         (e.End.IsInRange(user, Q.Range) && !col))

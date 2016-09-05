@@ -13,8 +13,6 @@ namespace AramBuddy.Plugins.Champions.TwistedFate
     {
         private static bool Selecting;
         private static int lastcasted;
-        private static Spell.Skillshot Q { get; }
-        private static Spell.Active W { get; }
 
         static TwistedFate()
         {
@@ -24,12 +22,7 @@ namespace AramBuddy.Plugins.Champions.TwistedFate
             HarassMenu = MenuIni.AddSubMenu("Harass");
             LaneClearMenu = MenuIni.AddSubMenu("LaneClear");
             KillStealMenu = MenuIni.AddSubMenu("KillSteal");
-
-            Q = new Spell.Skillshot(SpellSlot.Q, 1400, SkillShotType.Linear, 0, 1000, 40) { AllowedCollisionCount = int.MaxValue };
-            W = new Spell.Active(SpellSlot.W, 800);
-            SpellList.Add(Q);
-            SpellList.Add(W);
-
+            
             foreach (var spell in SpellList)
             {
                 ComboMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
@@ -146,12 +139,13 @@ namespace AramBuddy.Plugins.Champions.TwistedFate
 
         public override void LaneClear()
         {
+            var linefarmloc = EntityManager.MinionsAndMonsters.GetLineFarmLocation(EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => m.IsKillable(Q.Range)), Q.SetSkillshot().Width, (int)Q.Range);
+            if (Q.IsReady() && linefarmloc.HitNumber > 1 && LaneClearMenu.CheckBoxValue(SpellSlot.Q) && LaneClearMenu.CompareSlider(Q.Slot + "mana", user.ManaPercent))
+            {
+                Q.Cast(linefarmloc.CastPosition);
+            }
             foreach (var target in EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => m != null))
             {
-                if (Q.IsReady() && target.IsKillable(Q.Range) && LaneClearMenu.CheckBoxValue(Q.Slot) && LaneClearMenu.CompareSlider(Q.Slot + "mana", user.ManaPercent))
-                {
-                    Q.Cast(target, HitChance.Low);
-                }
                 if (LaneClearMenu.CheckBoxValue(W.Slot) && target.IsKillable(W.Range))
                 {
                     SetectCard(target);

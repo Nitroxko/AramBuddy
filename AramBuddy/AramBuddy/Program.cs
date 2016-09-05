@@ -62,11 +62,6 @@ namespace AramBuddy
                 
                 // Initialize the AutoShop.
                 AutoShop.Setup.Init();
-
-                if (!File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\temp123.dat"))
-                {
-                    File.Create(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\temp123.dat");
-                }
                 
                 /*
                 Chat.OnInput += delegate (ChatInputEventArgs msg)
@@ -84,7 +79,7 @@ namespace AramBuddy
                 };*/
 
                 Timer = Game.Time;
-                TimeToStart = new Random().Next(10000 + Game.Ping, 20000 + Game.Ping);
+                TimeToStart = new Random().Next(10000, 20000) + Game.Ping;
                 Game.OnTick += Game_OnTick;
                 Events.OnGameEnd += Events_OnGameEnd;
                 Player.OnPostIssueOrder += Player_OnPostIssueOrder;
@@ -113,7 +108,7 @@ namespace AramBuddy
             try
             {
                 if (QuitOnGameEnd)
-                    Core.DelayAction(() => Game.QuitGame(), new Random().Next(15000 + Game.Ping, 30000 + Game.Ping));
+                    Core.DelayAction(() => Game.QuitGame(), new Random().Next(15000, 30000) + Game.Ping);
             }
             catch (Exception ex)
             {
@@ -127,7 +122,7 @@ namespace AramBuddy
             {
                 if (Orbwalker.MovementDelay < 200)
                 {
-                    Orbwalker.MovementDelay = 200 + Game.Ping;
+                    Orbwalker.MovementDelay = new Random().Next(200, 500) + Game.Ping;
                 }
 
                 MenuIni = MainMenu.AddMenu("AramBuddy", "AramBuddy");
@@ -177,11 +172,14 @@ namespace AramBuddy
                 SpellsMenu.Add("Flash", new CheckBox("Use Flash"));
                 SpellsMenu.Add("Cleanse", new CheckBox("Use Cleanse"));
 
-                var i = 0;
-                foreach (var item in AutoShop.Setup.CurrentChampionBuild.BuildData)
+                if (AutoShop.Setup.CurrentChampionBuild.BuildData.Length > 0)
                 {
-                    i++;
-                    build.AddLabel(i + " - " + item);
+                    var i = 0;
+                    foreach (var item in AutoShop.Setup.CurrentChampionBuild.BuildData)
+                    {
+                        i++;
+                        build.AddLabel(i + " - " + item);
+                    }
                 }
 
                 if (!DisableSpellsCasting)
@@ -267,13 +265,16 @@ namespace AramBuddy
                 var SafeToDive = " | SafeToDive: " + Misc.SafeToDive;
                 var LastTeamFight = " | LastTeamFight: " + (int)(Core.GameTickCount - Pathing.LastTeamFight);
                 var MovementCommands = " | Movement Commands Issued: " + MoveToCommands;
-
+                var nextitem = " | Next Item: " + AutoShop.Sequences.Buy.NextItem + " | Value: " + AutoShop.Sequences.Buy.NextItemValue;
+                
                 Drawing.DrawText(Drawing.Width * 0.2f, Drawing.Height * 0.025f, System.Drawing.Color.White, AllyTeamTotal + EnemyTeamTotal);
 
                 Drawing.DrawText(Drawing.Width * 0.2f, Drawing.Height * 0.04f, System.Drawing.Color.White, ActiveMode + Alone + AttackObject + SafeToDive);
                 Drawing.DrawText(Drawing.Width * 0.2f, Drawing.Height * 0.055f, System.Drawing.Color.White, LastTurretAttack + LastTeamFight);
 
                 Drawing.DrawText(Drawing.Width * 0.2f, Drawing.Height * 0.07f, System.Drawing.Color.White, MovementCommands + MoveTo);
+
+                Drawing.DrawText(Drawing.Width * 0.2f, Drawing.Height * 0.085f, System.Drawing.Color.White, nextitem);
 
                 Drawing.DrawText(
                     Game.CursorPos.WorldToScreen().X + 50,
@@ -329,10 +330,13 @@ namespace AramBuddy
                 }
                 else
                 {
-                    if (!Player.Instance.IsDead)
+                    if (Player.Instance.IsDead)
                     {
-                        Brain.Decisions();
+                        Orbwalker.ActiveModesFlags = Orbwalker.ActiveModes.None;
+                        return;
                     }
+
+                    Brain.Decisions();
                 }
             }
             catch (Exception ex)

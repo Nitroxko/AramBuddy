@@ -1,7 +1,6 @@
 ﻿using System.Linq;
 using EloBuddy;
 using EloBuddy.SDK;
-using EloBuddy.SDK.Enumerations;
 using EloBuddy.SDK.Menu;
 using static AramBuddy.MainCore.Utility.Misc;
 
@@ -9,11 +8,6 @@ namespace AramBuddy.Plugins.Champions.Akali
 {
     internal class Akali : Base
     {
-        private static Spell.Targeted Q { get; }
-        private static Spell.Skillshot W { get; }
-        private static Spell.Active E { get; }
-        private static Spell.Targeted R { get; }
-
         static Akali()
         {
             MenuIni = MainMenu.AddMenu(MenuName, MenuName);
@@ -22,16 +16,7 @@ namespace AramBuddy.Plugins.Champions.Akali
             HarassMenu = MenuIni.AddSubMenu("Harass");
             LaneClearMenu = MenuIni.AddSubMenu("LaneClear");
             KillStealMenu = MenuIni.AddSubMenu("KillSteal");
-
-            Q = new Spell.Targeted(SpellSlot.Q, 600);
-            W = new Spell.Skillshot(SpellSlot.W, 700, SkillShotType.Circular);
-            E = new Spell.Active(SpellSlot.E, 325);
-            R = new Spell.Targeted(SpellSlot.R, 700);
-            SpellList.Add(Q);
-            SpellList.Add(W);
-            SpellList.Add(E);
-            SpellList.Add(R);
-
+            
             foreach (var spell in SpellList)
             {
                 ComboMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);

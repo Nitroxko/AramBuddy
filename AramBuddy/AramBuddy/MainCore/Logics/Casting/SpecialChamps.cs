@@ -96,10 +96,10 @@ namespace AramBuddy.MainCore.Logics.Casting
                     }
                     if (Importantspells.Any(s => s.champ == Player.Instance.Hero && s.champ == Champion.Velkoz))
                     {
-                        var target = TargetSelector.GetTarget(1500, DamageType.Magical);
+                        var target = TargetSelector.GetTarget(1750, DamageType.Magical);
                         if (target != null)
                         {
-                            Player.UpdateChargeableSpell(SpellSlot.R, target.PredictPosition(), false);
+                            Player.UpdateChargeableSpell(SpellSlot.R, target.PredictPosition(), false, false);
                         }
                     }
                 }

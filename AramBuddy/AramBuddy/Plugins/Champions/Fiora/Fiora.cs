@@ -7,18 +7,11 @@ using EloBuddy.SDK;
 using EloBuddy.SDK.Enumerations;
 using EloBuddy.SDK.Menu;
 using SharpDX;
-using static AramBuddy.MainCore.Utility.Misc;
-using Collision = AramBuddy.KappaEvade.Collision;
 
 namespace AramBuddy.Plugins.Champions.Fiora
 {
     internal class Fiora : Base
     {
-        private static Spell.Skillshot Q { get; }
-        private static Spell.Skillshot W { get; }
-        private static Spell.Active E { get; }
-        private static Spell.Targeted R { get; }
-
         static Fiora()
         {
             MenuIni = MainMenu.AddMenu(MenuName, MenuName);
@@ -27,15 +20,7 @@ namespace AramBuddy.Plugins.Champions.Fiora
             HarassMenu = MenuIni.AddSubMenu("Harass");
             LaneClearMenu = MenuIni.AddSubMenu("LaneClear");
             KillStealMenu = MenuIni.AddSubMenu("KillSteal");
-
-            Q = new Spell.Skillshot(SpellSlot.Q, 750, SkillShotType.Linear, 250, 1000, 70) { AllowedCollisionCount = int.MaxValue };
-            W = new Spell.Skillshot(SpellSlot.W, 750, SkillShotType.Linear, 500, 3200, 70) { AllowedCollisionCount = int.MaxValue };
-            E = new Spell.Active(SpellSlot.E, 200);
-            R = new Spell.Targeted(SpellSlot.R, 500);
-            SpellList.Add(Q);
-            SpellList.Add(E);
-            SpellList.Add(R);
-
+            
             foreach (var spell in SpellList)
             {
                 ComboMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);

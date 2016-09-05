@@ -19,23 +19,7 @@ namespace AramBuddy.Plugins.Champions.Caitlyn
             HarassMenu = MenuIni.AddSubMenu("Harass");
             LaneClearMenu = MenuIni.AddSubMenu("LaneClear");
             KillStealMenu = MenuIni.AddSubMenu("KillSteal");
-
-            Q = new Spell.Skillshot(SpellSlot.Q, 1240, SkillShotType.Linear, 250, 2000, 60);
-            {
-                Q.AllowedCollisionCount = int.MaxValue;
-            }
-            W = new Spell.Skillshot(SpellSlot.W, 820, SkillShotType.Circular, 500, int.MaxValue, 80);
-            {
-                W.AllowedCollisionCount = int.MaxValue;
-            }
-            E = new Spell.Skillshot(SpellSlot.E, 800, SkillShotType.Linear, 250, 1600, 80);
-            R = new Spell.Targeted(SpellSlot.R, 2000);
-
-            SpellList.Add(Q);
-            SpellList.Add(W);
-            SpellList.Add(E);
-            SpellList.Add(R);
-
+            
             AutoMenu.CreateCheckBox("E", "Flee E");
             AutoMenu.CreateCheckBox("GapW", "Anti-GapCloser W");
             AutoMenu.CreateCheckBox("GapE", "Anti-GapCloser E");
@@ -57,12 +41,7 @@ namespace AramBuddy.Plugins.Champions.Caitlyn
             Interrupter.OnInterruptableSpell += Interrupter_OnInterruptableSpell;
             Dash.OnDash += Dash_OnDash;
         }
-
-        private static Spell.Skillshot Q { get; }
-        private static Spell.Skillshot W { get; }
-        private static Spell.Skillshot E { get; }
-        private static Spell.Targeted R { get; }
-
+        
         private static void Dash_OnDash(Obj_AI_Base sender, Dash.DashEventArgs e)
         {
             if (sender == null || !sender.IsEnemy || !sender.IsKillable(1000))
@@ -171,13 +150,10 @@ namespace AramBuddy.Plugins.Champions.Caitlyn
 
         public override void LaneClear()
         {
-            foreach (var target in
-                from target in EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => m != null && m.IsValidTarget())
-                from spell in SpellList.Where(s => s.IsReady() && s != R && LaneClearMenu.CheckBoxValue(s.Slot) && LaneClearMenu.CompareSlider(s.Slot + "mana", user.ManaPercent))
-                where spell.Slot == SpellSlot.Q
-                select target)
+            var linefarmloc = EntityManager.MinionsAndMonsters.GetLineFarmLocation(EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => m.IsKillable(Q.Range)), Q.SetSkillshot().Width, (int)Q.Range);
+            if (Q.IsReady() && linefarmloc.HitNumber > 1 && LaneClearMenu.CheckBoxValue(SpellSlot.Q) && LaneClearMenu.CompareSlider(Q.Slot + "mana", user.ManaPercent))
             {
-                Q.Cast(target);
+                Q.Cast(linefarmloc.CastPosition);
             }
         }
 

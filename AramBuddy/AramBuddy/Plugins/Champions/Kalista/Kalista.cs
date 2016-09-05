@@ -10,11 +10,6 @@ namespace AramBuddy.Plugins.Champions.Kalista
 {
     internal class Kalista : Base
     {
-        public static Spell.Skillshot Q { get; }
-        public static Spell.Skillshot W { get; }
-        public static Spell.Active E { get; }
-        public static Spell.Active R { get; }
-
         static Kalista()
         {
             MenuIni = MainMenu.AddMenu(MenuName, MenuName);
@@ -23,14 +18,7 @@ namespace AramBuddy.Plugins.Champions.Kalista
             HarassMenu = MenuIni.AddSubMenu("Harass");
             LaneClearMenu = MenuIni.AddSubMenu("LaneClear");
             KillStealMenu = MenuIni.AddSubMenu("KillSteal");
-
-            Q = new Spell.Skillshot(SpellSlot.Q, 1150, SkillShotType.Linear, 250, 2100, 80) { AllowedCollisionCount = 0 };
-            W = new Spell.Skillshot(SpellSlot.W, 5000, SkillShotType.Circular, 250, 2100, 80);
-            E = new Spell.Active(SpellSlot.E, 1000);
-            R = new Spell.Active(SpellSlot.R, 1100);
-            SpellList.Add(Q);
-            SpellList.Add(E);
-
+            
             foreach (var spell in SpellList)
             {
                 ComboMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);

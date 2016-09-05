@@ -17,11 +17,6 @@ namespace AramBuddy.Plugins.Champions.Azir
                     .Any(rectangle => rectangle.IsInside(target));
         }
 
-        private static Spell.Skillshot Q { get; }
-        private static Spell.Skillshot W { get; }
-        private static Spell.Skillshot E { get; }
-        private static Spell.Skillshot R { get; }
-
         static Azir()
         {
             MenuIni = MainMenu.AddMenu(MenuName, MenuName);
@@ -30,16 +25,7 @@ namespace AramBuddy.Plugins.Champions.Azir
             HarassMenu = MenuIni.AddSubMenu("Harass");
             LaneClearMenu = MenuIni.AddSubMenu("LaneClear");
             KillStealMenu = MenuIni.AddSubMenu("KillSteal");
-
-            Q = new Spell.Skillshot(SpellSlot.Q, 1000, SkillShotType.Linear, 250, 1000, 65) { AllowedCollisionCount = int.MaxValue };
-            W = new Spell.Skillshot(SpellSlot.W, 525, SkillShotType.Circular);
-            E = new Spell.Skillshot(SpellSlot.E, 1100, SkillShotType.Linear, 250, 1200, 80) { AllowedCollisionCount = int.MaxValue };
-            R = new Spell.Skillshot(SpellSlot.R, 350, SkillShotType.Linear, 500, 1000, 220) { AllowedCollisionCount = int.MaxValue };
-
-            SpellList.Add(Q);
-            SpellList.Add(W);
-            SpellList.Add(E);
-
+            
             foreach (var spell in SpellList)
             {
                 ComboMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);

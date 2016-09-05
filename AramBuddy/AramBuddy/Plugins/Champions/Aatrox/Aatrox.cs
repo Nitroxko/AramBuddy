@@ -10,11 +10,6 @@ namespace AramBuddy.Plugins.Champions.Aatrox
 {
     internal class Aatrox : Base
     {
-        private static Spell.Skillshot Q { get; }
-        private static Spell.Active W { get; }
-        private static Spell.Skillshot E { get; }
-        private static Spell.Active R { get; }
-
         static Aatrox()
         {
             MenuIni = MainMenu.AddMenu(MenuName, MenuName);
@@ -23,15 +18,7 @@ namespace AramBuddy.Plugins.Champions.Aatrox
             HarassMenu = MenuIni.AddSubMenu("Harass");
             LaneClearMenu = MenuIni.AddSubMenu("LaneClear");
             KillStealMenu = MenuIni.AddSubMenu("KillSteal");
-
-            Q = new Spell.Skillshot(SpellSlot.Q, 650, SkillShotType.Circular, 250, 450, 285) { AllowedCollisionCount = int.MaxValue };
-            W = new Spell.Active(SpellSlot.W);
-            E = new Spell.Skillshot(SpellSlot.E, 1000, SkillShotType.Linear, 250, 1200, 100) { AllowedCollisionCount = int.MaxValue };
-            R = new Spell.Active(SpellSlot.R, 500);
-            SpellList.Add(Q);
-            SpellList.Add(W);
-            SpellList.Add(E);
-            SpellList.Add(R);
+            
 
             foreach (var spell in SpellList)
             {
@@ -131,30 +118,29 @@ namespace AramBuddy.Plugins.Champions.Aatrox
 
         public override void LaneClear()
         {
-            foreach (var target in EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => m != null && m.IsKillable(Q.Range)))
+            var Cirarmloc = EntityManager.MinionsAndMonsters.GetCircularFarmLocation(EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => m.IsKillable(E.Range)), ((Spell.Skillshot)E).Width, (int)E.Range);
+            if (Q.IsReady() && LaneClearMenu.CheckBoxValue(SpellSlot.Q) && user.HealthPercent > 25)
             {
-                if (Q.IsReady() && LaneClearMenu.CheckBoxValue(SpellSlot.Q) && user.HealthPercent > 25)
+                if (user.CountEnemiesInRange(1000 + Q.Range) < 2 && Cirarmloc.HitNumber > 2)
                 {
-                    if (target.CountEnemiesInRange(1000) < 2 && target.CountEnemyMinionsInRange(Q.Width) > 1)
-                    {
-                        Q.Cast(target);
-                    }
+                    Q.Cast(Cirarmloc.CastPosition);
                 }
-                if (W.IsReady() && LaneClearMenu.CheckBoxValue(SpellSlot.W))
+            }
+            if (W.IsReady() && LaneClearMenu.CheckBoxValue(SpellSlot.W))
+            {
+                if (W.Handle.ToggleState == 1 && user.HealthPercent > 50)
                 {
-                    if (W.Handle.ToggleState == 1 && user.HealthPercent > 50)
-                    {
-                        W.Cast();
-                    }
-                    else
-                    {
-                        W.Cast();
-                    }
+                    W.Cast();
                 }
-                if (E.IsReady() && target.IsKillable(E.Range) && LaneClearMenu.CheckBoxValue(SpellSlot.E))
+                else
                 {
-                    E.Cast(target, HitChance.Medium);
+                    W.Cast();
                 }
+            }
+            var linefarmloc = EntityManager.MinionsAndMonsters.GetLineFarmLocation(EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => m.IsKillable(E.Range)), ((Spell.Skillshot)E).Width, (int)E.Range);
+            if (E.IsReady() && linefarmloc.HitNumber > 1 && LaneClearMenu.CheckBoxValue(SpellSlot.E))
+            {
+                E.Cast(linefarmloc.CastPosition);
             }
         }
 
@@ -200,7 +186,7 @@ namespace AramBuddy.Plugins.Champions.Aatrox
 
         private static void QAOE(Obj_AI_Base target)
         {
-            if (Q.GetPrediction(target).CastPosition.CountEnemiesInRange(Q.Width) >= 2)
+            if (Q.GetPrediction(target).CastPosition.CountEnemiesInRange(((Spell.Skillshot)Q).Width) >= 2)
             {
                 Q.Cast(target, HitChance.Medium);
             }

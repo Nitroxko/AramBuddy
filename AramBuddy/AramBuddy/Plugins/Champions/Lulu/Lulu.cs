@@ -23,25 +23,12 @@ namespace AramBuddy.Plugins.Champions.Lulu
             HarassMenu = MenuIni.AddSubMenu("Harass");
             LaneClearMenu = MenuIni.AddSubMenu("LaneClear");
             KillStealMenu = MenuIni.AddSubMenu("KillSteal");
-
-            Q = new Spell.Skillshot(SpellSlot.Q, 925, SkillShotType.Linear, 250, 1450, 60);
-            {
-                Q.AllowedCollisionCount = int.MaxValue;
-            }
+            
             Q1 = new Spell.Skillshot(SpellSlot.Q, 925, SkillShotType.Linear, 250, 1450, 60);
             {
                 if (Pix.IsValid && Pix != null)
                     Q1.SourcePosition = Pix.ServerPosition;
             }
-            W = new Spell.Targeted(SpellSlot.W, 650);
-            E = new Spell.Targeted(SpellSlot.E, 650);
-            R = new Spell.Targeted(SpellSlot.R, 900);
-
-            SpellList.Add(Q);
-            SpellList.Add(W);
-            SpellList.Add(E);
-            SpellList.Add(R);
-
 
             AutoMenu.CreateCheckBox("Rsave", "R Saver");
             ComboMenu.CreateSlider("RAOE", "R AOE {0}", 3, 1, 5);
@@ -78,12 +65,8 @@ namespace AramBuddy.Plugins.Champions.Lulu
             SpellsDetector.OnTargetedSpellDetected += SpellsDetector_OnTargetedSpellDetected;
             Game.OnTick += Lulu_SkillshotDetector;
         }
-
-        private static Spell.Skillshot Q { get; }
+        
         private static Spell.Skillshot Q1 { get; }
-        private static Spell.Targeted W { get; }
-        private static Spell.Targeted E { get; }
-        private static Spell.Targeted R { get; }
 
         private static Obj_AI_Base Pix
         {
@@ -359,7 +342,7 @@ namespace AramBuddy.Plugins.Champions.Lulu
                 {
                     if (spell.Slot == SpellSlot.Q)
                     {
-                        Q.CastOnBestFarmPosition();
+                        Q.SetSkillshot().CastOnBestFarmPosition();
                     }
                     else
                     {

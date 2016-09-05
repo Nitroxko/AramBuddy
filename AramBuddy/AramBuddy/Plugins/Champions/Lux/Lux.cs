@@ -20,25 +20,7 @@ namespace AramBuddy.Plugins.Champions.Lux
             HarassMenu = MenuIni.AddSubMenu("Harass");
             LaneClearMenu = MenuIni.AddSubMenu("LaneClear");
             KillStealMenu = MenuIni.AddSubMenu("KillSteal");
-
-            Q = new Spell.Skillshot(SpellSlot.Q, 1175, SkillShotType.Linear, 250, 1200, 70) {AllowedCollisionCount = 1};
-            W = new Spell.Skillshot(SpellSlot.W, 1075, SkillShotType.Linear, 0, 1400, 85)
-            {
-                AllowedCollisionCount = int.MaxValue
-            };
-            E = new Spell.Skillshot(SpellSlot.E, 1100, SkillShotType.Circular, 250, 1400, 335)
-            {
-                AllowedCollisionCount = int.MaxValue
-            };
-            R = new Spell.Skillshot(SpellSlot.R, 3340, SkillShotType.Linear, int.MaxValue, 500, 110)
-            {
-                AllowedCollisionCount = int.MaxValue
-            };
-
-            SpellList.Add(Q);
-            SpellList.Add(E);
-            SpellList.Add(R);
-
+            
             AutoMenu.CreateCheckBox("FleeQ", "Flee Q");
             AutoMenu.CreateCheckBox("FleeW", "Flee W");
             AutoMenu.CreateCheckBox("FleeE", "Flee E");
@@ -69,12 +51,7 @@ namespace AramBuddy.Plugins.Champions.Lux
             Game.OnTick += Lux_PopE;
             SpellsDetector.OnTargetedSpellDetected += SpellsDetector_OnTargetedSpellDetected;
         }
-
-        private static Spell.Skillshot Q { get; }
-        private static Spell.Skillshot W { get; }
-        private static Spell.Skillshot E { get; }
-        private static Spell.Skillshot R { get; }
-
+        
         private static void Lux_PopE(EventArgs args)
         {
             if (user.Spellbook.GetSpell(SpellSlot.E).ToggleState == 2 ||

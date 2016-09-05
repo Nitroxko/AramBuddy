@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Net;
 using AramBuddy.MainCore.Utility;
 using EloBuddy;
+using EloBuddy.SDK.Notifications;
 using EloBuddy.SDK.Rendering;
 using SharpDX;
 using Color = System.Drawing.Color;
@@ -41,7 +42,7 @@ namespace AramBuddy
                                 };
                             Outdated = true;
                             Logger.Send("There is a new Update Available for AramBuddy!", Logger.LogLevel.Warn);
-                            Logger.Send(UpdateMsg, Logger.LogLevel.Info);
+                            Logger.Send("Update Log: " + UpdateMsg, Logger.LogLevel.Info);
                         }
                         else
                         {
@@ -55,7 +56,8 @@ namespace AramBuddy
                     if (UpdateMsg != string.Empty && !Sent && Outdated)
                     {
                         Chat.Print("<b>AramBuddy: There is a new Update Available for AramBuddy !</b>");
-                        Chat.Print("<b>AramBuddy: " + UpdateMsg + "</b>");
+                        Chat.Print("<b>AramBuddy Update Log: " + UpdateMsg + "</b>");
+                        Notifications.Show(new SimpleNotification("ARAMBUDDY OUTDATED", "Update Log: " + UpdateMsg), 10000);
                         Sent = true;
                     }
                 };
