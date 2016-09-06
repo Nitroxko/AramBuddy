@@ -448,7 +448,7 @@ namespace AramBuddy.MainCore.Logics
                 Position = ObjectsManager.Minion.PredictPosition().Random();
                 return true;
             }
-
+            
             // if SecondTurret exsists moves to SecondTurret.
             if (ObjectsManager.SecondTurret != null)
             {
