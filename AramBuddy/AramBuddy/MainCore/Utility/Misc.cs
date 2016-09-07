@@ -15,6 +15,14 @@ namespace AramBuddy.MainCore.Utility
     public static class Misc
     {
         /// <summary>
+        ///     Returns Spell Mana Cost.
+        /// </summary>
+        public static float Mana(this Spell.SpellBase spell)
+        {
+            return spell.Handle.SData.Mana;
+        }
+
+        /// <summary>
         ///     Returns true if target Is CC'D.
         /// </summary>
         public static bool IsCC(this Obj_AI_Base target)
@@ -190,7 +198,7 @@ namespace AramBuddy.MainCore.Utility
                    && !target.HasBuff("ChronoShift") && !target.HasBuff("UndyingRage") && !target.IsInvulnerable && !target.IsZombie && !target.HasBuff("bansheesveil") && !target.IsDead
                    && !target.IsPhysicalImmune && target.Health > 0 && !target.HasBuffOfType(BuffType.Invulnerability) && !target.HasBuffOfType(BuffType.PhysicalImmunity) && target.IsValidTarget(range);
         }
-
+        
         /// <summary>
         ///     Returns true if you can deal damage to the target.
         /// </summary>
@@ -249,6 +257,52 @@ namespace AramBuddy.MainCore.Utility
                     spell.Cast(pred.CastPosition);
                 }
             }
+        }
+
+        /// <summary>
+        ///     Casts spell with selected hitchancepercent.
+        /// </summary>
+        public static void Cast(this Spell.Skillshot spell, Obj_AI_Base target, float hitchancepercent)
+        {
+            if (target != null && spell.IsReady() && target.IsKillable(spell.Range))
+            {
+                var pred = spell.GetPrediction(target);
+                if (pred.HitChancePercent >= hitchancepercent || target.IsCC())
+                {
+                    spell.Cast(pred.CastPosition);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Casts spell with selected hitchancepercent.
+        /// </summary>
+        public static void Cast(this Spell.SpellBase spell, Obj_AI_Base target, float hitchancepercent)
+        {
+            if (target != null && spell.IsReady() && target.IsKillable(spell.Range))
+            {
+                var pred = spell.GetPrediction(target);
+                if (pred.HitChancePercent >= hitchancepercent || target.IsCC())
+                {
+                    spell.Cast(pred.CastPosition);
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Returns true if the target is big minion (Siege / Super Minion).
+        /// </summary>
+        public static bool IsBigMinion(this Obj_AI_Base target)
+        {
+            return target.BaseSkinName.ToLower().Contains("siege") || target.BaseSkinName.ToLower().Contains("super");
+        }
+
+        /// <summary>
+        ///     Returns Lane Minions In Spell Range.
+        /// </summary>
+        public static IEnumerable<Obj_AI_Minion> LaneMinions(this Spell.SpellBase spell)
+        {
+            return EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => m.IsKillable(spell.Range));
         }
 
         public static bool CastStartToEnd(this Spell.SpellBase spell, Vector3 start, Vector3 end)
@@ -388,7 +442,7 @@ namespace AramBuddy.MainCore.Utility
         /// </summary>
         public static bool WillKill(this Spell.SpellBase spell, Obj_AI_Base target, float MultiplyDmgBy = 1, float ExtraDamage = 0, DamageType ExtraDamageType = DamageType.True)
         {
-            return Player.Instance.GetSpellDamage(target, spell.Slot) * MultiplyDmgBy + Player.Instance.CalculateDamageOnUnit(target, ExtraDamageType, ExtraDamage) >= Prediction.Health.GetPrediction(target, spell.CastDelay + Game.Ping);
+            return Player.Instance.GetSpellDamage(target, spell.Slot) * MultiplyDmgBy + Player.Instance.CalculateDamageOnUnit(target, ExtraDamageType, ExtraDamage) >= spell.GetHealthPrediction(target);
         }
 
         /// <summary>
@@ -477,9 +531,9 @@ namespace AramBuddy.MainCore.Utility
         /// <summary>
         ///     Returns The predicted position for the target.
         /// </summary>
-        public static Vector3 PredictPosition(this Obj_AI_Base target)
+        public static Vector3 PredictPosition(this Obj_AI_Base target, int Time = 250)
         {
-            return Prediction.Position.PredictUnitPosition(target, 100 + Game.Ping).To3D();
+            return Prediction.Position.PredictUnitPosition(target, Time).To3D();
         }
 
         /// <summary>

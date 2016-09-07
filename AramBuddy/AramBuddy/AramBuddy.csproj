@@ -36,8 +36,9 @@
     <Reference Include="EloBuddy">
       <HintPath>..\..\..\..\..\..\..\Program Files (x86)\EloBuddy\System\EloBuddy.dll</HintPath>
     </Reference>
-    <Reference Include="EloBuddy.SDK">
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\EloBuddy\System\EloBuddy.SDK.dll</HintPath>
+    <Reference Include="EloBuddy.SDK, Version=1.0.0.0, Culture=neutral, PublicKeyToken=6b574a82b1ea937e, processorArchitecture=x86">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\Desktop\New folder\EloBuddy\System\EloBuddy.SDK.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=7.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.7.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
@@ -82,6 +83,7 @@
     <Compile Include="Plugins\Champions\Fiora\Fiora.cs" />
     <Compile Include="Plugins\Champions\Gangplank\Gangplank.cs" />
     <Compile Include="Plugins\Champions\Garen\Garen.cs" />
+    <Compile Include="Plugins\Champions\Jhin\Jhin.cs" />
     <Compile Include="Plugins\Champions\Kalista\Kalista.cs" />
     <Compile Include="Plugins\Champions\Lulu\Lulu.cs" />
     <Compile Include="Plugins\Champions\Lux\Lux.cs" />

@@ -93,7 +93,7 @@ namespace AramBuddy.AutoShop
                 if (Builds.Keys.All(b => b != Player.Instance.ChampionName))
                 {
                     // If not, warn the user
-                    Logger.Send("There are no builds for your champion.", Logger.LogLevel.Warn);
+                    Logger.Send("There are no builds for your champion. " + Player.Instance.ChampionName, Logger.LogLevel.Warn);
 
                     // and Use Default build
                     if (Builds.Keys.Any(b => b.Equals(Build.BuildName())))

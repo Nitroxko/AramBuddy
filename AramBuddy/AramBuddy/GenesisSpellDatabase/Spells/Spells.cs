@@ -55,7 +55,6 @@ namespace GenesisSpellLibrary.Spells
         }
     }
 
-
     public class Ahri : SpellBase
     {
         public sealed override Spell.SpellBase Q { get; set; }
@@ -979,10 +978,10 @@ namespace GenesisSpellLibrary.Spells
 
         public Jhin()
         {
-            this.Q = new Spell.Targeted(SpellSlot.Q, 500);
-            this.W = new Spell.Skillshot(SpellSlot.W, 1000, SkillShotType.Linear, 250, 1000, 80);
-            this.E = new Spell.Skillshot(SpellSlot.E, 325, SkillShotType.Circular, 250, 1000, 180);
-            this.R = new Spell.Skillshot(SpellSlot.R, 1300, SkillShotType.Linear, 250, 1250, 80) { AllowedCollisionCount = int.MaxValue };
+            this.Q = new Spell.Targeted(SpellSlot.Q, 600) { DamageType = DamageType.Physical };
+            this.W = new Spell.Skillshot(SpellSlot.W, 2500, SkillShotType.Linear, 750, 5000, 40) { AllowedCollisionCount = -1, DamageType = DamageType.Physical };
+            this.E = new Spell.Skillshot(SpellSlot.E, 750, SkillShotType.Circular, 250, 1600, 300) { DamageType = DamageType.Magical };
+            this.R = new Spell.Skillshot(SpellSlot.R, 3500, SkillShotType.Linear, 200, 4500, 80) { AllowedCollisionCount = -1, DamageType = DamageType.Physical };
         }
     } // Just fuck you jhin.
 
@@ -1019,10 +1018,10 @@ namespace GenesisSpellLibrary.Spells
 
         public Kalista()
         {
-            this.Q = new Spell.Skillshot(SpellSlot.Q, 1150, SkillShotType.Linear, 250, 1200, 40) { AllowedCollisionCount = int.MaxValue };
-            this.W = new Spell.Targeted(SpellSlot.W, 5000);
+            this.Q = new Spell.Skillshot(SpellSlot.Q, 1150, SkillShotType.Linear, 250, 2100, 60) { AllowedCollisionCount = int.MaxValue };
+            this.W = new Spell.Skillshot(SpellSlot.W, 5000, SkillShotType.Circular, 250, 2100, 80);
             this.E = new Spell.Active(SpellSlot.E, 1000);
-            this.R = new Spell.Active(SpellSlot.R, 1500); //You are gonna suck until you get logic
+            this.R = new Spell.Active(SpellSlot.R, 1100); //You are gonna suck until you get logic
             this.RisCC = true;
             this.RisSaver = true;
         }
@@ -2160,9 +2159,9 @@ namespace GenesisSpellLibrary.Spells
 
         public Syndra()
         {
-            this.Q = new Spell.Skillshot(SpellSlot.Q, 800, SkillShotType.Circular, 600, int.MaxValue, 125);
-            this.W = new Spell.Skillshot(SpellSlot.W, 950, SkillShotType.Circular, 250, 1600, 140);
-            this.E = new Spell.Skillshot(SpellSlot.E, 700, SkillShotType.Cone, 250, 2500, 22) { AllowedCollisionCount = int.MaxValue };
+            this.Q = new Spell.Skillshot(SpellSlot.Q, 810, SkillShotType.Circular, 600, int.MaxValue, 125) { AllowedCollisionCount = int.MaxValue, DamageType = DamageType.Magical };
+            this.W = new Spell.Skillshot(SpellSlot.W, 1000, SkillShotType.Circular, 350, 1500, 140) { AllowedCollisionCount = int.MaxValue, DamageType = DamageType.Magical };
+            this.E = new Spell.Skillshot(SpellSlot.E, 680, SkillShotType.Cone, 250, 2500, 50) { AllowedCollisionCount = int.MaxValue, DamageType = DamageType.Magical };
             this.R = new Spell.Targeted(SpellSlot.R, 675);
             this.EisCC = true;
             this.EDontWaste = true;
@@ -2572,9 +2571,9 @@ namespace GenesisSpellLibrary.Spells
 
         public Viktor()
         {
-            this.Q = new Spell.Targeted(SpellSlot.Q, 600);
-            this.W = new Spell.Skillshot(SpellSlot.W, 700, SkillShotType.Circular, 500, int.MaxValue, 300) { AllowedCollisionCount = int.MaxValue };
-            this.E = new Spell.Skillshot(SpellSlot.E, 525, SkillShotType.Linear, 250, int.MaxValue, 100) { AllowedCollisionCount = int.MaxValue };
+            this.Q = new Spell.Targeted(SpellSlot.Q, 670);
+            this.W = new Spell.Skillshot(SpellSlot.W, 700, SkillShotType.Circular, 500, int.MaxValue, 250) { AllowedCollisionCount = int.MaxValue };
+            this.E = new Spell.Skillshot(SpellSlot.E, 1225, SkillShotType.Linear, 250, int.MaxValue, 100) { AllowedCollisionCount = int.MaxValue };
             this.R = new Spell.Skillshot(SpellSlot.R, 700, SkillShotType.Circular, 250, int.MaxValue, 450) { AllowedCollisionCount = int.MaxValue };
             this.WisCC = true;
             this.WDontWaste = true;

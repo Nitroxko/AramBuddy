@@ -10,32 +10,18 @@ namespace AramBuddy.MainCore.Utility
         internal static void Init()
         {
             LevelSpells();
-            Obj_AI_Base.OnLevelUp += Obj_AI_BaseOnOnLevelUp;
+            Game.OnTick += Game_OnTick;
         }
 
-        private static int i;
+        private static void Game_OnTick(EventArgs args)
+        {
+
+        }
+
+        private static int I;
 
         private static void LevelSpells()
         {
-            int[] LevelSet = { };
-
-            if (Player.Instance.ChampionName.Equals("Ryze"))
-            {
-                LevelSet = MaxRyze;
-            }
-
-            if (MaxQChampions.Any(s => s.Equals(Player.Instance.ChampionName, StringComparison.CurrentCultureIgnoreCase)))
-            {
-                LevelSet = MaxQSequence;
-            }
-            if (MaxWChampions.Any(s => s.Equals(Player.Instance.ChampionName, StringComparison.CurrentCultureIgnoreCase)))
-            {
-                LevelSet = MaxWSequence;
-            }
-            if (MaxEChampions.Any(s => s.Equals(Player.Instance.ChampionName, StringComparison.CurrentCultureIgnoreCase)))
-            {
-                LevelSet = MaxESequence;
-            }
             var qL = Player.Instance.Spellbook.GetSpell(SpellSlot.Q).Level;
             var wL = Player.Instance.Spellbook.GetSpell(SpellSlot.W).Level;
             var eL = Player.Instance.Spellbook.GetSpell(SpellSlot.E).Level;
@@ -44,6 +30,26 @@ namespace AramBuddy.MainCore.Utility
             var level = new[] { 0, 0, 0, 0 };
             if (qL + wL + eL + rL < Player.Instance.Level)
             {
+                int[] LevelSet = { };
+
+                if (Player.Instance.ChampionName.Equals("Ryze"))
+                {
+                    LevelSet = MaxRyze;
+                }
+
+                if (MaxQChampions.Any(s => s.Equals(Player.Instance.ChampionName, StringComparison.CurrentCultureIgnoreCase)))
+                {
+                    LevelSet = MaxQSequence;
+                }
+                if (MaxWChampions.Any(s => s.Equals(Player.Instance.ChampionName, StringComparison.CurrentCultureIgnoreCase)))
+                {
+                    LevelSet = MaxWSequence;
+                }
+                if (MaxEChampions.Any(s => s.Equals(Player.Instance.ChampionName, StringComparison.CurrentCultureIgnoreCase)))
+                {
+                    LevelSet = MaxESequence;
+                }
+
                 for (var i = 0; i < Player.Instance.Level; i++)
                 {
                     if (LevelSet != null)
@@ -72,34 +78,26 @@ namespace AramBuddy.MainCore.Utility
             
             if (Player.Instance.EvolvePoints > 0)
             {
-                switch (i)
+                switch (I)
                 {
                     case 0:
                         Player.EvolveSpell(SpellSlot.Q);
-                        i++;
+                        I++;
                         return;
                     case 1:
                         Player.EvolveSpell(SpellSlot.W);
-                        i++;
+                        I++;
                         return;
                     case 2:
                         Player.EvolveSpell(SpellSlot.E);
-                        i++;
+                        I++;
                         return;
                     case 3:
                         Player.EvolveSpell(SpellSlot.R);
-                        i++;
+                        I++;
                         return;
                 }
             }
-        }
-
-        /// <summary>
-        ///     Levels up spells using Obj_AI_Base.OnLevelUp Event.
-        /// </summary>
-        public static void Obj_AI_BaseOnOnLevelUp(Obj_AI_Base sender, Obj_AI_BaseLevelUpEventArgs args)
-        {
-            LevelSpells();
         }
 
         /// <summary>
