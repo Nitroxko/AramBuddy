@@ -114,7 +114,7 @@ namespace AramBuddy.Plugins.Champions.Jhin
                 CurrentRShot = 0;
             }
 
-            var RKillable = EntityManager.Heroes.Enemies.OrderBy(t => t.TotalShieldHealth() / TotalRDamage(t)).FirstOrDefault(e => e != null && e.IsKillable(R.Range));
+            var RKillable = EntityManager.Heroes.Enemies.OrderBy(t => t.TotalShieldHealth() / TotalRDamage(t)).FirstOrDefault(e => e != null && TotalRDamage(e) >= e.TotalShieldHealth() && e.IsKillable(R.Range));
 
             if (!IsCastingR && R.IsReady() && RKillable != null && user.CountEnemiesInRange(1200) < 1)
             {
