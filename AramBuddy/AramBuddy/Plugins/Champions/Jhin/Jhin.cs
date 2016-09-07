@@ -118,7 +118,7 @@ namespace AramBuddy.Plugins.Champions.Jhin
 
             if (!IsCastingR && R.IsReady() && RKillable != null && user.CountEnemiesInRange(1200) < 1)
             {
-                
+                R.Cast(RKillable);
             }
 
             if (IsCastingR && AutoMenu.CheckBoxValue("R") && LastRPosition != null)
