@@ -9,13 +9,12 @@ namespace AramBuddy.MainCore.Utility
     {
         internal static void Init()
         {
-            LevelSpells();
             Game.OnTick += Game_OnTick;
         }
 
         private static void Game_OnTick(EventArgs args)
         {
-
+            LevelSpells();
         }
 
         private static int I;
