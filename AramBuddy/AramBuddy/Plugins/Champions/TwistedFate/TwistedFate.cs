@@ -163,7 +163,7 @@ namespace AramBuddy.Plugins.Champions.TwistedFate
             {
                 if (Q.IsReady() && KillStealMenu.CheckBoxValue(Q.Slot) && target.IsKillable(Q.Range) && Q.WillKill(target))
                 {
-                    Q.Cast(target, HitChance.Low);
+                    Q.Cast(target, 30);
                 }
                 if (KillStealMenu.CheckBoxValue(W.Slot) && target.IsKillable(W.Range) && W.WillKill(target))
                 {

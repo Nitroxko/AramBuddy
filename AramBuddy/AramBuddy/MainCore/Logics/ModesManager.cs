@@ -199,7 +199,7 @@ namespace AramBuddy.MainCore.Logics
         {
             get
             {
-                return (Misc.TeamTotal(Player.Instance.PredictPosition()) > Misc.TeamTotal(Player.Instance.PredictPosition(), true)
+                return (Misc.TeamTotal(Player.Instance.PredictPosition()) > Misc.TeamTotal(Player.Instance.PredictPosition(), true) && Misc.SafeToAttack
                        && Player.Instance.CountAlliesInRange(1000) >= Player.Instance.CountEnemiesInRange(1000) && Player.Instance.CountEnemiesInRange(1000) > 0
                        && ((Player.Instance.PredictPosition().UnderEnemyTurret() && Misc.SafeToDive) || !Player.Instance.UnderEnemyTurret())) || Player.Instance.IsZombie();
             }
@@ -212,7 +212,7 @@ namespace AramBuddy.MainCore.Logics
         {
             get
             {
-                return (Misc.TeamTotal(Player.Instance.PredictPosition()) < Misc.TeamTotal(Player.Instance.PredictPosition(), true) || Player.Instance.IsUnderHisturret())
+                return  Misc.SafeToAttack && (Misc.TeamTotal(Player.Instance.PredictPosition()) < Misc.TeamTotal(Player.Instance.PredictPosition(), true) || Player.Instance.IsUnderHisturret())
                        && Player.Instance.CountEnemiesInRange(1000) > 0 && ((Player.Instance.PredictPosition().UnderEnemyTurret() && Misc.SafeToDive) || !Player.Instance.PredictPosition().UnderEnemyTurret()) && !Flee;
             }
         }
@@ -224,7 +224,7 @@ namespace AramBuddy.MainCore.Logics
         {
             get
             {
-                return Player.Instance.CountEnemiesInRange(1000) <= 1 && !Combo && !Flee && (Player.Instance.CountAlliesInRange(800) > 1 || Player.Instance.CountMinions() > 0)
+                return Misc.SafeToAttack && Player.Instance.CountEnemiesInRange(1000) <= 1 && !Combo && !Flee && (Player.Instance.CountAlliesInRange(800) > 1 || Player.Instance.CountMinions() > 0)
                        && (Player.Instance.CountMinions(true) > 0 || AttackObject);
             }
         }

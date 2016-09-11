@@ -133,11 +133,25 @@ namespace AramBuddy.MainCore.Utility
         {
             get
             {
+                var attackrange = ObjectsManager.EnemyTurret.GetAutoAttackRange(Player.Instance);
                 return ObjectsManager.EnemyTurret != null && Player.Instance.HealthPercent > 10 && Core.GameTickCount - Brain.LastTurretAttack > 3000
-                       && (ObjectsManager.EnemyTurret.CountMinions() > 2 || ObjectsManager.EnemyTurret.CountAlliesInRange(825) > 1 || ObjectsManager.EnemyTurret.IsAttackPlayer() && Core.GameTickCount - ObjectsManager.EnemyTurret.LastPlayerAttack() < 1000);
+                       && (ObjectsManager.EnemyTurret.CountAllyMinionsInRange(attackrange) > 2 || ObjectsManager.EnemyTurret.CountAlliesInRange(attackrange) > 1 || ObjectsManager.EnemyTurret.IsAttackPlayer() && Core.GameTickCount - ObjectsManager.EnemyTurret.LastPlayerAttack() < 1000);
             }
         }
-        
+
+        /// <summary>
+        ///     Returns true if it's safe to Attack.
+        /// </summary>
+        public static bool SafeToAttack
+        {
+            get
+            {
+                return Player.Instance.HealthPercent > 10 && Core.GameTickCount - Brain.LastTurretAttack > 3000
+                    && ((Player.Instance.IsUnderEnemyturret() && SafeToDive || !Player.Instance.UnderEnemyTurret())
+                    || ObjectsManager.EnemyTurret != null && ObjectsManager.EnemyTurret.LastTarget() is AIHeroClient && !ObjectsManager.EnemyTurret.LastTarget().IsMe);
+            }
+        }
+
         /// <summary>
         ///     Returns true if Obj_AI_Base is UnderEnemyTurret.
         /// </summary>

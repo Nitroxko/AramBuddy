@@ -83,9 +83,9 @@ namespace AramBuddy.MainCore
                 Pathing.Position = ObjectsManager.NearestEnemy.Position.Extend(ObjectsManager.AllySpawn, Misc.KiteDistance(ObjectsManager.NearestEnemy)).To3D();
             }
 
-            if (Pathing.Position.UnderEnemyTurret() && !Misc.SafeToDive && ObjectsManager.AllySpawn != null)
+            if (Pathing.Position.UnderEnemyTurret() && !Misc.SafeToDive)
             {
-                Pathing.Position = Pathing.Position.Extend(ObjectsManager.AllySpawn.Position, 250).To3D();
+                Pathing.Position = Pathing.Position.Extend(ObjectsManager.AllySpawn.Position.Random(), 250).To3D();
             }
 
             // Moves to the Bot selected Position.

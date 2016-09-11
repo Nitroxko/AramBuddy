@@ -2378,7 +2378,7 @@ namespace GenesisSpellLibrary.Spells
         public TwistedFate()
         {
             this.Q = new Spell.Skillshot(SpellSlot.Q, 1450, SkillShotType.Linear, 0, 1000, 40) { AllowedCollisionCount = int.MaxValue };
-            this.W = new Spell.Active(SpellSlot.W);
+            this.W = new Spell.Active(SpellSlot.W, 800);
             this.E = new Spell.Active(SpellSlot.E);
             this.R = new Spell.Skillshot(SpellSlot.R, 5500, SkillShotType.Circular);
             this.RisTP = true;
