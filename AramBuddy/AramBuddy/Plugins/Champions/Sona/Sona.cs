@@ -106,7 +106,7 @@ namespace AramBuddy.Plugins.Champions.Sona
                             s.IsReady() && target.IsKillable(s.Range) &&
                             ComboMenu.CheckBoxValue(s.Slot)))
             {
-                spell.Cast(target, HitChance.Medium);
+                spell.Cast();
             }
         }
 
@@ -123,7 +123,7 @@ namespace AramBuddy.Plugins.Champions.Sona
                             s.IsReady() && target.IsKillable(s.Range) &&
                             ComboMenu.CheckBoxValue(s.Slot)))
             {
-                spell.Cast(target, HitChance.Medium);
+                spell.Cast();
             }
         }
 
