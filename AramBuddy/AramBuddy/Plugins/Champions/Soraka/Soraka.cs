@@ -63,7 +63,7 @@ namespace AramBuddy.Plugins.Champions.Soraka
 
             if (E.IsReady() && AutoMenu.CheckBoxValue("GapE") && e.EndPos.IsInRange(user, E.Range))
             {
-                W.Cast(e.EndPos);
+                E.Cast(e.EndPos);
             }
         }
 
