@@ -25,7 +25,7 @@ namespace AramBuddy.Plugins.Champions.Ashe
             foreach (var spell in SpellList)
             {
                 ComboMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
-                if (spell != R)
+                if (spell != R && spell != E)
                 {
                     HarassMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
                     HarassMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
@@ -149,7 +149,7 @@ namespace AramBuddy.Plugins.Champions.Ashe
         {
             foreach (var target in EntityManager.Heroes.Enemies.Where(e => e != null && e.IsValidTarget()))
             {
-                foreach (var spell in SpellList.Where(s => s.WillKill(target) && s.IsReady() && target.IsKillable(s.Range) && KillStealMenu.CheckBoxValue(s.Slot)))
+                foreach (var spell in SpellList.Where(s => s.WillKill(target) && s.IsReady() && target.IsKillable(s.Range) && KillStealMenu.CheckBoxValue(s.Slot) && s.Slot != SpellSlot.E))
                 {
                     if (spell.Slot == SpellSlot.Q)
                     {
