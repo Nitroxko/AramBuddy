@@ -25,23 +25,29 @@ namespace AramBuddy.MainCore.Utility
 
         public static void Init()
         {
-            var startfile = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\Chat\\Start.txt";
-            var endfile = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\Chat\\End.txt";
+            var startfile = Misc.AramBuddyFolder + "\\Chat\\Start.txt";
+            var endfile = Misc.AramBuddyFolder + "\\Chat\\End.txt";
             var random = new Random();
 
-            if (!Directory.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\Chat\\"))
+            if (!Directory.Exists(Misc.AramBuddyFolder + "\\Chat\\"))
             {
-                Directory.CreateDirectory(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\Chat\\");
+                Directory.CreateDirectory(Misc.AramBuddyFolder + "\\Chat\\");
             }
 
             if (!File.Exists(startfile))
             {
-                File.Create(startfile);
+                using (var sw = File.AppendText(startfile))
+                {
+                    StartMsg.ForEach(t => sw.WriteLine(t));
+                }
             }
 
             if (!File.Exists(endfile))
             {
-                File.Create(endfile);
+                using (var sw = File.AppendText(endfile))
+                {
+                    EndMsg.ForEach(t => sw.WriteLine(t));
+                }
             }
 
             Start = File.ReadAllLines(startfile).Length == 0 ? StartMsg[random.Next(StartMsg.Count)] : File.ReadAllLines(startfile)[random.Next(File.ReadAllLines(startfile).Length)];
@@ -49,9 +55,19 @@ namespace AramBuddy.MainCore.Utility
 
             Loading.OnLoadingComplete += Loading_OnLoadingComplete;
             Events.OnGameEnd += Events_OnGameEnd;
+            Chat.OnMessage += Chat_OnMessage;
         }
 
-        private static void Events_OnGameEnd(EventArgs args)
+        private static void Chat_OnMessage(AIHeroClient sender, ChatMessageEventArgs args)
+        {
+            var msg = args.Message.Replace("<font color=", "").Replace("\"#40c1ff\">", "").Replace("\"#ffffff\">", "").Replace("\"#ff3333\">", "").Replace("</font>", "");
+            var ts = TimeSpan.FromSeconds(Game.Time);
+            var time = $"{ts.Minutes}:{ts.Seconds:D2}";
+            var finalmsg = "[" + time + "] " + msg;
+            Misc.SaveLogs(finalmsg, Misc.AramBuddyDirectories.ChatLogs);
+        }
+
+        private static void Events_OnGameEnd(bool args)
         {
             if(EnableChat)
                 Core.DelayAction(() => Chat.Say("/all " + End), new Random().Next(500 + Game.Ping, 2000 + Game.Ping));

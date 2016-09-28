@@ -52,15 +52,16 @@ namespace AramBuddy.MainCore.Utility
             {
                 EnemyTeamTotal = 0;
                 AllyTeamTotal = 0;
+                EnemyTeamTotal += Game.Ping + SafeValue / 2;
                 var enemyturrets = EntityManager.Turrets.Enemies.Where(t => !t.IsDead && t.Health > 0 && t.CountEnemiesInRange(t.GetAutoAttackRange()) > 1).Sum(turret => turret.Health + turret.TotalAttackDamage);
                 var allyturrets = EntityManager.Turrets.Allies.Where(t => !t.IsDead && t.Health > 0 && t.CountAlliesInRange(t.GetAutoAttackRange()) > 1 && t.Distance(Player.Instance) <= 1000).Sum(turret => turret.Health + turret.TotalAttackDamage);
 
-                var enemyminions = EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => !m.IsDead && m.IsHPBarRendered && m.Health > 0 && m.IsValidTarget() && m.IsInRange(Position, SafeValue) && m.CountEnemiesInRange(700) > 1).Sum(minion => (minion.Health * 0.30f) + minion.Armor + minion.SpellBlock + minion.TotalMagicalDamage + minion.TotalAttackDamage - minion.Distance(Position) * 0.35f);
-                var allyminions = EntityManager.MinionsAndMonsters.AlliedMinions.Where(m => !m.IsDead && m.IsHPBarRendered && m.Health > 0 && m.IsValidTarget() && m.IsInRange(Position, SafeValue) && m.CountAlliesInRange(700) > 1).Sum(minion => (minion.Health * 0.30f) + minion.Armor + minion.SpellBlock + minion.TotalMagicalDamage + minion.TotalAttackDamage - minion.Distance(Position) * 0.35f);
+                var enemyminions = EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => !m.IsDead && m.IsValid && m.Health > 0 && m.IsInRange(Position, SafeValue) && m.CountEnemiesInRange(700) > 1).Sum(minion => (minion.Health * 0.30f) + minion.Armor + minion.SpellBlock + minion.TotalMagicalDamage + minion.TotalAttackDamage - minion.Distance(Position) * 0.35f);
+                var allyminions = EntityManager.MinionsAndMonsters.AlliedMinions.Where(m => !m.IsDead && m.IsValid && m.Health > 0 && m.IsInRange(Position, SafeValue) && m.CountAlliesInRange(700) > 1).Sum(minion => (minion.Health * 0.30f) + minion.Armor + minion.SpellBlock + minion.TotalMagicalDamage + minion.TotalAttackDamage - minion.Distance(Position) * 0.35f);
 
-                var enemyheros = EntityManager.Heroes.Enemies.Where(e => !e.IsDead && e.IsHPBarRendered && e.IsValidTarget() && e.IsInRange(Position, SafeValue))
+                var enemyheros = EntityManager.Heroes.Enemies.Where(e => !e.IsDead && e.IsValid && e.IsInRange(Position, SafeValue))
                         .Sum(enemy => enemy.Health + (enemy.Mana * 0.25f) + enemy.Armor + enemy.SpellBlock + enemy.TotalMagicalDamage + enemy.TotalAttackDamage + enemy.GetAutoAttackDamage(Player.Instance, true) - enemy.Distance(Position) * 0.35f);
-                var allyheros = EntityManager.Heroes.Allies.Where(e => !e.IsDead && e.IsHPBarRendered && e.IsValidTarget() && !e.IsMe && e.IsInRange(Position, SafeValue))
+                var allyheros = EntityManager.Heroes.Allies.Where(e => !e.IsDead && e.IsValid && !e.IsMe && e.IsInRange(Position, SafeValue))
                         .Sum(ally => ally.Health + (ally.Mana * 0.25f) + ally.Armor + ally.SpellBlock + ally.TotalMagicalDamage + ally.TotalAttackDamage + ally.GetAutoAttackDamage(Player.Instance, true) - ally.Distance(Position) * 0.35f);
 
                 var mydamage = Player.Instance.Health + (Player.Instance.Mana * 0.25f) + Player.Instance.Armor + Player.Instance.SpellBlock
@@ -94,12 +95,12 @@ namespace AramBuddy.MainCore.Utility
 
             foreach (var slot in spelllist)
             {
-                foreach (var enemy in EntityManager.Heroes.Enemies.Where(e => !e.IsDead && e.IsValidTarget() && e.IsHPBarRendered && e.IsInRange(Position, SafeValue)
+                foreach (var enemy in EntityManager.Heroes.Enemies.Where(e => !e.IsDead && e.IsValid && e.IsInRange(Position, SafeValue)
                 && e.Spellbook.GetSpell(slot).IsLearned && e.Spellbook.GetSpell(slot).SData.Mana < e.Mana))
                 {
                     EnemyTeamDamage += enemy.GetSpellDamage(Player.Instance, slot);
                 }
-                foreach (var ally in EntityManager.Heroes.Allies.Where(e => !e.IsDead && e.IsValidTarget() && e.IsHPBarRendered && !e.IsMe && e.IsInRange(Position, SafeValue)
+                foreach (var ally in EntityManager.Heroes.Allies.Where(e => !e.IsDead && e.IsValid && !e.IsMe && e.IsInRange(Position, SafeValue)
                 && e.Spellbook.GetSpell(slot).IsLearned && e.Spellbook.GetSpell(slot).SData.Mana < e.Mana))
                 {
                     AllyTeamDamage += ally.GetSpellDamage(Player.Instance, slot);
@@ -135,7 +136,8 @@ namespace AramBuddy.MainCore.Utility
             {
                 var attackrange = ObjectsManager.EnemyTurret.GetAutoAttackRange(Player.Instance);
                 return ObjectsManager.EnemyTurret != null && Player.Instance.HealthPercent > 10 && Core.GameTickCount - Brain.LastTurretAttack > 3000
-                       && (ObjectsManager.EnemyTurret.CountAllyMinionsInRange(attackrange) > 2 || ObjectsManager.EnemyTurret.CountAlliesInRange(attackrange) > 1 || ObjectsManager.EnemyTurret.IsAttackPlayer() && Core.GameTickCount - ObjectsManager.EnemyTurret.LastPlayerAttack() < 1000);
+                       && (ObjectsManager.EnemyTurret.CountAllyMinionsInRange(attackrange) > 2 || ObjectsManager.EnemyTurret.CountAlliesInRange(attackrange) > 1
+                       || ObjectsManager.EnemyTurret.IsAttackPlayer() && Core.GameTickCount - ObjectsManager.EnemyTurret.LastPlayerAttack() < 1000);
             }
         }
 
@@ -199,7 +201,7 @@ namespace AramBuddy.MainCore.Utility
         {
             get
             {
-                return EntityManager.Heroes.Allies.Count(a => a.IsAttackPlayer() && a.CountAlliesInRange(1250) > 1 && a.IsValidTarget() && Player.Instance.HealthPercent > 20) >= 2;
+                return EntityManager.Heroes.Allies.Count(a => a.IsAttackPlayer() && a.CountAlliesInRange(1250) > 1 && a.IsValidTarget() && Player.Instance.HealthPercent > 20) >= 3;
             }
         }
 
@@ -336,30 +338,122 @@ namespace AramBuddy.MainCore.Utility
             return skillshot?.GetPrediction(target);
         }
 
+        public static float ProtectFPS
+        {
+            get
+            {
+                return Game.FPS < 60 && !Game.FPS.Equals(25) ? Game.FPS * 2 : Game.FPS;
+            }
+        }
+        
+        public static string AramBuddyFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy";
+        public static string[] AramBuddySubFolders = { "\\Builds", "\\Chat", "\\temp", "\\Logs", "\\Logs\\AramBuddyLogs", "\\Logs\\ChatLogs" };
+
+        public static AramBuddyDirectories AramBuddyDirectory;
+        
+        public static void SaveLogs(string str, AramBuddyDirectories Directory)
+        {
+            var dir = AramBuddyFolder + "\\Logs";
+            switch (Directory)
+            {
+                case AramBuddyDirectories.AramBuddyLogs:
+                    if (!EnableLogs) return;
+                    dir += "\\AramBuddyLogs\\";
+                    break;
+                case AramBuddyDirectories.ChatLogs:
+                    if (!SaveChat) return;
+                    dir += "\\ChatLogs\\";
+                    break;
+                default:
+                    return;
+            }
+            var file = "[" + Player.Instance.Name + " " + Player.Instance.ChampionName + "] - [" + DateTime.Now.ToString("yy-MM-dd") + "] " + Game.GameId + ".txt";
+            using (var stream = new StreamWriter(dir + file, true))
+            {
+                stream.WriteLine(str);
+                //stream.Close();
+            }
+        }
+
+        public enum AramBuddyDirectories
+        {
+            Builds, Chat, Temp, AramBuddyLogs, Logs, ChatLogs
+        }
+
+        public static void CreateAramBuddyDirectories()
+        {
+            if (!Directory.Exists(AramBuddyFolder))
+            {
+                Directory.CreateDirectory(AramBuddyFolder);
+            }
+            foreach (var f in AramBuddySubFolders)
+            {
+                if (!Directory.Exists(AramBuddyFolder + f))
+                {
+                    Directory.CreateDirectory(AramBuddyFolder + f);
+                }
+            }
+        }
+
+        public static void CreateAramBuddyFile(string FileName, AramBuddyDirectories Directory)
+        {
+            CreateAramBuddyDirectories();
+
+            var dir = AramBuddyFolder;
+            switch (Directory)
+            {
+                case AramBuddyDirectories.AramBuddyLogs:
+                    dir += "\\Logs\\AramBuddyLogs\\";
+                    break;
+                case AramBuddyDirectories.Logs:
+                    dir += "\\Logs\\";
+                    break;
+                case AramBuddyDirectories.ChatLogs:
+                    dir += "\\Logs\\ChatLogs\\";
+                    break;
+                case AramBuddyDirectories.Builds:
+                    dir += "\\Builds\\";
+                    break;
+                case AramBuddyDirectories.Chat:
+                    dir += "\\Chat\\";
+                    break;
+                case AramBuddyDirectories.Temp:
+                    dir += "\\temp\\";
+                    break;
+            }
+            if (!File.Exists(dir + FileName))
+            {
+                File.Create(dir + FileName);
+            }
+        }
+
         /// <summary>
         ///     Distance To Keep from an Object and still be able to attack.
         /// </summary>
         public static float KiteDistance(GameObject target)
         {
-            var extra = 0f;
-            if (!Player.Instance.IsMelee)
-                extra = target.BoundingRadius;
+            var extra = target.BoundingRadius * 0.5f;
 
-            return (Player.Instance.GetAutoAttackRange() * (Player.Instance.IsMelee ? 0.2f : 0.7f)) + extra;
+            return (Player.Instance.GetAutoAttackRange() * (Player.Instance.GetAutoAttackRange() < 425 ? 0.5f : 0.9f)) + extra;
         }
         
         public static bool Added(this AIHeroClient target)
         {
-            var read = File.ReadAllLines(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\temp123.dat");
+            return false; // disabled for now
+            var read = File.ReadAllLines(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\ " + Game.GameId + ".dat");
+            if (target.IsAlly && EntityManager.Heroes.Allies.Count(a => read.Contains(a.NetworkId.ToString())) > 3)
+            {
+                return false;
+            }
             return read.Contains(target.NetworkId.ToString());
         }
 
         public static void Add(this AIHeroClient target)
         {
-            using (var stream = new StreamWriter(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\temp123.dat", true))
+            return; // disabled for now
+            using (var stream = new StreamWriter(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\ " + Game.GameId + ".dat", true))
             {
                 stream.WriteLine(target.NetworkId);
-                stream.Close();
             }
         }
 

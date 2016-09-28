@@ -72,7 +72,7 @@ namespace AramBuddy.Plugins.Champions.Jhin
 
         private static void Player_OnIssueOrder(Obj_AI_Base sender, PlayerIssueOrderEventArgs args)
         {
-            if (sender.IsMe && IsCastingR && AutoMenu.CheckBoxValue("Commands"))
+            if (sender.IsMe && IsCastingR && EntityManager.Heroes.Enemies.Any(e => e.IsKillable() && JhinRSector(LastRPosition).IsInside(e)))
             {
                 args.Process = false;
             }
@@ -216,13 +216,13 @@ namespace AramBuddy.Plugins.Champions.Jhin
             {
                 var minions = W.LaneMinions();
                 var farmloc = EntityManager.MinionsAndMonsters.GetLineFarmLocation(minions, W.SetSkillshot().Width, (int)W.Range);
-                if (farmloc.HitNumber >= LaneClearMenu.SliderValue("Whit"))
+                if (farmloc.HitNumber >= 2)
                     W.Cast(farmloc.CastPosition);
             }
 
             if (Q.IsReady() && LaneClearMenu.CheckBoxValue(SpellSlot.Q) && LaneClearMenu.CompareSlider("Qmana", user.ManaPercent))
             {
-                var qminion = Q.LaneMinions().OrderBy(m => m.Health / user.GetSpellDamage(m, SpellSlot.Q)).FirstOrDefault(m => m.CountEnemyMinionsInRange(450) >= LaneClearMenu.SliderValue("Qhit"));
+                var qminion = Q.LaneMinions().OrderBy(m => m.Health / user.GetSpellDamage(m, SpellSlot.Q)).FirstOrDefault(m => m.CountEnemyMinionsInRange(450) >= 4);
                 if (qminion != null)
                 {
                     Q.Cast(qminion);
@@ -233,7 +233,7 @@ namespace AramBuddy.Plugins.Champions.Jhin
             {
                 var minions = E.LaneMinions();
                 var farmloc = EntityManager.MinionsAndMonsters.GetCircularFarmLocation(minions, E.SetSkillshot().Width, (int)E.Range);
-                if (farmloc.HitNumber >= LaneClearMenu.SliderValue("Ehit"))
+                if (farmloc.HitNumber >= 3)
                     E.Cast(farmloc.CastPosition);
             }
         }

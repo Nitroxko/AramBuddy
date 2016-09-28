@@ -21,12 +21,12 @@ namespace AramBuddy.AutoShop
         /// <summary>
         ///     Path to the build folder, containing all the champion builds
         /// </summary>
-        public static readonly string BuildPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\Builds";
+        public static readonly string BuildPath = Misc.AramBuddyFolder + "\\Builds";
 
         /// <summary>
         ///     Path to the temporary folder which contains the in-game cache
         /// </summary>
-        public static readonly string TempPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp";
+        public static readonly string TempPath = Misc.AramBuddyFolder + "\\temp";
 
         /// <summary>
         ///     Path to the temporary file which contains the in-game cache
@@ -56,21 +56,6 @@ namespace AramBuddy.AutoShop
                 var useDefaultBuild = false;
                 // When the game starts
                 AramBuddy.Events.OnGameStart += Events_OnGameStart;
-
-                // Item Bought Event, reduce the temp value when we buy the item.
-                Events.OnBuyItem += delegate
-                    {
-                        Core.DelayAction(
-                            () =>
-                                {
-                                    // Try to buy more than one item if we can afford it
-                                    Buy.BuyNextItem(CurrentChampionBuild);
-                                },
-                            new Random().Next(900 + Game.Ping, 2750 + Game.Ping));
-                    };
-
-                // Create the build path directory
-                Directory.CreateDirectory(BuildPath);
 
                 // Check if the index file exists
                 if (!File.Exists(TempFile))
@@ -205,7 +190,7 @@ namespace AramBuddy.AutoShop
         ///     Fired when the game ends
         /// </summary>
         /// <param name="args">Arguments providing with information about the GameEnd</param>
-        private static void Events_OnGameEnd(EventArgs args)
+        private static void Events_OnGameEnd(bool args)
         {
             // Delete the index file if it exists
             if (File.Exists(TempFile))
@@ -222,7 +207,7 @@ namespace AramBuddy.AutoShop
         private static void Events_OnBuildReset(EventArgs args)
         {
             // Notify the user that the build has been reset
-            Logger.Send("Build has been reset!", Logger.LogLevel.Info);
+            Logger.Send("Build has been reset!", Logger.LogLevel.Event);
 
             // Reset the build index, restarting the build process from the start
             Buy.ResetIndex();
@@ -234,11 +219,14 @@ namespace AramBuddy.AutoShop
         /// <param name="args">Arguments of the event</param>
         private static void Events_OnBuyAllow(EventArgs args)
         {
+            // To Prevent Instantly buying item when event is fired
+            var rnd = new Random().Next(500, 3000) + Game.Ping;
+
             // Notify the user that we are going to try to buy items now
-            Logger.Send("Can buy items", Logger.LogLevel.Info);
+            Logger.Send("Can buy items: " + (rnd / 1000).ToString("F1") + " Second/s Delay", Logger.LogLevel.Event);
 
             // Attempt to buy as many consecutive items on the build as we can
-            Buy.BuyNextItem(CurrentChampionBuild);
+            Core.DelayAction(() => Buy.BuyNextItem(CurrentChampionBuild), rnd);
         }
     }
 }

@@ -38,6 +38,8 @@ namespace AramBuddy.AutoShop.Sequences
         {
             try
             {
+                if (!Config.EnableAutoShop) return false;
+
                 // Check if we've reached the end of the build
                 if (build.BuildData.Length < GetIndex() + 1)
                 {
@@ -61,9 +63,6 @@ namespace AramBuddy.AutoShop.Sequences
 
                         // Buy the actual item from the shop
                         Shop.BuyItem(itembuy);
-
-                        // Success
-                        Events.OnOnBuyItem();
 
                         // Notify the user that the item has been bought and of the value of the item
                         Logger.Send("Item bought: " + itembuy + " - Item Value: " + new Item(itembuy).ItemInfo.Gold.Total, Logger.LogLevel.Info);
@@ -89,8 +88,8 @@ namespace AramBuddy.AutoShop.Sequences
                 NextItemValue = currentprice;
 
                 // Check if we can buy the item
-                if ((item.Value != null) && CanShop && (item.Key != ItemId.Unknown) && item.Value.ValidForPlayer && item.Value.InStore && item.Value.Gold.Purchasable
-                    && item.Value.AvailableForMap && (Player.Instance.Gold >= currentprice))
+                if ((item.Value != null) && CanShop && (item.Key != ItemId.Unknown) && item.Value.ValidForPlayer && item.Value.InStore && item.Value.Gold.Purchasable && item.Value.AvailableForMap
+                    && (Player.Instance.Gold >= currentprice))
                 {
                     // Buy the actual item from the shop
                     Shop.BuyItem(item.Key);
@@ -101,8 +100,10 @@ namespace AramBuddy.AutoShop.Sequences
                     // Notify the user that the item has been bought and of the value of the item
                     Logger.Send("Item bought: " + item.Value.Name + " - Item Value: " + currentprice, Logger.LogLevel.Info);
 
+                    // Try to buy more than one item if we can afford it
+                    Core.DelayAction(() => BuyNextItem(build), new Random().Next(900, 2750) + Game.Ping);
+
                     // Success
-                    Events.OnOnBuyItem();
                     return true;
                 }
 

@@ -8,15 +8,20 @@ namespace AramBuddy.MainCore.Utility
         {
             Error,
             Info,
-            Warn
+            Warn,
+            Event
         }
 
         public static bool Send(string str, LogLevel level)
         {
-            var date = DateTime.Now.ToString("[H:mm:ss - ") + "AramBuddy ";
+            var date = DateTime.Now.ToString("[H:mm:ss - ") + "AramBuddy";
             var text = string.Empty;
             switch (level)
             {
+                case LogLevel.Event:
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    text = date + " Event] ";
+                    break;
                 case LogLevel.Info:
                     Console.ForegroundColor = ConsoleColor.Cyan;
                     text = date + " Info] ";
@@ -32,15 +37,20 @@ namespace AramBuddy.MainCore.Utility
             }
             Console.WriteLine(text + str);
             Console.ResetColor();
+            Misc.SaveLogs(text + str, Misc.AramBuddyDirectories.AramBuddyLogs);
             return true;
         }
 
         public static void Send(string str, Exception ex, LogLevel level)
         {
-            var date = DateTime.Now.ToString("[H:mm:ss - ") + "AramBuddy ";
+            var date = DateTime.Now.ToString("[H:mm:ss - ") + "AramBuddy";
             var text = string.Empty;
             switch (level)
             {
+                case LogLevel.Event:
+                    Console.ForegroundColor = ConsoleColor.Green;
+                    text = date + " Event] ";
+                    break;
                 case LogLevel.Info:
                     Console.ForegroundColor = ConsoleColor.Cyan;
                     text = date + " Info] ";
@@ -54,9 +64,10 @@ namespace AramBuddy.MainCore.Utility
                     text = date + " Error] ";
                     break;
             }
-            Console.WriteLine(text);
+            Console.WriteLine(text + str);
             Console.WriteLine(ex);
             Console.ResetColor();
+            Misc.SaveLogs(text + str, Misc.AramBuddyDirectories.AramBuddyLogs);
         }
     }
 }

@@ -99,7 +99,7 @@ namespace AramBuddy.Plugins.Champions.Kalista
             Events.OnGameEnd += Events_OnGameEnd;
         }
 
-        private static void Events_OnGameEnd(EventArgs args)
+        private static void Events_OnGameEnd(bool args)
         {
             if (File.Exists(appdata + Game.GameId + ".dat"))
             {

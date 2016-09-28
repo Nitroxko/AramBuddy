@@ -4,7 +4,6 @@ using System;
 using AramBuddy.AutoShop.Sequences;
 using AramBuddy.MainCore.Utility;
 using EloBuddy;
-using EloBuddy.SDK;
 
 #endregion
 
@@ -26,12 +25,6 @@ namespace AramBuddy.AutoShop
         /// </summary>
         /// <param name="args">The arguments the event provides</param>
         public delegate void OnBuyAllowHandler(EventArgs args);
-
-        /// <summary>
-        ///     A handler for the OnItemBought event
-        /// </summary>
-        /// <param name="price">The arguments the event provides</param>
-        public delegate void OnItemBought();
 
         /// <summary>
         ///     A handler for the OnPlayerDeathHandler event
@@ -165,15 +158,5 @@ namespace AramBuddy.AutoShop
         ///     Fires when the player dies
         /// </summary>
         public static event OnPlayerDeathHandler OnPlayerDeath;
-
-        /// <summary>
-        ///     Fires when buying items is allowed
-        /// </summary>
-        public static event OnItemBought OnBuyItem;
-
-        public static void OnOnBuyItem()
-        {
-            OnBuyItem?.Invoke();
-        }
     }
 }

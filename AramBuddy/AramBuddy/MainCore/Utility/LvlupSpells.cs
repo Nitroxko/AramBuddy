@@ -14,7 +14,8 @@ namespace AramBuddy.MainCore.Utility
 
         private static void Game_OnTick(EventArgs args)
         {
-            LevelSpells();
+            if(Config.EnableAutoLvlUP)
+                LevelSpells();
         }
 
         private static int I;
@@ -27,7 +28,7 @@ namespace AramBuddy.MainCore.Utility
             var rL = Player.Instance.Spellbook.GetSpell(SpellSlot.R).Level;
 
             var level = new[] { 0, 0, 0, 0 };
-            if (qL + wL + eL + rL < Player.Instance.Level)
+            if (qL + wL + eL + rL < Player.Instance.Level && Player.Instance.SpellTrainingPoints > 0)
             {
                 int[] LevelSet = { };
 
@@ -57,19 +58,19 @@ namespace AramBuddy.MainCore.Utility
                     }
                 }
 
-                if (qL < level[0])
+                if (qL < level[0] && Player.Instance.Spellbook.CanSpellBeUpgraded(SpellSlot.Q))
                 {
                     Player.LevelSpell(SpellSlot.Q);
                 }
-                if (wL < level[1])
+                if (wL < level[1] && Player.Instance.Spellbook.CanSpellBeUpgraded(SpellSlot.W))
                 {
                     Player.LevelSpell(SpellSlot.W);
                 }
-                if (eL < level[2])
+                if (eL < level[2] && Player.Instance.Spellbook.CanSpellBeUpgraded(SpellSlot.E))
                 {
                     Player.LevelSpell(SpellSlot.E);
                 }
-                if (rL < level[3])
+                if (rL < level[3] && Player.Instance.Spellbook.CanSpellBeUpgraded(SpellSlot.R))
                 {
                     Player.LevelSpell(SpellSlot.R);
                 }

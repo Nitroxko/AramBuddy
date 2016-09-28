@@ -57,7 +57,7 @@ namespace AramBuddy
                     {
                         Chat.Print("<b>AramBuddy: There is a new Update Available for AramBuddy !</b>");
                         Chat.Print("<b>AramBuddy Update Log: " + UpdateMsg + "</b>");
-                        Notifications.Show(new SimpleNotification("ARAMBUDDY OUTDATED", "Update Log: " + UpdateMsg), 10000);
+                        Notifications.Show(new SimpleNotification("ARAMBUDDY OUTDATED", "Update Log: " + UpdateMsg), 25000);
                         Sent = true;
                     }
                 };

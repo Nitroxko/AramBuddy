@@ -17,8 +17,8 @@ namespace AramBuddy
         /// <summary>
         ///     A handler for the OnGameEnd event
         /// </summary>
-        /// <param name="args">The arguments the event provides</param>
-        public delegate void OnGameEndHandler(EventArgs args);
+        /// <param name="win">The arguments the event provides</param>
+        public delegate void OnGameEndHandler(bool win);
 
         /// <summary>
         ///     A handler for the OnGameStart event
@@ -38,10 +38,16 @@ namespace AramBuddy
             public AIHeroClient Target;
             public float InComingDamage;
             public Type DamageType;
+
             public enum Type
             {
-                TurretAttack, HeroAttack, MinionAttack, SkillShot, TargetedSpell
+                TurretAttack,
+                HeroAttack,
+                MinionAttack,
+                SkillShot,
+                TargetedSpell
             }
+
             public InComingDamageEventArgs(Obj_AI_Base sender, AIHeroClient target, float Damage, Type type)
             {
                 this.Sender = sender;
@@ -54,6 +60,7 @@ namespace AramBuddy
         static Events()
         {
             // Invoke the OnGameEnd event
+
             #region OnGameEnd
 
             // Variable used to make sure that the event invoke isn't spammed and is only called once
@@ -80,13 +87,14 @@ namespace AramBuddy
                     // If the nexus is dead or its health is equal to 0
                     if (nexus.Any(n => n.IsDead || n.Health.Equals(0)))
                     {
+                        var win = ObjectManager.Get<Obj_HQ>().Any(n => n.IsEnemy && n.Health.Equals(0));
                         // Invoke the event
-                        OnGameEnd(EventArgs.Empty);
+                        OnGameEnd?.Invoke(win);
 
                         // Set gameEndNotified to true, as the event has been completed
                         gameEndNotified = true;
 
-                        Logger.Send("Game ended!", Logger.LogLevel.Info);
+                        Logger.Send("Game ended! " + (win ? "Victory !" : ""), Logger.LogLevel.Info);
                     }
                 };
 
@@ -103,39 +111,42 @@ namespace AramBuddy
                 };
 
             SpellsDetector.OnTargetedSpellDetected += delegate(AIHeroClient sender, AIHeroClient target, GameObjectProcessSpellCastEventArgs args, Database.TargetedSpells.TSpell spell)
-            {
-                // Used to Invoke the Incoming Damage Event When there is a TargetedSpell Incoming
-                if (target.IsAlly)
+                {
+                    // Used to Invoke the Incoming Damage Event When there is a TargetedSpell Incoming
+                    if (target.IsAlly)
                         OnIncomingDamage?.Invoke(new InComingDamageEventArgs(sender, target, sender.GetSpellDamage(target, spell.slot), InComingDamageEventArgs.Type.TargetedSpell));
                 };
 
             Obj_AI_Base.OnBasicAttack += delegate(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
-            {
-                // Used to Invoke the Incoming Damage Event When there is an AutoAttack Incoming
+                {
+                    // Used to Invoke the Incoming Damage Event When there is an AutoAttack Incoming
                     var target = args.Target as AIHeroClient;
                     var hero = sender as AIHeroClient;
                     var turret = sender as Obj_AI_Turret;
                     var minion = sender as Obj_AI_Minion;
 
-                    if(target == null || !target.IsAlly) return;
+                    if (target == null || !target.IsAlly)
+                        return;
 
-                    if(hero != null)
+                    if (hero != null)
                         OnIncomingDamage?.Invoke(new InComingDamageEventArgs(hero, target, hero.GetAutoAttackDamage(target), InComingDamageEventArgs.Type.HeroAttack));
                     if (turret != null)
                         OnIncomingDamage?.Invoke(new InComingDamageEventArgs(turret, target, turret.GetAutoAttackDamage(target), InComingDamageEventArgs.Type.TurretAttack));
                     if (minion != null)
                         OnIncomingDamage?.Invoke(new InComingDamageEventArgs(minion, target, minion.GetAutoAttackDamage(target), InComingDamageEventArgs.Type.MinionAttack));
                 };
-            Obj_AI_Base.OnProcessSpellCast += delegate (Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
-            {
-                var caster = sender as AIHeroClient;
-                var target = args.Target as AIHeroClient;
-                if (caster == null || target == null || !caster.IsEnemy || !target.IsAlly || args.IsAutoAttack()) return;
-                if (!Database.TargetedSpells.TargetedSpellsList.Any(s => s.hero == caster.Hero && s.slot == args.Slot))
+            Obj_AI_Base.OnProcessSpellCast += delegate(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
                 {
-                    OnIncomingDamage?.Invoke(new InComingDamageEventArgs(caster, target, caster.GetSpellDamage(target, args.Slot), InComingDamageEventArgs.Type.TargetedSpell));
-                }
-            };
+                    var caster = sender as AIHeroClient;
+                    var target = args.Target as AIHeroClient;
+                    if (caster == null || target == null || !caster.IsEnemy || !target.IsAlly || args.IsAutoAttack())
+                        return;
+                    if (!Database.TargetedSpells.TargetedSpellsList.Any(s => s.hero == caster.Hero && s.slot == args.Slot))
+                    {
+                        OnIncomingDamage?.Invoke(new InComingDamageEventArgs(caster, target, caster.GetSpellDamage(target, args.Slot), InComingDamageEventArgs.Type.TargetedSpell));
+                    }
+                };
+
             #endregion
 
             // Invoke the OnGameStart event

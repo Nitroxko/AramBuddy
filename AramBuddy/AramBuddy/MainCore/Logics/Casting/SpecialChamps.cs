@@ -94,12 +94,19 @@ namespace AramBuddy.MainCore.Logics.Casting
                             Player.CastSpell(SpellSlot.R, target.PredictPosition());
                         }
                     }
-                    if (Importantspells.Any(s => s.champ == Player.Instance.Hero && s.champ == Champion.Velkoz))
+                    if (Importantspells.Any(s => s.champ == Player.Instance.Hero))
                     {
-                        var target = TargetSelector.GetTarget(1750, DamageType.Magical);
-                        if (target != null)
+                        if (Player.Instance.Hero == Champion.Velkoz)
                         {
-                            Player.UpdateChargeableSpell(SpellSlot.R, target.PredictPosition(), false, false);
+                            var target = TargetSelector.GetTarget(1750, DamageType.Magical);
+                            if (target != null)
+                            {
+                                Player.UpdateChargeableSpell(SpellSlot.R, target.PredictPosition(), false, false);
+                            }
+                        }
+                        if (Player.Instance.Hero == Champion.TahmKench)
+                        {
+                            Player.CastSpell(SpellSlot.R);
                         }
                     }
                 }

@@ -12,6 +12,7 @@ using EloBuddy.SDK;
 using EloBuddy.SDK.Events;
 using EloBuddy.SDK.Menu;
 using EloBuddy.SDK.Menu.Values;
+using EloBuddy.SDK.Notifications;
 using EloBuddy.SDK.Rendering;
 using SharpDX;
 using static AramBuddy.Config;
@@ -22,6 +23,7 @@ namespace AramBuddy
 {
     internal class Program
     {
+        public static bool CrashAIODetected;
         public static Version version = typeof(Program).Assembly.GetName().Version;
         public static int MoveToCommands;
         public static bool CustomChamp;
@@ -30,11 +32,11 @@ namespace AramBuddy
         private static float TimeToStart;
         public static string Moveto;
 
-        public static Menu MenuIni, SpellsMenu;
+        public static Menu MenuIni, SpellsMenu, MiscMenu;
 
         private static void Main()
         {
-            if (File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\DisableTexture.dat"))
+            if (File.Exists(Misc.AramBuddyFolder + "\\temp\\DisableTexture.dat"))
             {
                 Hacks.DisableTextures = true;
                 ManagedTexture.OnLoad += delegate (OnLoadTextureEventArgs texture) { texture.Process = false; };
@@ -54,6 +56,29 @@ namespace AramBuddy
                     return;
                 }
 
+                Chat.OnClientSideMessage += delegate (ChatClientSideMessageEventArgs eventArgs)
+                {
+                    if (eventArgs.Message.ToLower().Contains("portaio") && !CrashAIODetected)
+                    {
+                        var warnmsg = "AramBuddy Doesnt Work With CrashAIO\nDisable CrashAIO\nIn order To use AramBuddy !";
+                        Chat.Print(warnmsg);
+                        Logger.Send(warnmsg, Logger.LogLevel.Warn);
+                        Notifications.Show(new SimpleNotification("AramBuddy", warnmsg), 20000);
+                        Drawing.OnEndScene += delegate
+                            {
+                                text.TextValue = warnmsg;
+                                text.Position = new Vector2(Drawing.Width * 0.3f, Drawing.Height * 0.2f);
+                                text.Draw();
+                        };
+                        CrashAIODetected = true;
+                    }
+                };
+
+                Misc.CreateAramBuddyFile(Game.GameId + ".dat", Misc.AramBuddyDirectories.Temp);
+
+                // Creates The Menu
+                CreateMenu();
+
                 // Checks for updates
                 CheckVersion.Init();
 
@@ -62,7 +87,7 @@ namespace AramBuddy
                 
                 // Initialize the AutoShop.
                 AutoShop.Setup.Init();
-                
+
                 /*
                 Chat.OnInput += delegate (ChatInputEventArgs msg)
                 {
@@ -77,7 +102,7 @@ namespace AramBuddy
                         }
                     }
                 };*/
-
+                
                 Timer = Game.Time;
                 TimeToStart = new Random().Next(10000, 20000) + Game.Ping;
                 Game.OnTick += Game_OnTick;
@@ -103,12 +128,31 @@ namespace AramBuddy
             }
         }
 
-        private static void Events_OnGameEnd(EventArgs args)
+        private static void Events_OnGameEnd(bool args)
         {
             try
             {
                 if (QuitOnGameEnd)
-                    Core.DelayAction(() => Game.QuitGame(), new Random().Next(15000, 30000) + Game.Ping);
+                {
+                    var rnd = new Random().Next(15000, 30000) + Game.Ping;
+                    Logger.Send("Closing the Game in: " + (rnd / 1000).ToString("F1") + " Second/s", Logger.LogLevel.Event);
+                    Core.DelayAction(
+                        () =>
+                        {
+                            if (File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\ " + Game.GameId + ".dat"))
+                            {
+                                File.Delete(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\ " + Game.GameId + ".dat");
+                            }
+                            Game.QuitGame();
+                            }, rnd);
+                }
+                else
+                {
+                    if (File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\ " + Game.GameId + ".dat"))
+                    {
+                        File.Delete(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\ " + Game.GameId + ".dat");
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -122,55 +166,10 @@ namespace AramBuddy
             {
                 if (Orbwalker.MovementDelay < 200)
                 {
-                    Orbwalker.MovementDelay = new Random().Next(200, 500) + Game.Ping;
+                    Orbwalker.MovementDelay += new Random().Next(200, 500) + Game.Ping;
                 }
-
-                MenuIni = MainMenu.AddMenu("AramBuddy", "AramBuddy");
+                
                 var build = MenuIni.AddSubMenu("Current Build");
-                SpellsMenu = MenuIni.AddSubMenu("Spells");
-                MenuIni.AddGroupLabel("AramBuddy Version: " + version);
-                MenuIni.AddGroupLabel("AramBuddy Settings");
-                var debug = MenuIni.CreateCheckBox("debug", "Enable Debugging Mode");
-                var activator = MenuIni.CreateCheckBox("activator", "Enable Built-In Activator");
-                var DisableSpells = MenuIni.CreateCheckBox("DisableSpells", "Disable Built-in Casting Logic", false);
-                var quit = MenuIni.CreateCheckBox("quit", "Quit On Game End");
-                var stealhr = MenuIni.CreateCheckBox("stealhr", "Dont Steal Health Relics From Allies", false);
-                var chat = MenuIni.CreateCheckBox("chat", "Send Start / End msg In-Game Chat", false);
-                var texture = MenuIni.CreateCheckBox("texture", "Disable In-Game Texture (Less RAM/CPU)", false);
-
-                MenuIni.AddSeparator(0);
-                var Safe = MenuIni.CreateSlider("Safe", "Safe Slider (Recommended 1250)", 1250, 0, 2500);
-                MenuIni.AddLabel("More Safe Value = more defensive playstyle");
-                MenuIni.AddSeparator(0);
-                var HRHP = MenuIni.CreateSlider("HRHP", "Health Percent To Pick Health Relics (Recommended 75%)", 75);
-                var HRMP = MenuIni.CreateSlider("HRMP", "Mana Percent To Pick Health Relics (Recommended 15%)", 15);
-                MenuIni.AddSeparator(0);
-                var Reset = MenuIni.CreateCheckBox("reset", "Reset All Settings To Default", false);
-                Reset.OnValueChange += delegate(ValueBase<bool> sender, ValueBase<bool>.ValueChangeArgs args)
-                    {
-                        if (args.NewValue)
-                        {
-                            Reset.CurrentValue = false;
-                            debug.CurrentValue = true;
-                            activator.CurrentValue = true;
-                            DisableSpells.CurrentValue = false;
-                            quit.CurrentValue = true;
-                            stealhr.CurrentValue = false;
-                            chat.CurrentValue = true;
-                            texture.CurrentValue = false;
-                            Safe.CurrentValue = 1250;
-                            HRHP.CurrentValue = 75;
-                            HRMP.CurrentValue = 15;
-                        }
-                    };
-
-                SpellsMenu.AddGroupLabel("SummonerSpells");
-                SpellsMenu.Add("Heal", new CheckBox("Use Heal"));
-                SpellsMenu.Add("Barrier", new CheckBox("Use Barrier"));
-                SpellsMenu.Add("Clarity", new CheckBox("Use Clarity"));
-                SpellsMenu.Add("Ghost", new CheckBox("Use Ghost"));
-                SpellsMenu.Add("Flash", new CheckBox("Use Flash"));
-                SpellsMenu.Add("Cleanse", new CheckBox("Use Cleanse"));
 
                 if (AutoShop.Setup.CurrentChampionBuild.BuildData.Length > 0)
                 {
@@ -208,18 +207,15 @@ namespace AramBuddy
                 // Inits Activator
                 if (EnableActivator)
                     Plugins.Activator.Load.Init();
-                
-                if (!File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\DisableTexture.dat"))
+
+
+                if (DisableTexture)
                 {
-                    if(DisableTexture)
-                        File.Create(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\DisableTexture.dat");
+                    Misc.CreateAramBuddyFile("DisableTexture.dat", Misc.AramBuddyDirectories.Temp);
                 }
                 else
                 {
-                    if (!DisableTexture)
-                    {
-                        File.Delete(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\DisableTexture.dat");
-                    }
+                    File.Delete(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\DisableTexture.dat");
                 }
 
                 Drawing.OnEndScene += Drawing_OnEndScene;
@@ -232,25 +228,111 @@ namespace AramBuddy
             }
         }
 
+        private static void CreateMenu()
+        {
+            try
+            {
+                MenuIni = MainMenu.AddMenu("AramBuddy", "AramBuddy");
+                SpellsMenu = MenuIni.AddSubMenu("Spells");
+                MenuIni.AddGroupLabel("AramBuddy Version: " + version);
+                MenuIni.AddGroupLabel("AramBuddy Settings");
+
+                var debug = MenuIni.CreateCheckBox("debug", "Enable Debugging Mode");
+                var activator = MenuIni.CreateCheckBox("activator", "Enable Built-In Activator");
+                var DisableSpells = MenuIni.CreateCheckBox("DisableSpells", "Disable Built-in Casting Logic", false);
+                var quit = MenuIni.CreateCheckBox("quit", "Quit On Game End");
+                var stealhr = MenuIni.CreateCheckBox("stealhr", "Dont Steal Health Relics From Allies", false);
+                var chat = MenuIni.CreateCheckBox("chat", "Send Start / End msg In-Game Chat", false);
+                var texture = MenuIni.CreateCheckBox("texture", "Disable In-Game Texture (Less RAM/CPU)", false);
+
+                MenuIni.AddSeparator(0);
+                var Safe = MenuIni.CreateSlider("Safe", "Safe Slider (Recommended 1250)", 1250, 0, 2500);
+                MenuIni.AddLabel("More Safe Value = more defensive playstyle");
+                MenuIni.AddSeparator(0);
+                var HRHP = MenuIni.CreateSlider("HRHP", "Health Percent To Pick Health Relics (Recommended 75%)", 75);
+                var HRMP = MenuIni.CreateSlider("HRMP", "Mana Percent To Pick Health Relics (Recommended 15%)", 15);
+                MenuIni.AddSeparator(0);
+                var Reset = MenuIni.CreateCheckBox("reset", "Reset All Settings To Default", false);
+
+                // Misc Settings
+                MiscMenu = MenuIni.AddSubMenu("Misc Settings");
+                var autolvl = MiscMenu.CreateCheckBox("autolvl", "Enable AutoLvlUP");
+                var autoshop = MiscMenu.CreateCheckBox("autoshop", "Enable AutoShop");
+                var fixdive = MiscMenu.CreateCheckBox("fixdive", "Try to Fix Diving Towers");
+                var kite = MiscMenu.CreateCheckBox("kite", "Try Kite Near Enemies");
+                var bardchime = MiscMenu.CreateCheckBox("bardchime", "Pick Bard Chimes");
+                var corkibomb = MiscMenu.CreateCheckBox("corkibomb", "Pick Corki Bomb");
+                var dravenaxe = MiscMenu.CreateCheckBox("dravenaxe", "Pick Draves Axes");
+                var zacpassive = MiscMenu.CreateCheckBox("zacpassive", "Pick Zac Blops");
+                var azirtower = MiscMenu.CreateCheckBox("azirtower", "Create Azir Towers");
+                var teleport = MiscMenu.CreateCheckBox("tp", "Enable use of Teleporting Logic");
+                var logs = MiscMenu.CreateCheckBox("logs", "Save AramBuddy Logs", false);
+                var savechat = MiscMenu.CreateCheckBox("savechat", "Save In-Game Chat", false);
+                var tyler1 = MiscMenu.CreateCheckBox("bigbrother", "Run it down mid", false);
+                var tyler1g = MiscMenu.CreateSlider("gold", "Run it down mid if my Gold >= {0}", 3000, 500, 17500);
+
+                Reset.OnValueChange += delegate (ValueBase<bool> sender, ValueBase<bool>.ValueChangeArgs args)
+                {
+                    if (args.NewValue)
+                    {
+                        Reset.CurrentValue = false;
+                        debug.CurrentValue = true;
+                        activator.CurrentValue = true;
+                        DisableSpells.CurrentValue = false;
+                        quit.CurrentValue = true;
+                        stealhr.CurrentValue = false;
+                        chat.CurrentValue = true;
+                        texture.CurrentValue = false;
+                        Safe.CurrentValue = 1250;
+                        HRHP.CurrentValue = 75;
+                        HRMP.CurrentValue = 15;
+
+                        // Misc
+                        autolvl.CurrentValue = true;
+                        autoshop.CurrentValue = true;
+                        fixdive.CurrentValue = true;
+                        kite.CurrentValue = true;
+                        bardchime.CurrentValue = true;
+                        corkibomb.CurrentValue = true;
+                        dravenaxe.CurrentValue = true;
+                        zacpassive.CurrentValue = true;
+                        azirtower.CurrentValue = true;
+                        teleport.CurrentValue = true;
+                        logs.CurrentValue = false;
+                        savechat.CurrentValue = false;
+                        tyler1.CurrentValue = false;
+                        tyler1g.CurrentValue = 3000;
+                    }
+                };
+                
+                corkibomb.IsVisible = false; // disable for now
+
+                SpellsMenu.AddGroupLabel("SummonerSpells");
+                SpellsMenu.Add("Heal", new CheckBox("Use Heal"));
+                SpellsMenu.Add("Barrier", new CheckBox("Use Barrier"));
+                SpellsMenu.Add("Clarity", new CheckBox("Use Clarity"));
+                SpellsMenu.Add("Ghost", new CheckBox("Use Ghost"));
+                SpellsMenu.Add("Flash", new CheckBox("Use Flash"));
+                SpellsMenu.Add("Cleanse", new CheckBox("Use Cleanse"));
+            }
+            catch (Exception ex)
+            {
+                Logger.Send("Program Error At CreateMenu", ex, Logger.LogLevel.Error);
+            }
+        }
+
         private static readonly float textsize = Drawing.Width <= 400 || Drawing.Height <= 400 ? 10F : 40F;
         private static readonly Text text = new Text("YOUR ORBWALKER IS DISABLED", new Font("Euphemia", textsize, FontStyle.Bold)) { Color = System.Drawing.Color.White, Position = new Vector2(Drawing.Width * 0.3f, Drawing.Height * 0.2f) };
         private static void Drawing_OnEndScene(EventArgs args)
         {
             try
             {
+                if(CrashAIODetected) return;
+
                 if (Orbwalker.DisableMovement)
                 {
-                    text.TextValue = "YOUR ORBWALKER IS DISABLED";
+                    text.TextValue = "YOUR ORBWALKER IS DISABLED\nTHE BOT WILL NOT WORK\nMAKE SURE TO UNTICK\nDISABLE MOVING TO MOUSE";
                     text.Position = new Vector2(Drawing.Width * 0.3f, Drawing.Height * 0.2f);
-                    text.Draw();
-                    text.TextValue = "THE BOT WILL NOT WORK";
-                    text.Position = new Vector2(Drawing.Width * 0.3f, Drawing.Height * 0.25f);
-                    text.Draw();
-                    text.TextValue = "MAKE SURE TO UNTICK";
-                    text.Position = new Vector2(Drawing.Width * 0.3f, Drawing.Height * 0.3f);
-                    text.Draw();
-                    text.TextValue = "DISABLE MOVING TO MOUSE";
-                    text.Position = new Vector2(Drawing.Width * 0.3f, Drawing.Height * 0.35f);
                     text.Draw();
                 }
 
@@ -263,18 +345,18 @@ namespace AramBuddy
                 var AttackObject = " | AttackObject: " + ModesManager.AttackObject;
                 var LastTurretAttack = " | LastTurretAttack: " + (Core.GameTickCount - Brain.LastTurretAttack);
                 var SafeToDive = " | SafeToDive: " + Misc.SafeToDive;
+                var SafeToAttack = " | SafeToAttack: " + Misc.SafeToAttack;
                 var LastTeamFight = " | LastTeamFight: " + (int)(Core.GameTickCount - Pathing.LastTeamFight);
                 var MovementCommands = " | Movement Commands Issued: " + MoveToCommands;
                 var nextitem = " | Next Item: " + AutoShop.Sequences.Buy.NextItem + " | Value: " + AutoShop.Sequences.Buy.NextItemValue;
                 
-                Drawing.DrawText(Drawing.Width * 0.2f, Drawing.Height * 0.025f, System.Drawing.Color.White, AllyTeamTotal + EnemyTeamTotal);
-
-                Drawing.DrawText(Drawing.Width * 0.2f, Drawing.Height * 0.04f, System.Drawing.Color.White, ActiveMode + Alone + AttackObject + SafeToDive);
-                Drawing.DrawText(Drawing.Width * 0.2f, Drawing.Height * 0.055f, System.Drawing.Color.White, LastTurretAttack + LastTeamFight);
-
-                Drawing.DrawText(Drawing.Width * 0.2f, Drawing.Height * 0.07f, System.Drawing.Color.White, MovementCommands + MoveTo);
-
-                Drawing.DrawText(Drawing.Width * 0.2f, Drawing.Height * 0.085f, System.Drawing.Color.White, nextitem);
+                Drawing.DrawText(Drawing.Width * 0.2f, Drawing.Height * 0.025f, System.Drawing.Color.White,
+                    AllyTeamTotal + EnemyTeamTotal + "\n"
+                    + ActiveMode + Alone + AttackObject + "\n"
+                    + SafeToDive + SafeToAttack + "\n"
+                    + LastTurretAttack + LastTeamFight + "\n"
+                    + MovementCommands + MoveTo + "\n"
+                    + nextitem);
 
                 Drawing.DrawText(
                     Game.CursorPos.WorldToScreen().X + 50,
@@ -285,12 +367,12 @@ namespace AramBuddy
 
                 foreach (var hr in ObjectsManager.HealthRelics.Where(h => h.IsValid && !h.IsDead))
                 {
-                    Circle.Draw(Color.White, hr.BoundingRadius * 2, hr.Position);
+                    Circle.Draw(Color.GreenYellow, hr.BoundingRadius * 2, hr.Position);
                 }
 
                 foreach (var trap in ObjectsManager.EnemyTraps)
                 {
-                    Circle.Draw(Color.White, trap.Trap.BoundingRadius * 2, trap.Trap.Position);
+                    Circle.Draw(Color.OrangeRed, trap.Trap.BoundingRadius * 2, trap.Trap.Position);
                 }
 
                 if (Pathing.Position != null && Pathing.Position != Vector3.Zero && Pathing.Position.IsValid())
@@ -300,13 +382,15 @@ namespace AramBuddy
 
                 foreach (var spell in ModesManager.Spelllist.Where(s => s != null))
                 {
-                    Circle.Draw(Color.Chartreuse, spell.Range, Player.Instance);
+                    Circle.Draw(spell.IsReady() ? Color.Chartreuse : Color.OrangeRed, spell.Range, Player.Instance);
                 }
 
                 foreach (var chime in ObjectsManager.BardChimes.Where(c => Player.Instance.Hero == Champion.Bard && c.IsValid && !c.IsDead))
                 {
-                    Circle.Draw(Color.White, chime.BoundingRadius * 2, chime.Position);
+                    Circle.Draw(Color.Goldenrod, chime.BoundingRadius * 2, chime.Position);
                 }
+
+                ObjectsManager.ZacPassives.ForEach(p => Circle.Draw(Color.AliceBlue, 100, p));
             }
             catch (Exception ex)
             {

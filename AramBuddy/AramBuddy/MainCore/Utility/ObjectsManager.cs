@@ -14,7 +14,9 @@ namespace AramBuddy.MainCore.Utility
             HealthRelics.Clear();
             foreach (var hr in ObjectManager.Get<GameObject>().Where(o => o != null && o.Name.ToLower().Contains("healthrelic") && o.IsValid && !o.IsDead))
             {
-                HealthRelics.Add(hr);
+                var validrelic = ObjectManager.GetUnitByNetworkId<Obj_AI_Base>((uint)hr.NetworkId)?.Health > 0;
+                if(validrelic)
+                    HealthRelics.Add(hr);
             }
 
             // Clears and adds new EnemyTraps.
@@ -33,17 +35,22 @@ namespace AramBuddy.MainCore.Utility
                 }*/
             }
 
+            var lastupdate = 0f;
             Game.OnTick += delegate
                 {
-                    HealthRelics.AddRange(
-                        ObjectManager.Get<GameObject>()
-                            .Where(o => o.Name.Equals("bardhealthshrine", StringComparison.CurrentCultureIgnoreCase) && o.IsAlly && o.IsValid && !o.IsDead)
-                            .Where(hr => hr != null && !HealthRelics.Contains(hr) && Logger.Send("Added " + hr.Name, Logger.LogLevel.Info)));
+                    if (Core.GameTickCount - lastupdate > Misc.ProtectFPS + 200)
+                    {
+                        HealthRelics.AddRange(
+                            ObjectManager.Get<GameObject>()
+                                .Where(o => o.Name.Equals("bardhealthshrine", StringComparison.CurrentCultureIgnoreCase) && o.IsAlly && o.IsValid && !o.IsDead)
+                                .Where(hr => hr != null && !HealthRelics.Contains(hr) && Logger.Send("Added " + hr.Name, Logger.LogLevel.Info)));
 
-                    // Removes HealthRelics and Enemy Traps.
-                    
-                    HealthRelics.RemoveAll(h => h == null || !h.IsValid || h.IsDead || EntityManager.Heroes.AllHeroes.Any(a => !a.IsDead && a.IsValidTarget() && a.Distance(h) <= a.BoundingRadius + h.BoundingRadius));
-                    EnemyTraps.RemoveAll(t => t.Trap == null || !t.Trap.IsValid || t.Trap.IsDead || EntityManager.Heroes.Allies.Any(a => !a.IsDead && a.IsValidTarget() && a.Distance(t.Trap) <= a.BoundingRadius + t.Trap.BoundingRadius));
+                        // Removes HealthRelics and Enemy Traps.
+                        HealthRelics.RemoveAll(h => h == null || ObjectManager.GetUnitByNetworkId<Obj_AI_Base>((uint)h.NetworkId)?.Health <= 1 || !h.IsValid || h.IsDead || EntityManager.Heroes.AllHeroes.Any(a => a.IsValidTarget() && a.Distance(h) <= a.BoundingRadius + h.BoundingRadius));
+                        EnemyTraps.RemoveAll(t => t.Trap == null || !t.Trap.IsValid || t.Trap.IsDead || EntityManager.Heroes.Allies.Any(a => !a.IsDead && a.IsValidTarget() && a.Distance(t.Trap) <= a.BoundingRadius + t.Trap.BoundingRadius));
+                        lastupdate = Core.GameTickCount;
+                        ZacPassives.RemoveAll(p => p.IsDead || !p.IsValid);
+                    }
                 };
 
             GameObject.OnCreate += GameObject_OnCreate;
@@ -55,6 +62,16 @@ namespace AramBuddy.MainCore.Utility
         /// </summary>
         public static void GameObject_OnCreate(GameObject sender, EventArgs args)
         {
+            if (sender.GetType() == typeof(Obj_GeneralParticleEmitter))
+            {
+                var gameObject = (Obj_GeneralParticleEmitter)sender;
+                if (ZacPassiveNames.Contains(gameObject.Name) && !ZacPassives.Contains(gameObject))
+                {
+                    ZacPassives.Add(gameObject);
+                    Logger.Send("Create " + gameObject.Name, Logger.LogLevel.Info);
+                }
+            }
+
             var caster = sender as Obj_AI_Base;
             if (caster != null)
             {
@@ -83,6 +100,16 @@ namespace AramBuddy.MainCore.Utility
         /// </summary>
         public static void GameObject_OnDelete(GameObject sender, EventArgs args)
         {
+            if (sender.GetType() == typeof(Obj_GeneralParticleEmitter))
+            {
+                var gameObject = (Obj_GeneralParticleEmitter)sender;
+                if (ZacPassiveNames.Contains(gameObject.Name) && ZacPassives.Contains(gameObject))
+                {
+                    ZacPassives.Remove(gameObject);
+                    Logger.Send("Delete " + gameObject.Name, Logger.LogLevel.Info);
+                }
+            }
+
             var caster = sender as Obj_AI_Base;
             if (caster != null)
             {
@@ -141,6 +168,13 @@ namespace AramBuddy.MainCore.Utility
         }
 
         /// <summary>
+        ///     Zac Passive blops list.
+        /// </summary>
+        public static List<GameObject> ZacPassives = new List<GameObject>();
+
+        public static string[] ZacPassiveNames = { "Zac_Base_P_Chunk.troy", "Zac_SKN1_Chunk.troy", "Zac_SKN2_Chunk.troy" };
+
+        /// <summary>
         ///     HealthRelics and BardHealthShrines list.
         /// </summary>
         public static List<GameObject> HealthRelics = new List<GameObject>();
@@ -164,6 +198,40 @@ namespace AramBuddy.MainCore.Utility
         }
 
         /// <summary>
+        ///     Returns Azir Tower.
+        /// </summary>
+        public static GameObject AzirTower
+        {
+            get
+            {
+                return ObjectManager.Get<Obj_AI_Base>()
+                    .FirstOrDefault(o => o.IsValid && o.Name.ToLower().Contains("towerclicker") && o.IsInRange(Player.Instance, Player.Instance.GetAutoAttackRange()) && o.CountEnemiesInRange(o.GetAutoAttackRange(Player.Instance)) > 1 && Player.Instance.Hero == Champion.Azir);
+            }
+        }
+
+        /// <summary>
+        ///     Returns ZacBlop.
+        /// </summary>
+        public static GameObject ZacBlop
+        {
+            get
+            {
+                return ZacPassives.FirstOrDefault(o => o.IsValid && !o.IsDead && o.IsInRange(Player.Instance, 600) && Misc.TeamTotal(o.Position) >= Misc.TeamTotal(o.Position, true) && Player.Instance.Hero == Champion.Zac);
+            }
+        }
+
+        /// <summary>
+        ///     Returns Corki Bomb.
+        /// </summary>
+        public static GameObject CorkiBomb
+        {
+            get
+            {
+                return ObjectManager.Get<Obj_AI_Base>().FirstOrDefault(b => b.IsAlly && b.BaseSkinName.Equals("CorkiBombAlly") && b.IsValid && !b.IsDead && Player.Instance.Hero == Champion.Corki);
+            }
+        }
+             
+        /// <summary>
         ///     Returns Thresh Lantern.
         /// </summary>
         public static Obj_AI_Base ThreshLantern
@@ -174,7 +242,7 @@ namespace AramBuddy.MainCore.Utility
                     ObjectManager.Get<Obj_AI_Base>()
                         .FirstOrDefault(
                             l =>
-                            l.IsValid && !l.IsDead && Player.Instance.Hero != Champion.Thresh
+                            l.IsValid && !l.IsDead && Player.Instance.Hero != Champion.Thresh && Player.Instance.HealthPercent <= 50 && l.Distance(Player.Instance) <= 800
                             && (l.CountEnemiesInRange(1000) > 0 && Player.Instance.Distance(l) < 500 || l.CountEnemiesInRange(SafeValue) < 1) && l.IsAlly && l.Name.Equals("ThreshLantern"));
             }
         }
@@ -190,7 +258,7 @@ namespace AramBuddy.MainCore.Utility
                     BardChimes.OrderBy(c => c.Distance(Player.Instance))
                         .FirstOrDefault(
                             l =>
-                            l.IsValid && !l.IsDead && Player.Instance.Hero == Champion.Bard && (!l.Position.UnderEnemyTurret() || l.Position.UnderEnemyTurret() && Misc.SafeToDive) && l.IsAlly
+                            l.IsValid && !l.IsDead && Player.Instance.Hero == Champion.Bard && (!l.Position.UnderEnemyTurret() || l.Position.UnderEnemyTurret() && Misc.SafeToDive) && l.IsAlly && l.Distance(Player.Instance) <= 600
                             && (l.CountEnemiesInRange(1000) > 0 && Player.Instance.Distance(l) < 600 || l.CountEnemiesInRange(SafeValue) < 1));
             }
         }
@@ -215,7 +283,7 @@ namespace AramBuddy.MainCore.Utility
         {
             get
             {
-                return EntityManager.Heroes.Enemies.OrderBy(e => e.Distance(Player.Instance)).ThenByDescending(e => e.CountAlliesInRange(1250)).FirstOrDefault(e => e.IsKillable() && e.CountAlliesInRange(SafeValue) > 1 && !e.IsDead && !e.IsZombie);
+                return EntityManager.Heroes.Enemies.OrderBy(e => e.Distance(Player.Instance)).ThenByDescending(e => e.CountAlliesInRange(SafeValue + 100)).FirstOrDefault(e => e.IsKillable() && e.CountAlliesInRange(SafeValue) > 1 && !e.IsDead && !e.IsZombie);
             }
         }
 
@@ -258,9 +326,9 @@ namespace AramBuddy.MainCore.Utility
                     EntityManager.Heroes.Allies.OrderByDescending(a => Misc.TeamTotal(a.PredictPosition()))
                         .ThenByDescending(a => a.Distance(AllyNexues))
                         .Where(
-                            a =>  Player.Instance.HealthPercent > 10 && //!a.Added() &&
+                            a => !a.IsMe && Player.Instance.HealthPercent > 20 && !a.Added() &&
                             a.IsValidTarget() && ((a.UnderEnemyTurret() && Misc.SafeToDive) || !a.UnderEnemyTurret()) && a.CountAlliesInRange(SafeValue + 100) > 1 && a.HealthPercent > 10
-                            && !a.IsInFountainRange() && !a.IsDead && !a.IsZombie() && !a.IsMe
+                            && !a.IsInFountainRange() && !a.IsDead && !a.IsZombie()
                             && (a.Spellbook.IsCharging || a.Spellbook.IsChanneling || a.Spellbook.IsAutoAttacking || a.IsAttackPlayer() || a.Spellbook.IsCastingSpell
                             || (a.Path.LastOrDefault().Distance(a) > 35 && a.IsMoving)));
             }
@@ -284,7 +352,7 @@ namespace AramBuddy.MainCore.Utility
         {
             get
             {
-                return EntityManager.Heroes.Allies.OrderBy(a => a.Distance(AllySpawn)).FirstOrDefault(a => a.Distance(AllySpawn) > 3500 && !a.IsMe && a.Distance(Player.Instance) > 2500 && a.IsValidTarget());
+                return EntityManager.Heroes.Allies.OrderBy(a => a.Distance(AllySpawn)).FirstOrDefault(a => a.Distance(AllySpawn) > 3500 && !a.IsMe && a.Distance(Player.Instance) > 2500 && a.CountAlliesInRange(SafeValue) + 1 >= a.CountEnemiesInRange(SafeValue) && a.IsValidTarget());
             }
         }
 
@@ -321,10 +389,10 @@ namespace AramBuddy.MainCore.Utility
                 return EntityManager.MinionsAndMonsters.AlliedMinions.OrderByDescending(a => a.Distance(AllyNexues))
                         .FirstOrDefault(
                         m =>
-                        m.CountAlliesInRange(SafeValue) - m.CountEnemiesInRange(SafeValue) >= 0
+                        Player.Instance.HealthPercent > 25 &&
+                        Misc.TeamTotal(m.PredictPosition()) >= Misc.TeamTotal(m.PredictPosition(), true)
                         && ((m.UnderEnemyTurret() && Misc.SafeToDive) || !m.UnderEnemyTurret()) && m.IsValidTarget(2500)
-                        && m.IsValid && m.IsHPBarRendered && !m.IsDead && !m.IsZombie && m.HealthPercent > 20
-                        && Misc.TeamTotal(m.PredictPosition()) - Misc.TeamTotal(m.PredictPosition(), true) >= 0);
+                        && m.IsValid && m.IsHPBarRendered && !m.IsDead && !m.IsZombie && m.HealthPercent > 20);
             }
         }
 
@@ -353,7 +421,7 @@ namespace AramBuddy.MainCore.Utility
             get
             {
                 return EntityManager.MinionsAndMonsters.EnemyMinions.OrderBy(m => m.Distance(Player.Instance))
-                    .FirstOrDefault(m => m.IsKillable() && Misc.TeamTotal(m.PredictPosition()) >= Misc.TeamTotal(m.PredictPosition(), true) && m.CountAllyMinionsInRange(1000) > 0 && m.Health > 0 && (!m.UnderEnemyTurret() || m.UnderEnemyTurret() && Misc.SafeToDive));
+                    .FirstOrDefault(m => m.IsKillable() && Misc.TeamTotal(m.PredictPosition()) >= Misc.TeamTotal(m.PredictPosition(), true) && m.CountAllyMinionsInRange(1000) > 0 && (!m.UnderEnemyTurret() || m.UnderEnemyTurret() && Misc.SafeToDive));
             }
         }
 
@@ -436,6 +504,17 @@ namespace AramBuddy.MainCore.Utility
         }
 
         /// <summary>
+        ///     Returns Closest Enemy Turret.
+        /// </summary>
+        public static Obj_AI_Turret EnemyTurretNearSpawn
+        {
+            get
+            {
+                return EntityManager.Turrets.Enemies.OrderBy(t => t.Distance(AllySpawn)).FirstOrDefault(t => !t.IsDead && t.IsValid && t.Health > 0);
+            }
+        }
+
+        /// <summary>
         ///     Returns Closest Enemy Inhbitor.
         /// </summary>
         public static Obj_BarracksDampener EnemyInhb
@@ -476,6 +555,17 @@ namespace AramBuddy.MainCore.Utility
             get
             {
                 return ObjectManager.Get<Obj_SpawnPoint>().FirstOrDefault(i => i.IsAlly);
+            }
+        }
+
+        /// <summary>
+        ///     Returns Enemy SpawnPoint.
+        /// </summary>
+        public static Obj_SpawnPoint EnemySpawn
+        {
+            get
+            {
+                return ObjectManager.Get<Obj_SpawnPoint>().FirstOrDefault(i => i.IsEnemy);
             }
         }
     }
