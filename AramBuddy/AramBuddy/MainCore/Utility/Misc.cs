@@ -342,7 +342,7 @@ namespace AramBuddy.MainCore.Utility
         {
             get
             {
-                return Game.FPS < 60 && !Game.FPS.Equals(25) ? Game.FPS * 2 : Game.FPS;
+                return /*Game.FPS < 60 && !Game.FPS.Equals(25) ? Game.FPS * 2 : Game.FPS*/ 100;
             }
         }
         

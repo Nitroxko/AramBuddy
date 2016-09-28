@@ -70,7 +70,7 @@ namespace AramBuddy.MainCore
         public static void Decisions()
         {
             // Picks best position for the bot.
-            if (Core.GameTickCount - LastUpdate > /*Misc.ProtectFPS*/ 100)
+            if (Core.GameTickCount - LastUpdate > Misc.ProtectFPS)
             {
                 /*
                 foreach (var hero in EntityManager.Heroes.AllHeroes.Where(a => a != null && a.IsValidTarget() && !a.Added()
