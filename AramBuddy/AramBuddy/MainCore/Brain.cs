@@ -41,6 +41,12 @@ namespace AramBuddy.MainCore
                 // Initialize TeamFights Detector.
                 TeamFightsDetection.Init();
 
+                Spellbook.OnCastSpell += delegate (Spellbook sender, SpellbookCastSpellEventArgs args)
+                {
+                    if (sender.Owner.IsMe && RunningItDownMid)
+                        args.Process = false;
+                };
+
                 Obj_AI_Base.OnBasicAttack += Obj_AI_Base_OnBasicAttack;
                 Gapcloser.OnGapcloser += SpellsCasting.GapcloserOnOnGapcloser;
                 Interrupter.OnInterruptableSpell += SpellsCasting.Interrupter_OnInterruptableSpell;
@@ -64,7 +70,7 @@ namespace AramBuddy.MainCore
         public static void Decisions()
         {
             // Picks best position for the bot.
-            if (Core.GameTickCount - LastUpdate > Misc.ProtectFPS)
+            if (Core.GameTickCount - LastUpdate > /*Misc.ProtectFPS*/ 100)
             {
                 /*
                 foreach (var hero in EntityManager.Heroes.AllHeroes.Where(a => a != null && a.IsValidTarget() && !a.Added()
@@ -93,17 +99,16 @@ namespace AramBuddy.MainCore
                 Program.Moveto = "FixedToAntiDivePosition";
                 Pathing.Position = ObjectsManager.EnemyTurretNearSpawn.ServerPosition.Extend(ObjectsManager.AllySpawn.Position.Random(), ObjectsManager.EnemyTurretNearSpawn.GetAutoAttackRange(Player.Instance) + 200).To3D();
             }
-
             if (Config.CreateAzirTower && ObjectsManager.AzirTower != null)
             {
                 Program.Moveto = "CreateAzirTower";
                 Player.UseObject(ObjectsManager.AzirTower);
             }
-
-            RunningItDownMid = Config.Tyler1 && Player.Instance.Gold >= Config.Tyler1g
-                && (Player.Instance.Distance(ObjectsManager.AllySpawn) > 4000 || EntityManager.Heroes.Enemies.Count(e => !e.IsDead) == 0)
+            
+            RunningItDownMid = ObjectsManager.EnemySpawn != null && Config.Tyler1 && Player.Instance.Gold >= Config.Tyler1g
+                && (ObjectsManager.AllySpawn != null && Player.Instance.Distance(ObjectsManager.AllySpawn) > 4000 || EntityManager.Heroes.Enemies.Count(e => !e.IsDead) == 0)
                 && EntityManager.Heroes.Allies.Count(a => a.IsValidTarget() && !a.IsMe) >= 2;
-            if (RunningItDownMid)
+            if (RunningItDownMid && ObjectsManager.EnemySpawn != null)
             {
                 Program.Moveto = "RUNNING IT DOWN MID";
                 Pathing.Position = ObjectsManager.EnemySpawn.Position.Random();
@@ -114,12 +119,6 @@ namespace AramBuddy.MainCore
             {
                 Pathing.MoveTo(Pathing.Position);
             }
-
-            Spellbook.OnCastSpell += delegate(Spellbook sender, SpellbookCastSpellEventArgs args)
-                {
-                    if (sender.Owner.IsMe && RunningItDownMid)
-                        args.Process = false;
-                };
         }
 
         /// <summary>
