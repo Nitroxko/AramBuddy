@@ -10,8 +10,6 @@ namespace AramBuddy.Plugins.Activator
         public static Item EyeOfTheOasis = new Item(ItemId.Eye_of_the_Oasis, 600);
         public static Item EyeOfTheWatchers = new Item(ItemId.Eye_of_the_Watchers, 600);
         public static Item TrackerKnife = new Item(ItemId.Trackers_Knife, 600);
-        public static Item TrackerKnife_Devourer = new Item(ItemId.Trackers_Knife_Enchantment_Devourer, 600);
-        public static Item TrackerKnife_Sated_Devourer = new Item(ItemId.Trackers_Knife_Enchantment_Sated_Devourer, 600);
         public static Item TrackerKnife_Cinderhulk = new Item(ItemId.Trackers_Knife_Enchantment_Cinderhulk, 600);
         public static Item TrackerKnife_Runic_Echoes = new Item(ItemId.Trackers_Knife_Enchantment_Runic_Echoes, 600);
         public static Item TrackerKnife_Warrior = new Item(ItemId.Trackers_Knife_Enchantment_Warrior, 600);
@@ -39,7 +37,6 @@ namespace AramBuddy.Plugins.Activator
 
         // AP
         public static Item Hextech_Gunblade = new Item(ItemId.Hextech_Gunblade, 600);
-        public static Item Hextech_ProtoBelt = new Item(ItemId.Will_of_the_Ancients, 600);
         public static Item Hextech_GLP = new Item(3030, 600);
 
         // Pots

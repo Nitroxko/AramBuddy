@@ -13,7 +13,7 @@ namespace AramBuddy.Plugins.Activator.Items
     {
         private static readonly List<Item> HPItems = new List<Item> { Botrk, Cutlass, Hextech_Gunblade };
 
-        private static readonly List<Item> DmgItems = new List<Item> { Hextech_GLP, Hextech_ProtoBelt };
+        private static readonly List<Item> DmgItems = new List<Item> { Hextech_GLP };
 
         private static readonly List<Item> AAItems = new List<Item> { Hydra, TitanicHydra, Tiamat, Youmuus };
 
