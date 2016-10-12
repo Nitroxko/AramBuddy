@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Linq;
-using AramBuddy.GenesisSpellDatabase;
 using AramBuddy.MainCore.Logics;
 using AramBuddy.MainCore.Logics.Casting;
 using AramBuddy.MainCore.Utility;
+using AramBuddy.MainCore.Utility.MiscUtil;
+using AramBuddy.MainCore.Utility.MiscUtil.Caching;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Events;
@@ -14,7 +15,8 @@ namespace AramBuddy.MainCore
 {
     internal class Brain
     {
-        private static bool RunningItDownMid;
+        public static Vector3 LastPickPosition;
+        public static bool RunningItDownMid;
 
         /// <summary>
         ///     Init bot functions.
@@ -30,7 +32,11 @@ namespace AramBuddy.MainCore
                 // Initialize ObjectsManager.
                 ObjectsManager.Init();
 
+                // Initialize Special Champions Logic.
                 SpecialChamps.Init();
+
+                // Initialize Cache.
+                Cache.Init();
 
                 // Overrides Orbwalker Movements
                 Orbwalker.OverrideOrbwalkPosition += OverrideOrbwalkPosition;
@@ -44,7 +50,10 @@ namespace AramBuddy.MainCore
                 Spellbook.OnCastSpell += delegate (Spellbook sender, SpellbookCastSpellEventArgs args)
                 {
                     if (sender.Owner.IsMe && RunningItDownMid)
+                    {
                         args.Process = false;
+                        Logger.Send("Blocked: " + args.Slot + " Reason: Running It Down Mid");
+                    }
                 };
 
                 Obj_AI_Base.OnBasicAttack += Obj_AI_Base_OnBasicAttack;
@@ -65,6 +74,11 @@ namespace AramBuddy.MainCore
         public static float LastUpdate;
 
         /// <summary>
+        ///     Returns LastTeamFight Time.
+        /// </summary>
+        public static float LastTeamFight;
+
+        /// <summary>
         ///     Decisions picking for the bot.
         /// </summary>
         public static void Decisions()
@@ -81,39 +95,56 @@ namespace AramBuddy.MainCore
                 }
                 */
 
+                // Ticks for the modes manager.
+                ModesManager.OnTick();
+
                 Pathing.BestPosition();
+                LastPickPosition = Pathing.Position;
                 LastUpdate = Core.GameTickCount;
             }
+            
+            if (Misc.TeamFight)
+            {
+                LastTeamFight = Core.GameTickCount;
+            }
 
-            // Ticks for the modes manager.
-            ModesManager.OnTick();
-
-            if (Config.FixedKite && !(Program.Moveto.Contains("Enemy") || Program.Moveto.Contains("AllySpawn")) && !(ModesManager.Flee || ModesManager.None) && ObjectsManager.NearestEnemy != null && Pathing.Position.CountEnemiesInRange(Misc.KiteDistance(ObjectsManager.NearestEnemy)) > 1)
+            if (Config.FixedKite && !(Program.Moveto.Contains("Enemy") || Program.Moveto.Contains("AllySpawn")) && !(ModesManager.Flee || ModesManager.None)
+                && ObjectsManager.NearestEnemy != null && Pathing.Position.CountEnemyHeroesInRangeWithPrediction((int)(Misc.KiteDistance(ObjectsManager.NearestEnemy) + Player.Instance.BoundingRadius)) > 0)
             {
                 Program.Moveto = "FixedToKitingPosition";
-                Pathing.Position = ObjectsManager.NearestEnemy.Position.Extend(ObjectsManager.AllySpawn, Misc.KiteDistance(ObjectsManager.NearestEnemy)).To3D();
+                Pathing.Position = ObjectsManager.NearestEnemy.KitePos(ObjectsManager.AllySpawn);
             }
 
             if (Config.TryFixDive && Pathing.Position.UnderEnemyTurret() && !Misc.SafeToDive)
             {
                 Program.Moveto = "FixedToAntiDivePosition";
-                Pathing.Position = ObjectsManager.EnemyTurretNearSpawn.ServerPosition.Extend(ObjectsManager.AllySpawn.Position.Random(), ObjectsManager.EnemyTurretNearSpawn.GetAutoAttackRange(Player.Instance) + 200).To3D();
+                for (int i = 0; Pathing.Position.UnderEnemyTurret(); i+= 10)
+                {
+                    Pathing.Position = LastPickPosition.Extend(ObjectsManager.AllySpawn.Position.Random(), i + Player.Instance.BoundingRadius + 50).To3D();
+                }
             }
             if (Config.CreateAzirTower && ObjectsManager.AzirTower != null)
             {
                 Program.Moveto = "CreateAzirTower";
                 Player.UseObject(ObjectsManager.AzirTower);
             }
-            
-            RunningItDownMid = ObjectsManager.EnemySpawn != null && Config.Tyler1 && Player.Instance.Gold >= Config.Tyler1g
-                && (ObjectsManager.AllySpawn != null && Player.Instance.Distance(ObjectsManager.AllySpawn) > 4000 || EntityManager.Heroes.Enemies.Count(e => !e.IsDead) == 0)
-                && EntityManager.Heroes.Allies.Count(a => a.IsValidTarget() && !a.IsMe) >= 2;
+
+            if (Config.EnableHighPing && Game.Ping > 666 && ObjectsManager.AllySpawn != null)
+            {
+                Program.Moveto = "Moving to AllySpawn HIGH PING";
+                Pathing.Position = ObjectsManager.AllySpawn.Position.Random();
+            }
+
+            RunningItDownMid = ObjectsManager.EnemySpawn != null && Config.Tyler1 && Player.Instance.Gold >= Config.Tyler1g && !AutoShop.Sequences.Buy.FullBuild && Core.GameTickCount - LastTeamFight > 1500
+                && (ObjectsManager.AllySpawn != null && Player.Instance.Distance(ObjectsManager.AllySpawn) > 4000 || EntityManager.Heroes.Enemies.Count(e => !e.IsDead && e.IsValid) == 0)
+                && EntityManager.Heroes.Allies.Count(a => a.IsValidTarget()) > 2 && (Orbwalker.GetTarget() != null
+                && !(Orbwalker.GetTarget().Type == GameObjectType.obj_HQ || Orbwalker.GetTarget().Type == GameObjectType.obj_BarracksDampener) || Orbwalker.GetTarget() == null);
             if (RunningItDownMid && ObjectsManager.EnemySpawn != null)
             {
                 Program.Moveto = "RUNNING IT DOWN MID";
                 Pathing.Position = ObjectsManager.EnemySpawn.Position.Random();
             }
-
+            
             // Moves to the Bot selected Position.
             if (Pathing.Position != Vector3.Zero && Pathing.Position.IsValid() && !Pathing.Position.IsZero)
             {
@@ -126,8 +157,8 @@ namespace AramBuddy.MainCore
         /// </summary>
         public static bool Alone()
         {
-            return Player.Instance.CountAlliesInRange(4500) < 2 || Player.Instance.Path.Any(p => p.IsInRange(Game.CursorPos, 50))
-                   || EntityManager.Heroes.Allies.All(a => !a.IsMe && (a.IsInShopRange() || a.IsInFountainRange() || a.IsDead));
+            return Player.Instance.CountEnemyAlliesInRangeWithPrediction(4500) < 2 || Player.Instance.Path.Any(p => p.IsInRange(Game.CursorPos, 45))
+                   || EntityManager.Heroes.Allies.All(a => !a.IsMe && (a.IsInShopRange() || a.IsInFountainRange() || !a.IsActive()));
         }
 
         /// <summary>
@@ -151,7 +182,7 @@ namespace AramBuddy.MainCore
                 var target = args.Target as AIHeroClient;
                 if (target != null && target.IsAlly && !target.IsMe)
                 {
-                    var lastAttack = new Misc.LastAttack(turret, target) { Attacker = turret, LastAttackSent = Core.GameTickCount, Target = target };
+                    var lastAttack = new Misc.LastAttack(turret, target) { Attacker = turret, LastAttackTick = Core.GameTickCount, Target = target };
                     Misc.AutoAttacks.Add(lastAttack);
                 }
             }
@@ -162,7 +193,7 @@ namespace AramBuddy.MainCore
         /// </summary>
         private static Vector3? OverrideOrbwalkPosition()
         {
-            return Pathing.Position;
+            return Pathing.Position.Equals(Game.CursorPos) ? ObjectsManager.AllySpawn?.Position.Random() : Pathing.Position;
         }
     }
 }

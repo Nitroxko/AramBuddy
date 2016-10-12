@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using AramBuddy.MainCore.Utility.MiscUtil;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Events;
@@ -56,6 +57,20 @@ namespace AramBuddy.MainCore.Utility
             Loading.OnLoadingComplete += Loading_OnLoadingComplete;
             Events.OnGameEnd += Events_OnGameEnd;
             Chat.OnMessage += Chat_OnMessage;
+            Chat.OnClientSideMessage += Chat_OnClientSideMessage;
+        }
+
+        private static void Chat_OnClientSideMessage(ChatClientSideMessageEventArgs args)
+        {
+            if (Enableff && args.Message.ToLower().Contains("/nosurrender."))
+            {
+                Core.DelayAction(
+                    () =>
+                        {
+                            Chat.Say("/ff");
+                            Logger.Send("Voted Surrender With Team", Logger.LogLevel.Event);
+                        }, new Random().Next(1000, 5000));
+            }
         }
 
         private static void Chat_OnMessage(AIHeroClient sender, ChatMessageEventArgs args)

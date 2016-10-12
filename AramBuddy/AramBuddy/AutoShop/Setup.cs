@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using AramBuddy.AutoShop.Sequences;
-using AramBuddy.MainCore.Utility;
+using AramBuddy.MainCore.Utility.MiscUtil;
 using EloBuddy;
 using EloBuddy.SDK;
 
@@ -21,7 +21,7 @@ namespace AramBuddy.AutoShop
         /// <summary>
         ///     Path to the build folder, containing all the champion builds
         /// </summary>
-        public static readonly string BuildPath = Misc.AramBuddyFolder + "\\Builds";
+        public static string BuildPath = Misc.AramBuddyFolder + "\\Builds";
 
         /// <summary>
         ///     Path to the temporary folder which contains the in-game cache
@@ -53,7 +53,7 @@ namespace AramBuddy.AutoShop
             try
             {
                 Buy.CanShop = !Player.Instance.Buffs.Any(b => b.DisplayName.Equals("aramshopdisableplayer", StringComparison.CurrentCultureIgnoreCase)) || Player.Instance.IsDead;
-                var useDefaultBuild = false;
+                //var useDefaultBuild = false;
                 // When the game starts
                 AramBuddy.Events.OnGameStart += Events_OnGameStart;
 
@@ -74,36 +74,39 @@ namespace AramBuddy.AutoShop
                     Builds.Add(parsed, File.ReadAllText(build));
                 }
 
+                if (!Directory.Exists(BuildPath + "\\" + Config.CurrentBuildService))
+                {
+                    Directory.CreateDirectory(BuildPath + "\\" + Config.CurrentBuildService);
+                }
+
+                // Loop through all the builds in the build path directory
+                foreach (var build in Directory.GetFiles(BuildPath + "\\" + Config.CurrentBuildService))
+                {
+                    // Get the name of the champion from the build
+                    var parsed = build.Replace(".json", "").Replace(BuildPath + "\\" + Config.CurrentBuildService + "\\", "");
+
+                    // Add the build to the Builds dictionary in a ChampionName : BuildData format
+                    if(!Builds.ContainsKey(parsed))
+                        Builds.Add(parsed, File.ReadAllText(build));
+                }
+
                 // Check if there are any builds for our champion
-                if (Builds.Keys.All(b => b != Player.Instance.ChampionName))
+                if (Builds.Keys.All(b => Build.CleanUpChampionName(b) != Build.CleanUpChampionName(Player.Instance.ChampionName)))
                 {
                     // If not, warn the user
                     Logger.Send("There are no builds for your champion. " + Player.Instance.ChampionName, Logger.LogLevel.Warn);
-
-                    // and Use Default build
-                    if (Builds.Keys.Any(b => b.Equals(Build.BuildName())))
-                    {
-                        DefaultBuild();
-                        Logger.Send("Using default build path!", Logger.LogLevel.Warn);
-                    }
-                    else
-                    {
-                        // Creates Default Build for the AutoShop
-                        Logger.Send("Creating default build path!", Logger.LogLevel.Warn);
-                        Build.Create();
-                        useDefaultBuild = true;
-                    }
+                    Build.GetBuildFromService();
                 }
 
-                if (useDefaultBuild)
-                    return;
+                /*if (useDefaultBuild)
+                    return;*/
 
                 // Check if the parse of the build for the champion completed successfully and output it to public
                 // variable CurrentChampionBuild
                 if (Builds.Any(b => b.Key == Player.Instance.ChampionName) && Builds.FirstOrDefault(b => b.Key == Player.Instance.ChampionName).Value.TryParseData(out CurrentChampionBuild))
                 {
                     // If the parse is successful, notify the user that the initialization process is finished
-                    Logger.Send("AutoShop has been fully and succesfully initialized!", Logger.LogLevel.Info);
+                    Logger.Send("AutoShop has been fully and succesfully initialized!");
 
                     // and set up event listeners
                     SetUpEventListeners();
@@ -120,6 +123,22 @@ namespace AramBuddy.AutoShop
             }
         }
 
+        public static void UseDefaultBuild()
+        {
+            // and Use Default build
+            if (Builds.Keys.Any(b => b.Equals(Build.BuildName())))
+            {
+                DefaultBuild();
+                Logger.Send("Using default build path!", Logger.LogLevel.Warn);
+            }
+            else
+            {
+                // Creates Default Build for the AutoShop
+                Logger.Send("Creating default build path!", Logger.LogLevel.Warn);
+                Build.CreateDefualtBuild();
+            }
+        }
+
         /// <summary>
         ///     Method that sets up event listeners
         /// </summary>
@@ -131,7 +150,7 @@ namespace AramBuddy.AutoShop
                 // Use Default build
                 if (Builds.Keys.Any(b => b.Equals(Build.BuildName())) && Builds.FirstOrDefault(b => b.Key.Equals(Build.BuildName())).Value.TryParseData(out CurrentChampionBuild))
                 {
-                    Logger.Send(Build.BuildName() + " build Loaded!", Logger.LogLevel.Info);
+                    Logger.Send(Build.BuildName() + " build Loaded!");
 
                     // and set up event listeners
                     SetUpEventListeners();
@@ -146,6 +165,42 @@ namespace AramBuddy.AutoShop
                     Logger.Send("The selected AutoShop JSON could not be parsed.", Logger.LogLevel.Error);
 
                     Logger.Send("No build is currently used!", Logger.LogLevel.Warn);
+                }
+            }
+            catch (Exception ex)
+            {
+                // An exception occured somewhere else. Notify the user of the error, and print the exception to the console
+                Logger.Send("Exception occurred on initialization of AutoShop:", ex, Logger.LogLevel.Error);
+
+                // Warn the user about the exception
+                Logger.Send("Exception occurred during AutoShop initialization. AutoShop will most likely NOT work properly!", Logger.LogLevel.Warn);
+            }
+        }
+
+        public static void CustomBuildService()
+        {
+            try
+            {
+                if (Builds.Keys.Any(b => b.Equals(Build.CleanUpChampionName(Player.Instance.ChampionName)))
+                && Builds.FirstOrDefault(b => b.Key.Equals(Build.CleanUpChampionName(Player.Instance.ChampionName))).Value.TryParseData(out CurrentChampionBuild))
+                {
+                    Logger.Send(Build.CleanUpChampionName(Player.Instance.ChampionName) + " build Loaded!");
+
+                    // and set up event listeners
+                    SetUpEventListeners();
+                    if (Player.Instance.IsInShopRange())
+                    {
+                        Buy.BuyNextItem(CurrentChampionBuild);
+                    }
+                }
+                else
+                {
+                    // An error occured during parsing. Catch the error and print it in the console
+                    Logger.Send("The selected AutoShop JSON could not be parsed.", Logger.LogLevel.Error);
+                    Logger.Send("Using Default Build!", Logger.LogLevel.Warn);
+                    UseDefaultBuild();
+
+                    //Logger.Send("No build is currently used!", Logger.LogLevel.Warn);
                 }
             }
             catch (Exception ex)
@@ -195,9 +250,10 @@ namespace AramBuddy.AutoShop
             // Delete the index file if it exists
             if (File.Exists(TempFile))
             {
-                Buy.CanShop = false;
                 File.Delete(TempFile);
             }
+
+            Buy.CanShop = false;
         }
 
         /// <summary>
@@ -219,14 +275,15 @@ namespace AramBuddy.AutoShop
         /// <param name="args">Arguments of the event</param>
         private static void Events_OnBuyAllow(EventArgs args)
         {
+            var deathtime = Player.Instance.DeathTimer() * 1000;
             // To Prevent Instantly buying item when event is fired
-            var rnd = new Random().Next(500, 3000) + Game.Ping;
+            var rnd = (float)(new Random().Next(Math.Max(500, (int)(deathtime * 0.075f)), Math.Max(1000, (int)(deathtime * 0.25f))) + Game.Ping);
 
             // Notify the user that we are going to try to buy items now
             Logger.Send("Can buy items: " + (rnd / 1000).ToString("F1") + " Second/s Delay", Logger.LogLevel.Event);
 
             // Attempt to buy as many consecutive items on the build as we can
-            Core.DelayAction(() => Buy.BuyNextItem(CurrentChampionBuild), rnd);
+            Core.DelayAction(() => Buy.BuyNextItem(CurrentChampionBuild), (int)rnd);
         }
     }
 }

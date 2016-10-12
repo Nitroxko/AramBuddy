@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Linq;
-using AramBuddy.KappaEvade;
+using AramBuddy.Plugins.KappaEvade;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Enumerations;
 using EloBuddy.SDK.Events;
 using EloBuddy.SDK.Menu;
-using static AramBuddy.MainCore.Utility.Misc;
+using static AramBuddy.MainCore.Utility.MiscUtil.Misc;
 
 namespace AramBuddy.Plugins.Champions.Lux
 {
@@ -24,8 +24,8 @@ namespace AramBuddy.Plugins.Champions.Lux
             AutoMenu.CreateCheckBox("FleeQ", "Flee Q");
             AutoMenu.CreateCheckBox("FleeW", "Flee W");
             AutoMenu.CreateCheckBox("FleeE", "Flee E");
-            AutoMenu.CreateCheckBox("W", "W incoming Dmg self");
-            AutoMenu.CreateCheckBox("Wallies", "W incoming Dmg allies");
+            //AutoMenu.CreateCheckBox("W", "W incoming Dmg self");
+            //AutoMenu.CreateCheckBox("Wallies", "W incoming Dmg allies");
             AutoMenu.CreateCheckBox("GapQ", "Anti-GapCloser Q");
             AutoMenu.CreateCheckBox("GapE", "Anti-GapCloser E");
             AutoMenu.CreateCheckBox("GapW", "Anti-GapCloser W");
@@ -47,9 +47,9 @@ namespace AramBuddy.Plugins.Champions.Lux
 
             Gapcloser.OnGapcloser += Gapcloser_OnGapcloser;
             Interrupter.OnInterruptableSpell += Interrupter_OnInterruptableSpell;
-            Game.OnTick += Lux_SkillshotDetector;
+            //Game.OnTick += Lux_SkillshotDetector;
             Game.OnTick += Lux_PopE;
-            SpellsDetector.OnTargetedSpellDetected += SpellsDetector_OnTargetedSpellDetected;
+            //SpellsDetector.OnTargetedSpellDetected += SpellsDetector_OnTargetedSpellDetected;
         }
         
         private static void Lux_PopE(EventArgs args)
@@ -142,7 +142,7 @@ namespace AramBuddy.Plugins.Champions.Lux
                     var rTarget = target = TargetSelector.GetTarget(E.Range, DamageType.Magical);
                     if (target != null && target.IsKillable(R.Range))
                     {
-                        R.CastLineAoE(rTarget, HitChance.Medium, ComboMenu.SliderValue("RAOE")); // still testing
+                        R.CastAOE(ComboMenu.SliderValue("RAOE"), R.Range, rTarget); // still testing
 
                         if (R.WillKill(rTarget))
                         {

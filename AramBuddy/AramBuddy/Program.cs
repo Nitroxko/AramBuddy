@@ -6,7 +6,9 @@ using System.Linq;
 using AramBuddy.MainCore;
 using AramBuddy.MainCore.Logics;
 using AramBuddy.MainCore.Utility;
+using AramBuddy.MainCore.Utility.MiscUtil;
 using AramBuddy.Plugins.Champions;
+using AramBuddy.Plugins.KappaEvade;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Events;
@@ -24,15 +26,18 @@ namespace AramBuddy
     internal class Program
     {
         public static bool CrashAIODetected;
-        public static Version version = typeof(Program).Assembly.GetName().Version;
-        public static int MoveToCommands;
         public static bool CustomChamp;
         public static bool Loaded;
+        public static bool GameEnded;
+
+        public static Version version = typeof(Program).Assembly.GetName().Version;
+        public static int MoveToCommands;
         public static float Timer;
         private static float TimeToStart;
+
         public static string Moveto;
 
-        public static Menu MenuIni, SpellsMenu, MiscMenu;
+        public static Menu MenuIni, SpellsMenu, MiscMenu, BuildMenu;
 
         private static void Main()
         {
@@ -60,7 +65,7 @@ namespace AramBuddy
                 {
                     if (eventArgs.Message.ToLower().Contains("portaio") && !CrashAIODetected)
                     {
-                        var warnmsg = "AramBuddy Doesnt Work With CrashAIO\nDisable CrashAIO\nIn order To use AramBuddy !";
+                        var warnmsg = "AramBuddy Does not Work With CrashAIO\nDisable CrashAIO In order to use AramBuddy !";
                         Chat.Print(warnmsg);
                         Logger.Send(warnmsg, Logger.LogLevel.Warn);
                         Notifications.Show(new SimpleNotification("AramBuddy", warnmsg), 20000);
@@ -73,7 +78,7 @@ namespace AramBuddy
                         CrashAIODetected = true;
                     }
                 };
-
+                
                 Misc.CreateAramBuddyFile(Game.GameId + ".dat", Misc.AramBuddyDirectories.Temp);
 
                 // Creates The Menu
@@ -83,7 +88,7 @@ namespace AramBuddy
                 CheckVersion.Init();
 
                 // Inits KappaEvade
-                KappaEvade.KappaEvade.Init();
+                KappaEvade.Init();
                 
                 // Initialize the AutoShop.
                 AutoShop.Setup.Init();
@@ -98,16 +103,18 @@ namespace AramBuddy
                         {
                             CustomChamp = true;
                             msg.Process = false;
-                            Logger.Send("Loaded Custom Champion " + Player.Instance.Hero, Logger.LogLevel.Info);
+                            Logger.Send("Loaded Custom Champion " + Player.Instance.Hero);
                         }
                     }
                 };*/
                 
                 Timer = Game.Time;
-                TimeToStart = new Random().Next(10000, 20000) + Game.Ping;
+                TimeToStart = new Random().Next(10000, 30000) + Game.Ping;
                 Game.OnTick += Game_OnTick;
                 Events.OnGameEnd += Events_OnGameEnd;
                 Player.OnPostIssueOrder += Player_OnPostIssueOrder;
+                
+                Logger.Send("Starting After: " + (TimeToStart / 1000).ToString("F1") + " Second/s", Logger.LogLevel.Event);
             }
             catch (Exception ex)
             {
@@ -132,26 +139,17 @@ namespace AramBuddy
         {
             try
             {
+                GameEnded = true;
                 if (QuitOnGameEnd)
                 {
                     var rnd = new Random().Next(15000, 30000) + Game.Ping;
                     Logger.Send("Closing the Game in: " + (rnd / 1000).ToString("F1") + " Second/s", Logger.LogLevel.Event);
-                    Core.DelayAction(
-                        () =>
-                        {
-                            if (File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\ " + Game.GameId + ".dat"))
-                            {
-                                File.Delete(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\ " + Game.GameId + ".dat");
-                            }
-                            Game.QuitGame();
-                            }, rnd);
+                    Core.DelayAction(() => Game.QuitGame(), rnd);
                 }
-                else
+
+                if (File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\ " + Game.GameId + ".dat"))
                 {
-                    if (File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\ " + Game.GameId + ".dat"))
-                    {
-                        File.Delete(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\ " + Game.GameId + ".dat");
-                    }
+                    File.Delete(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\ " + Game.GameId + ".dat");
                 }
             }
             catch (Exception ex)
@@ -166,18 +164,16 @@ namespace AramBuddy
             {
                 if (Orbwalker.MovementDelay < 200)
                 {
-                    Orbwalker.MovementDelay += new Random().Next(200, 500) + Game.Ping;
+                    Orbwalker.MovementDelay += new Random().Next(200, 375) + Game.Ping;
                 }
                 
-                var build = MenuIni.AddSubMenu("Current Build");
-
                 if (AutoShop.Setup.CurrentChampionBuild.BuildData.Length > 0)
                 {
                     var i = 0;
                     foreach (var item in AutoShop.Setup.CurrentChampionBuild.BuildData)
                     {
                         i++;
-                        build.AddLabel(i + " - " + item);
+                        BuildMenu.AddLabel(i + " - " + item);
                     }
                 }
 
@@ -188,7 +184,7 @@ namespace AramBuddy
                         if ((Base)Activator.CreateInstance(null, "AramBuddy.Plugins.Champions." + Player.Instance.Hero + "." + Player.Instance.Hero).Unwrap() != null)
                         {
                             CustomChamp = true;
-                            Logger.Send("Loaded Custom Champion " + Player.Instance.Hero, Logger.LogLevel.Info);
+                            Logger.Send("Loaded Custom Champion " + Player.Instance.Hero);
                         }
                     }
                     catch (Exception)
@@ -207,7 +203,6 @@ namespace AramBuddy
                 // Inits Activator
                 if (EnableActivator)
                     Plugins.Activator.Load.Init();
-
 
                 if (DisableTexture)
                 {
@@ -237,6 +232,13 @@ namespace AramBuddy
                 MenuIni.AddGroupLabel("AramBuddy Version: " + version);
                 MenuIni.AddGroupLabel("AramBuddy Settings");
 
+                BuildMenu = MenuIni.AddSubMenu("Current Build");
+                BuildMenu.Add("buildsource", new ComboBox("Builds Service: ", 0, "MetaSrc", "Championgg", "KoreanBuilds", "LoLSkill", "User Builds"));
+                BuildMenu.AddLabel("MetaSrc: Very Good For Aram");
+                BuildMenu.AddLabel("Championgg: Decent For Aram");
+                BuildMenu.AddLabel("KoreanBuilds: Decent For Aram");
+                BuildMenu.AddLabel("LoLSkill: Not Good For Aram");
+
                 var debug = MenuIni.CreateCheckBox("debug", "Enable Debugging Mode");
                 var activator = MenuIni.CreateCheckBox("activator", "Enable Built-In Activator");
                 var DisableSpells = MenuIni.CreateCheckBox("DisableSpells", "Disable Built-in Casting Logic", false);
@@ -244,6 +246,8 @@ namespace AramBuddy
                 var stealhr = MenuIni.CreateCheckBox("stealhr", "Dont Steal Health Relics From Allies", false);
                 var chat = MenuIni.CreateCheckBox("chat", "Send Start / End msg In-Game Chat", false);
                 var texture = MenuIni.CreateCheckBox("texture", "Disable In-Game Texture (Less RAM/CPU)", false);
+                var evade = MenuIni.CreateCheckBox("evade", "Evade Integration[BETA]");
+                var ff = MenuIni.CreateCheckBox("ff", "Vote Surrender With Team Always");
 
                 MenuIni.AddSeparator(0);
                 var Safe = MenuIni.CreateSlider("Safe", "Safe Slider (Recommended 1250)", 1250, 0, 2500);
@@ -260,6 +264,7 @@ namespace AramBuddy
                 var autoshop = MiscMenu.CreateCheckBox("autoshop", "Enable AutoShop");
                 var fixdive = MiscMenu.CreateCheckBox("fixdive", "Try to Fix Diving Towers");
                 var kite = MiscMenu.CreateCheckBox("kite", "Try Kite Near Enemies");
+                var ping = MiscMenu.CreateCheckBox("ping", "Move To AllySpawn On High Ping/Ping-Spikes");
                 var bardchime = MiscMenu.CreateCheckBox("bardchime", "Pick Bard Chimes");
                 var corkibomb = MiscMenu.CreateCheckBox("corkibomb", "Pick Corki Bomb");
                 var dravenaxe = MiscMenu.CreateCheckBox("dravenaxe", "Pick Draves Axes");
@@ -283,6 +288,8 @@ namespace AramBuddy
                         stealhr.CurrentValue = false;
                         chat.CurrentValue = true;
                         texture.CurrentValue = false;
+                        evade.CurrentValue = true;
+                        ff.CurrentValue = true;
                         Safe.CurrentValue = 1250;
                         HRHP.CurrentValue = 75;
                         HRMP.CurrentValue = 15;
@@ -292,6 +299,7 @@ namespace AramBuddy
                         autoshop.CurrentValue = true;
                         fixdive.CurrentValue = true;
                         kite.CurrentValue = true;
+                        ping.CurrentValue = true;
                         bardchime.CurrentValue = true;
                         corkibomb.CurrentValue = true;
                         dravenaxe.CurrentValue = true;
@@ -329,14 +337,16 @@ namespace AramBuddy
             {
                 if(CrashAIODetected) return;
 
-                if (Orbwalker.DisableMovement)
+                if (Orbwalker.DisableMovement && !MainCore.Logics.Casting.SpecialChamps.IsCastingImportantSpell)
                 {
                     text.TextValue = "YOUR ORBWALKER IS DISABLED\nTHE BOT WILL NOT WORK\nMAKE SURE TO UNTICK\nDISABLE MOVING TO MOUSE";
                     text.Position = new Vector2(Drawing.Width * 0.3f, Drawing.Height * 0.2f);
                     text.Draw();
                 }
 
-                if (!EnableDebug) return;
+                if (!EnableDebug)
+                    return;
+
                 var AllyTeamTotal = " | AllyTeamTotal: " + (int)Misc.TeamTotal(Player.Instance.PredictPosition());
                 var EnemyTeamTotal = " | EnemyTeamTotal: " + (int)Misc.TeamTotal(Player.Instance.PredictPosition(), true);
                 var MoveTo = " | MoveTo: " + Moveto;
@@ -345,15 +355,19 @@ namespace AramBuddy
                 var AttackObject = " | AttackObject: " + ModesManager.AttackObject;
                 var LastTurretAttack = " | LastTurretAttack: " + (Core.GameTickCount - Brain.LastTurretAttack);
                 var SafeToDive = " | SafeToDive: " + Misc.SafeToDive;
+                var castingimportantspell = " | IsCastingImportantSpell: " + MainCore.Logics.Casting.SpecialChamps.IsCastingImportantSpell;
+                var lagging = " | Lagging: " + (Game.Ping > 666);
                 var SafeToAttack = " | SafeToAttack: " + Misc.SafeToAttack;
-                var LastTeamFight = " | LastTeamFight: " + (int)(Core.GameTickCount - Pathing.LastTeamFight);
+                var IsSafe = /*" | IsSafe: " + (Player.Instance.IsSafe() && Pathing.Position.IsSafe())*/ "";
+                var LastTeamFight = " | LastTeamFight: " + (int)(Core.GameTickCount - Brain.LastTeamFight);
                 var MovementCommands = " | Movement Commands Issued: " + MoveToCommands;
                 var nextitem = " | Next Item: " + AutoShop.Sequences.Buy.NextItem + " | Value: " + AutoShop.Sequences.Buy.NextItemValue;
-                
+
                 Drawing.DrawText(Drawing.Width * 0.2f, Drawing.Height * 0.025f, System.Drawing.Color.White,
                     AllyTeamTotal + EnemyTeamTotal + "\n"
                     + ActiveMode + Alone + AttackObject + "\n"
-                    + SafeToDive + SafeToAttack + "\n"
+                    + SafeToDive + SafeToAttack + IsSafe + "\n"
+                    + castingimportantspell + lagging + "\n"
                     + LastTurretAttack + LastTeamFight + "\n"
                     + MovementCommands + MoveTo + "\n"
                     + nextitem);
@@ -362,35 +376,51 @@ namespace AramBuddy
                     Game.CursorPos.WorldToScreen().X + 50,
                     Game.CursorPos.WorldToScreen().Y,
                     System.Drawing.Color.Goldenrod,
-                    (Misc.TeamTotal(Game.CursorPos) - Misc.TeamTotal(Game.CursorPos, true)).ToString(CultureInfo.CurrentCulture),
+                    (Misc.TeamTotal(Game.CursorPos) - Misc.TeamTotal(Game.CursorPos, true)).ToString(CultureInfo.CurrentCulture) + "\n" 
+                    /*+ "KDA: " + Player.Instance.KDA() +" [" + Player.Instance.ChampionsKilled + ", " + Player.Instance.Assists + ", " + Player.Instance.Deaths + "]"*/,
                     5);
 
                 foreach (var hr in ObjectsManager.HealthRelics.Where(h => h.IsValid && !h.IsDead))
                 {
-                    Circle.Draw(Color.GreenYellow, hr.BoundingRadius * 2, hr.Position);
+                    Circle.Draw(Color.GreenYellow, hr.BoundingRadius + Player.Instance.BoundingRadius, hr.Position);
                 }
-
-                foreach (var trap in ObjectsManager.EnemyTraps)
-                {
-                    Circle.Draw(Color.OrangeRed, trap.Trap.BoundingRadius * 2, trap.Trap.Position);
-                }
-
+                
                 if (Pathing.Position != null && Pathing.Position != Vector3.Zero && Pathing.Position.IsValid())
                 {
                     Circle.Draw(Color.White, 100, Pathing.Position);
                 }
 
-                foreach (var spell in ModesManager.Spelllist.Where(s => s != null))
+                if (!DisableSpellsCasting)
                 {
-                    Circle.Draw(spell.IsReady() ? Color.Chartreuse : Color.OrangeRed, spell.Range, Player.Instance);
+                    foreach (var spell in ModesManager.Spelllist.Where(s => s != null))
+                    {
+                        Circle.Draw(spell.IsReady() ? Color.Chartreuse : Color.OrangeRed, (spell as Spell.Chargeable)?.MaximumRange ?? spell.Range, Player.Instance);
+                    }
                 }
 
-                foreach (var chime in ObjectsManager.BardChimes.Where(c => Player.Instance.Hero == Champion.Bard && c.IsValid && !c.IsDead))
+                if (PickBardChimes)
                 {
-                    Circle.Draw(Color.Goldenrod, chime.BoundingRadius * 2, chime.Position);
+                    foreach (var chime in ObjectsManager.BardChimes.Where(c => Player.Instance.Hero == Champion.Bard && c.IsValid && !c.IsDead))
+                    {
+                        Circle.Draw(Color.Goldenrod, chime.BoundingRadius + Player.Instance.BoundingRadius, chime.Position);
+                    }
                 }
 
-                ObjectsManager.ZacPassives.ForEach(p => Circle.Draw(Color.AliceBlue, 100, p));
+                if (EnableEvade)
+                {
+                    foreach (var trap in ObjectsManager.EnemyTraps)
+                    {
+                        Circle.Draw(Color.OrangeRed, trap.Trap.BoundingRadius * 3, trap.Trap.Position);
+                    }
+                    /*
+                    foreach (var p in KappaEvade.dangerPolygons)
+                    {
+                        p.Draw(System.Drawing.Color.AliceBlue, 2);
+                    }*/
+                }
+
+                if(Player.Instance.Hero == Champion.Zac)
+                    ObjectsManager.ZacPassives.ForEach(p => Circle.Draw(Color.AliceBlue, 100, p));
             }
             catch (Exception ex)
             {
@@ -414,13 +444,19 @@ namespace AramBuddy
                 }
                 else
                 {
-                    if (Player.Instance.IsDead)
+                    if (Player.Instance.IsDead || GameEnded)
                     {
                         Orbwalker.ActiveModesFlags = Orbwalker.ActiveModes.None;
                         return;
                     }
 
                     Brain.Decisions();
+
+                    /* 10/10 would use Camera API again
+                    if (Pathing.Position != null && Pathing.Position.IsValid())
+                    {
+                        Camera.ScreenPosition = Pathing.Position.WorldToScreen();
+                    }*/
                 }
             }
             catch (Exception ex)

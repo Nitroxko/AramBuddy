@@ -5,7 +5,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Net;
-using AramBuddy.MainCore.Utility;
+using AramBuddy.MainCore.Utility.MiscUtil;
 using EloBuddy;
 
 namespace AramBuddy.AutoShop
@@ -25,7 +25,7 @@ namespace AramBuddy.AutoShop
         /// </summary>
         public static string BuildName()
         {
-            var ChampionName = Player.Instance.ChampionName;
+            var ChampionName = CleanUpChampionName(Player.Instance.ChampionName);
 
             if (ChampionName.Equals("MonkeyKing", StringComparison.CurrentCultureIgnoreCase))
             {
@@ -58,36 +58,46 @@ namespace AramBuddy.AutoShop
             }
 
             Logger.Send("Failed To Detect " + ChampionName, Logger.LogLevel.Warn);
-            Logger.Send("Using Default Build !", Logger.LogLevel.Info);
+            Logger.Send("Using Default Build !");
             return "Default";
         }
 
         /// <summary>
         ///     Creates Builds
         /// </summary>
-        public static void Create()
+        public static void CreateDefualtBuild()
         {
             try
             {
                 var filename = BuildName() + ".json";
-                var WebClient = new WebClient();
 
-                WebClient.DownloadStringTaskAsync("https://raw.githubusercontent.com/plsfixrito/AramBuddy/master/DefaultBuilds/" + filename);
-                WebClient.DownloadStringCompleted += delegate(object sender, DownloadStringCompletedEventArgs args)
+                using (var WebClient = new WebClient())
+                {
+                    using (var request = WebClient.DownloadStringTaskAsync("https://raw.githubusercontent.com/plsfixrito/AramBuddy/master/DefaultBuilds/" + filename))
                     {
-                        if (args.Result.Contains("data"))
+                        if (request.IsFaulted || request.IsCanceled)
                         {
-                            File.WriteAllText(Setup.BuildPath + "\\" + filename, args.Result);
-                            Setup.Builds.Add(BuildName(), File.ReadAllText(Setup.BuildPath + "\\" + filename));
-                            Logger.Send(BuildName() + " Build Created for " + Player.Instance.ChampionName + " - " + BuildName(), Logger.LogLevel.Info);
-                            Setup.DefaultBuild();
+                            Logger.Send("Wrong Response, Or Request Was Cancelled", Logger.LogLevel.Warn);
+                            Logger.Send(request?.Exception?.InnerException?.Message, Logger.LogLevel.Warn);
+                            Console.WriteLine(request.Result);
                         }
                         else
                         {
-                            Logger.Send("Wrong Response, No Champion Build Created", Logger.LogLevel.Warn);
-                            Console.WriteLine(args.Result);
+                            if (request.Result != null && request.Result.Contains("data"))
+                            {
+                                File.WriteAllText(Setup.BuildPath + "\\" + filename, request.Result);
+                                Setup.Builds.Add(BuildName(), File.ReadAllText(Setup.BuildPath + "\\" + filename));
+                                Logger.Send(BuildName() + " Build Created for " + Player.Instance.ChampionName + " - " + BuildName());
+                                Setup.DefaultBuild();
+                            }
+                            else
+                            {
+                                Logger.Send("Wrong Response, No Champion Build Created", Logger.LogLevel.Warn);
+                                Console.WriteLine(request.Result);
+                            }
                         }
-                    };
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -98,12 +108,66 @@ namespace AramBuddy.AutoShop
         }
 
         /// <summary>
+        ///     Creates Builds
+        /// </summary>
+        public static void GetBuildFromService()
+        {
+            try
+            {
+                var filename = CleanUpChampionName(Player.Instance.ChampionName) + ".json";
+
+                using (var WebClient = new WebClient())
+                {
+                    using (var request = WebClient.DownloadStringTaskAsync("https://raw.githubusercontent.com/plsfixrito/AramBuddy/master/DefaultBuilds/" + Config.CurrentBuildService + "/" + filename))
+                    {
+                        if (request != null && !request.IsCanceled && !request.IsFaulted)
+                        {
+                            if (request.Result.Contains("data"))
+                            {
+                                File.WriteAllText(Setup.BuildPath + "\\" + Config.CurrentBuildService + "\\" + filename, request.Result);
+                                Setup.Builds.Add(CleanUpChampionName(Player.Instance.ChampionName), File.ReadAllText(Setup.BuildPath + "\\" + Config.CurrentBuildService + "\\" + filename));
+                                Logger.Send("Created Build for " + Player.Instance.ChampionName);
+                                Setup.CustomBuildService();
+                            }
+                            else
+                            {
+                                Logger.Send("Wrong Response, No Champion Build Created !", Logger.LogLevel.Warn);
+                                Logger.Send("Trying To Get Defualt Build !", Logger.LogLevel.Warn);
+                                Setup.UseDefaultBuild();
+                                //Console.WriteLine(args.Result);
+                            }
+                        }
+                        else
+                        {
+                            Logger.Send("Failed Getting build, No Response !", Logger.LogLevel.Warn);
+                            Logger.Send("Trying To Get Defualt Build !", Logger.LogLevel.Warn);
+                            Setup.UseDefaultBuild();
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // if faild to create build terminate the AutoShop
+                Logger.Send("Failed to create Build from service " + Config.CurrentBuildService + " for " + Player.Instance.ChampionName, Logger.LogLevel.Error);
+                Logger.Send(ex.InnerException?.Message, Logger.LogLevel.Error);
+                Logger.Send("Trying To Get Defualt Build !", Logger.LogLevel.Warn);
+                Setup.UseDefaultBuild();
+            }
+        }
+
+        public static string CleanUpChampionName(string str)
+        {
+            return str.Trim().Replace("\'", "").Replace(".", "").Replace(" ", "");
+        }
+
+        /// <summary>
         ///  ADC Champions.
         /// </summary>
         public static readonly string[] ADC =
             {
-                "Ashe", "Caitlyn", "Corki", "Draven", "Ezreal", "Graves", "Jhin", "Jinx", "Kalista", "Kindred", "KogMaw", "Lucian", "MissFortune", "Sivir", "Quinn", "Tristana",
-                "Twitch", "Urgot", "Varus", "Vayne"
+                "Ashe", "Caitlyn", "Corki", "Draven", "Ezreal", "Graves", "Jhin", "Jinx", "Kalista", "Kindred", "KogMaw", "Lucian", "MissFortune", "Sivir", "Quinn",
+                "Tristana", "Twitch", "Urgot", "Varus", "Vayne"
             };
 
         /// <summary>
@@ -111,10 +175,9 @@ namespace AramBuddy.AutoShop
         /// </summary>
         public static readonly string[] ManaAP =
             {
-                "Ahri", "Anivia", "Annie", "AurelioSol", "Azir", "Brand", "Cassiopeia", "Diana", "Elise", "Ekko", "Evelynn", "Fiddlesticks", "Fizz", "Galio",
-                "Gragas", "Heimerdinger", "Janna", "Karma", "Karthus", "Kassadin", "Kayle", "Leblanc", "Lissandra", "Lulu", "Lux", "Malzahar", "Morgana", "Nami",
-                "Nidalee", "Ryze", "Orianna", "Sona", "Soraka", "Swain", "Syndra", "Taliyah", "Teemo", "TwistedFate", "Veigar", "Viktor", "VelKoz", "Xerath", "Ziggs",
-                "Zilean", "Zyra"
+                "Ahri", "Anivia", "Annie", "AurelionSol", "Azir", "Brand", "Cassiopeia", "Diana", "Elise", "Ekko", "Evelynn", "Fiddlesticks", "Fizz", "Galio",
+                "Gragas", "Heimerdinger", "Janna", "Karma", "Karthus", "Kassadin", "Kayle", "Leblanc", "Lissandra", "Lulu", "Lux", "Malzahar", "Morgana", "Nami", "Nidalee", "Ryze", "Orianna", "Sona",
+                "Soraka", "Swain", "Syndra", "Taliyah", "Teemo", "TwistedFate", "Veigar", "Viktor", "VelKoz", "Xerath", "Ziggs", "Zilean", "Zyra"
             };
 
         /// <summary>
@@ -127,8 +190,8 @@ namespace AramBuddy.AutoShop
         /// </summary>
         public static readonly string[] AD =
             {
-                "Aatrox", "Fiora", "Gangplank", "Jax", "Jayce", "KhaZix", "LeeSin", "MasterYi", "Nocturne", "Olaf", "Pantheon", "Rengar",
-                "Riven", "Talon", "Tryndamere", "Wukong", "XinZhao", "Yasuo", "Zed"
+                "Aatrox", "Fiora", "Gangplank", "Jax", "Jayce", "KhaZix", "LeeSin", "MasterYi", "Nocturne", "Olaf", "Pantheon", "Rengar", "Riven", "Talon", "Tryndamere",
+                "Wukong", "XinZhao", "Yasuo", "Zed"
             };
 
         /// <summary>
@@ -136,8 +199,8 @@ namespace AramBuddy.AutoShop
         /// </summary>
         public static readonly string[] Tank =
             {
-                "Alistar", "Amumu", "Blitzcrank", "Bard", "Braum", "ChoGath", "Darius", "DrMundo", "Garen", "Gnar", "Hecarim", "Kled", "Illaoi", "Irelia", "JarvanIV", "Leona",
-                "Malphite", "Maokai", "Nasus", "Nautilus", "Nunu", "Poppy", "Rammus", "RekSai", "Renekton", "Sejuani", "Shaco", "Shen", "Shyvana", "Singed", "Sion", "Skarner", "TahmKench",
+                "Alistar", "Amumu", "Blitzcrank", "Bard", "Braum", "ChoGath", "Darius", "DrMundo", "Garen", "Gnar", "Hecarim", "Kled", "Illaoi", "Irelia", "JarvanIV",
+                "Leona", "Malphite", "Maokai", "Nasus", "Nautilus", "Nunu", "Poppy", "Rammus", "RekSai", "Renekton", "Sejuani", "Shaco", "Shen", "Shyvana", "Singed", "Sion", "Skarner", "TahmKench",
                 "Taric", "Thresh", "Trundle", "Udyr", "Vi", "Volibear", "Warwick", "Yorick", "Zac"
             };
     }

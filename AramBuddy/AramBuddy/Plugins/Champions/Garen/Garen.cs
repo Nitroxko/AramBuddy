@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
-using AramBuddy.KappaEvade;
-using AramBuddy.MainCore.Utility;
+using AramBuddy.Plugins.KappaEvade;
+using AramBuddy.MainCore.Utility.MiscUtil;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Events;
@@ -21,10 +21,10 @@ namespace AramBuddy.Plugins.Champions.Garen
             KillStealMenu = MenuIni.AddSubMenu("KillSteal");
             
             AutoMenu.CreateCheckBox("Q", "Flee Q");
-            AutoMenu.CreateCheckBox("GapW", "Anti-GapCloser W");
+            //AutoMenu.CreateCheckBox("GapW", "Anti-GapCloser W");
             AutoMenu.CreateCheckBox("IntQ", "Interrupter Q");
-            AutoMenu.CreateCheckBox("TDmgW", "W against targeted Spells");
-            AutoMenu.CreateCheckBox("SDmgW", "W against Skillshots");
+            //AutoMenu.CreateCheckBox("TDmgW", "W against targeted Spells");
+            //AutoMenu.CreateCheckBox("SDmgW", "W against Skillshots");
             foreach (var spell in SpellList)
             {
                 ComboMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
@@ -36,11 +36,11 @@ namespace AramBuddy.Plugins.Champions.Garen
                 KillStealMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
             }
 
-            Gapcloser.OnGapcloser += Gapcloser_OnGapcloser;
+            //Gapcloser.OnGapcloser += Gapcloser_OnGapcloser;
             Interrupter.OnInterruptableSpell += Interrupter_OnInterruptableSpell;
             Orbwalker.OnPostAttack += Orbwalker_OnPostAttack;
-            SpellsDetector.OnTargetedSpellDetected += SpellsDetector_OnTargetedSpellDetected;
-            Game.OnTick += Garen_SkillshotDetector;
+            //SpellsDetector.OnTargetedSpellDetected += SpellsDetector_OnTargetedSpellDetected;
+            //Game.OnTick += Garen_SkillshotDetector;
         }
 
         private static void Garen_SkillshotDetector(EventArgs args)
@@ -106,7 +106,7 @@ namespace AramBuddy.Plugins.Champions.Garen
 
                 if (spell.Slot == SpellSlot.R)
                 {
-                    if (target.Health <= Player.Instance.GetSpellDamage(target, SpellSlot.R))
+                    if (target.PredictHealth() <= Player.Instance.GetSpellDamage(target, SpellSlot.R))
                     {
                         R.Cast(target);
                     }

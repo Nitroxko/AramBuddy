@@ -1,9 +1,9 @@
 ﻿using System;
-using AramBuddy.MainCore.Utility;
+using AramBuddy.MainCore.Utility.MiscUtil;
 using EloBuddy;
 using GenesisSpellLibrary.Spells;
 
-namespace AramBuddy.GenesisSpellDatabase
+namespace GenesisSpellLibrary
 {
     internal class SpellLibrary
     {

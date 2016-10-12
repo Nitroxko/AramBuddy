@@ -4,7 +4,7 @@ using EloBuddy.SDK;
 using EloBuddy.SDK.Enumerations;
 using EloBuddy.SDK.Events;
 using EloBuddy.SDK.Menu;
-using static AramBuddy.MainCore.Utility.Misc;
+using static AramBuddy.MainCore.Utility.MiscUtil.Misc;
 
 namespace AramBuddy.Plugins.Champions.Soraka
 {
@@ -30,21 +30,21 @@ namespace AramBuddy.Plugins.Champions.Soraka
             }
             AutoMenu.CreateCheckBox("GapQ", "Anti-GapCloser Q");
             AutoMenu.CreateCheckBox("GapE", "Anti-GapCloser E");
-            AutoMenu.CreateCheckBox("AutoHeal", "Heal Allies");
-            AutoMenu.CreateCheckBox("AutoR", "Auto Ult saver");
+            //AutoMenu.CreateCheckBox("AutoHeal", "Heal Allies");
+            //AutoMenu.CreateCheckBox("AutoR", "Auto Ult saver");
             AutoMenu.CreateCheckBox("AutoRteam", "Auto Ult Team");
             AutoMenu.CreateSlider("AutoRteamHp", "Auto Ult at Team HP {0}", 20, 1);
 
             Interrupter.OnInterruptableSpell += Interrupter_OnInterruptableSpell;
             Gapcloser.OnGapcloser += Gapcloser_OnGapcloser;
             Dash.OnDash += Dash_OnDash;
-            Events.OnIncomingDamage += Events_OnIncomingDamage;
+            //Events.OnIncomingDamage += Events_OnIncomingDamage;
         }
 
         private static void Events_OnIncomingDamage(Events.InComingDamageEventArgs args)
         {
             if (args.Target.IsAlly &&
-                (args.InComingDamage >= args.Target.Health && AutoMenu.CheckBoxValue("AutoR") && R.IsReady()))
+                (args.InComingDamage >= args.Target.PredictHealth() && AutoMenu.CheckBoxValue("AutoR") && R.IsReady()))
             {
                 R.Cast();
             }
@@ -98,21 +98,22 @@ namespace AramBuddy.Plugins.Champions.Soraka
 
         public override void Active()
         {
-            var teamHp = EntityManager.Heroes.Allies.Where(a => a.IsKillable()).Sum(a => a.HealthPercent)/5;
+            var teamHp = EntityManager.Heroes.Allies.Where(a => a.IsKillable()).Sum(a => a.PredictHealthPercent())/5;
 
             if (AutoMenu.CheckBoxValue("AutoRteam") && teamHp <= AutoMenu.SliderValue("AutoRteamHp"))
             {
                 R.Cast();
             }
 
+            /*
             foreach (
                 var ally in
                     EntityManager.Heroes.Allies.Where(
-                        a => a.IsKillable(W.Range) && a.HealthPercent < 50 && user.HealthPercent >= 40)
+                        a => a.IsKillable(W.Range) && a.PredictHealthPercent() < 50 && user.PredictHealthPercent() >= 40)
                         .Where(ally => AutoMenu.CheckBoxValue("AutoHeal")))
             {
                 W.Cast(ally);
-            }
+            }*/
         }
 
         public override void Combo()

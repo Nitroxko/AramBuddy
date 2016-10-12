@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using AramBuddy.MainCore.Utility;
+using AramBuddy.MainCore.Utility.MiscUtil;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Menu;
 using EloBuddy.SDK.Spells;
-using static AramBuddy.Plugins.Activator.Database;
+using static AramBuddy.Plugins.Activator.Items.Database;
 
 namespace AramBuddy.Plugins.Activator.Cleanse
 {

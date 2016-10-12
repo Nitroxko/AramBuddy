@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using AramBuddy.MainCore.Utility;
+using AramBuddy.MainCore.Utility.MiscUtil;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Enumerations;
@@ -114,9 +115,9 @@ namespace AramBuddy.Plugins.Champions.Jhin
                 CurrentRShot = 0;
             }
 
-            var RKillable = EntityManager.Heroes.Enemies.OrderBy(t => t.TotalShieldHealth() / TotalRDamage(t)).FirstOrDefault(e => e != null && TotalRDamage(e) >= e.TotalShieldHealth() && e.IsKillable(R.Range));
+            var RKillable = EntityManager.Heroes.Enemies.OrderBy(t => t.TotalShieldHealth() / TotalRDamage(t)).FirstOrDefault(e => e != null && TotalRDamage(e) >= e.TotalShieldHealth() && e.IsKillable(R.Range - 150));
 
-            if (!IsCastingR && R.IsReady() && RKillable != null && user.CountEnemiesInRange(1200) < 1)
+            if (!IsCastingR && R.IsReady() && RKillable != null && user.CountEnemyHeroesInRangeWithPrediction(Config.SafeValue) < 1)
             {
                 R.Cast(RKillable);
             }
@@ -222,7 +223,7 @@ namespace AramBuddy.Plugins.Champions.Jhin
 
             if (Q.IsReady() && LaneClearMenu.CheckBoxValue(SpellSlot.Q) && LaneClearMenu.CompareSlider("Qmana", user.ManaPercent))
             {
-                var qminion = Q.LaneMinions().OrderBy(m => m.Health / user.GetSpellDamage(m, SpellSlot.Q)).FirstOrDefault(m => m.CountEnemyMinionsInRange(450) >= 4);
+                var qminion = Q.LaneMinions().OrderBy(m => m.PredictHealth() / user.GetSpellDamage(m, SpellSlot.Q)).FirstOrDefault(m => m.CountEnemyMinionsInRangeWithPrediction(450) >= 4);
                 if (qminion != null)
                 {
                     Q.Cast(qminion);
@@ -278,11 +279,13 @@ namespace AramBuddy.Plugins.Champions.Jhin
 
         private static float JhinRDamage(Obj_AI_Base target)
         {
+            if (!R.IsLearned)
+                return 0f;
             var index = Jhin.R.Level - 1;
             var MinRDmg = new float[] { 40, 100, 160 }[index];
             var MaxRDmg = new float[] { 140, 350, 560 }[index];
 
-            var MHADP = 1 + (100 - target.HealthPercent) * 0.025f;
+            var MHADP = 1 + (100 - target.PredictHealthPercent()) * 0.025f;
 
             var mindmg = (MinRDmg + 0.2f * Player.Instance.TotalAttackDamage) * MHADP;
             var maxdmg = MaxRDmg + 0.7f * Player.Instance.TotalAttackDamage;
@@ -307,7 +310,7 @@ namespace AramBuddy.Plugins.Champions.Jhin
 
         private static Geometry.Polygon.Sector JhinRSector(Vector3 RCastedPos)
         {
-            return new Geometry.Polygon.Sector(Player.Instance.ServerPosition, Player.Instance.ServerPosition.Extend(RCastedPos, Jhin.R.Range).To3D(), (float)(60f * Math.PI / 180), Jhin.R.Range - 175);
+            return new Geometry.Polygon.Sector(Player.Instance.ServerPosition, Player.Instance.ServerPosition.Extend(RCastedPos, Jhin.R.Range).To3D(), (float)(61f * Math.PI / 180), Jhin.R.Range - 175);
         }
     }
 }

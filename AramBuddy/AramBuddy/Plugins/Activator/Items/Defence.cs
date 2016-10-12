@@ -1,9 +1,10 @@
 ﻿using System;
 using AramBuddy.MainCore.Utility;
+using AramBuddy.MainCore.Utility.MiscUtil;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Menu;
-using static AramBuddy.Plugins.Activator.Database;
+using static AramBuddy.Plugins.Activator.Items.Database;
 
 namespace AramBuddy.Plugins.Activator.Items
 {
@@ -42,7 +43,7 @@ namespace AramBuddy.Plugins.Activator.Items
             {
                 if (Player.Instance.IsDead) return;
 
-                if (Randuins.ItemReady(Def) && Def.CompareSlider(Randuins.Id + "hp", Player.Instance.HealthPercent) && Player.Instance.CountEnemiesInRange(Randuins.Range) > 0
+                if (Randuins.ItemReady(Def) && Def.CompareSlider(Randuins.Id + "hp", Player.Instance.PredictHealthPercent()) && Player.Instance.CountEnemyHeroesInRangeWithPrediction((int)Randuins.Range) > 0
                     && Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Combo))
                 {
                     Randuins.Cast();
@@ -63,7 +64,7 @@ namespace AramBuddy.Plugins.Activator.Items
 
                 if (args.Target.IsAlly && !args.Target.IsMe && Def.CheckBoxValue("ally"))
                 {
-                    if (Solari.ItemReady(Def) && Def.SliderValue(Solari.Id + "hp") >= args.Target.HealthPercent)
+                    if (Solari.ItemReady(Def) && Def.SliderValue(Solari.Id + "hp") >= args.Target.PredictHealthPercent())
                     {
                         Solari.Cast();
                         return;
@@ -71,17 +72,17 @@ namespace AramBuddy.Plugins.Activator.Items
                 }
                 if (args.Target.IsMe)
                 {
-                    if (Zhonyas.ItemReady(Def) && Def.SliderValue(Zhonyas.Id + "hp") >= args.Target.HealthPercent)
+                    if (Zhonyas.ItemReady(Def) && Def.SliderValue(Zhonyas.Id + "hp") >= args.Target.PredictHealthPercent())
                     {
                         Zhonyas.Cast();
                         return;
                     }
-                    if (Seraphs.ItemReady(Def) && Def.SliderValue(Seraphs.Id + "hp") >= args.Target.HealthPercent)
+                    if (Seraphs.ItemReady(Def) && Def.SliderValue(Seraphs.Id + "hp") >= args.Target.PredictHealthPercent())
                     {
                         Seraphs.Cast();
                         return;
                     }
-                    if (Solari.ItemReady(Def) && Def.SliderValue(Solari.Id + "hp") >= args.Target.HealthPercent)
+                    if (Solari.ItemReady(Def) && Def.SliderValue(Solari.Id + "hp") >= args.Target.PredictHealthPercent())
                     {
                         Solari.Cast();
                     }

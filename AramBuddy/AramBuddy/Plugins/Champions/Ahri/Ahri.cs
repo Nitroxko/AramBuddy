@@ -4,7 +4,7 @@ using EloBuddy.SDK;
 using EloBuddy.SDK.Enumerations;
 using EloBuddy.SDK.Events;
 using EloBuddy.SDK.Menu;
-using static AramBuddy.MainCore.Utility.Misc;
+using static AramBuddy.MainCore.Utility.MiscUtil.Misc;
 
 namespace AramBuddy.Plugins.Champions.Ahri
 {
@@ -74,7 +74,9 @@ namespace AramBuddy.Plugins.Champions.Ahri
             }
             if (R.IsReady() && ComboMenu.CheckBoxValue(SpellSlot.R))
             {
-                R.Cast(target.PredictPosition().Extend(user.PredictPosition(), 300).To3D());
+                var pos = target.PredictPosition().Extend(user.PredictPosition(), 300).To3D();
+                if(pos.IsSafe())
+                    R.Cast(pos);
             }
         }
 
@@ -140,7 +142,9 @@ namespace AramBuddy.Plugins.Champions.Ahri
                 }
                 if (R.IsReady() && R.WillKill(target) && target.IsKillable(R.Range) && KillStealMenu.CheckBoxValue(SpellSlot.R))
                 {
-                    R.Cast(target, HitChance.Low);
+                    var pos = R.GetPrediction(target).CastPosition;
+                    if(pos.IsSafe())
+                        R.Cast(target, HitChance.Low);
                 }
             }
         }

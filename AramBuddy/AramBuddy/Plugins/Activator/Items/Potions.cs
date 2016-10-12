@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using AramBuddy.MainCore.Utility;
+using AramBuddy.MainCore.Utility.MiscUtil;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Menu;
-using static AramBuddy.Plugins.Activator.Database;
+using static AramBuddy.Plugins.Activator.Items.Database;
 
 namespace AramBuddy.Plugins.Activator.Items
 {
@@ -41,7 +42,7 @@ namespace AramBuddy.Plugins.Activator.Items
             try
             {
                 if (Player.Instance.IsDead) return;
-                foreach (var pot in Pots.Where(p => p.ItemReady(PotionsMenu) && PotionsMenu.SliderValue(p.Id + "hp") >= Player.Instance.HealthPercent))
+                foreach (var pot in Pots.Where(p => p.ItemReady(PotionsMenu) && PotionsMenu.SliderValue(p.Id + "hp") >= Player.Instance.PredictHealthPercent()))
                 {
                     if (!Player.Instance.Buffs.Any(a => PotBuffs.Any(b => a.DisplayName.Equals(b))))
                     {

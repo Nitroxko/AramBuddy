@@ -1,5 +1,5 @@
 ﻿using System.Linq;
-using AramBuddy.MainCore.Utility;
+using AramBuddy.MainCore.Utility.MiscUtil;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Enumerations;
@@ -42,14 +42,14 @@ namespace AramBuddy.Plugins.Champions.Aatrox
 
         private static void Gapcloser_OnGapcloser(AIHeroClient sender, Gapcloser.GapcloserEventArgs e)
         {
-            if (sender == null || !sender.IsEnemy || !sender.IsKillable(Q.Range) || !Q.IsReady() || user.HealthPercent < 15 || !AutoMenu.CheckBoxValue("GapQ"))
+            if (sender == null || !sender.IsEnemy || !sender.IsKillable(Q.Range) || !Q.IsReady() || user.PredictHealthPercent() < 15 || !AutoMenu.CheckBoxValue("GapQ"))
                 return;
             Q.Cast(sender);
         }
 
         private static void Interrupter_OnInterruptableSpell(Obj_AI_Base sender, Interrupter.InterruptableSpellEventArgs e)
         {
-            if (sender == null || !sender.IsEnemy || !sender.IsKillable(Q.Range) || !Q.IsReady() || user.HealthPercent < 15 || !AutoMenu.CheckBoxValue("IntQ"))
+            if (sender == null || !sender.IsEnemy || !sender.IsKillable(Q.Range) || !Q.IsReady() || user.PredictHealthPercent() < 15 || !AutoMenu.CheckBoxValue("IntQ"))
                 return;
             Q.Cast(sender);
         }
@@ -71,7 +71,7 @@ namespace AramBuddy.Plugins.Champions.Aatrox
             }
             if (W.IsReady() && ComboMenu.CheckBoxValue(SpellSlot.W))
             {
-                if (W.Handle.ToggleState == 1 && user.HealthPercent > 50)
+                if (W.Handle.ToggleState == 1 && user.PredictHealthPercent() > 50)
                 {
                     W.Cast();
                 }
@@ -95,13 +95,13 @@ namespace AramBuddy.Plugins.Champions.Aatrox
             var target = TargetSelector.GetTarget(Q.Range, DamageType.Physical);
             if (target == null || !target.IsKillable(Q.Range)) return;
 
-            if (Q.IsReady() && HarassMenu.CheckBoxValue(SpellSlot.Q) && user.HealthPercent > 25)
+            if (Q.IsReady() && HarassMenu.CheckBoxValue(SpellSlot.Q) && user.PredictHealthPercent() > 25)
             {
                 QAOE(target);
             }
             if (W.IsReady() && HarassMenu.CheckBoxValue(SpellSlot.W))
             {
-                if (W.Handle.ToggleState == 1 && user.HealthPercent > 50)
+                if (W.Handle.ToggleState == 1 && user.PredictHealthPercent() > 50)
                 {
                     W.Cast();
                 }
@@ -119,16 +119,18 @@ namespace AramBuddy.Plugins.Champions.Aatrox
         public override void LaneClear()
         {
             var Cirarmloc = EntityManager.MinionsAndMonsters.GetCircularFarmLocation(EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => m.IsKillable(E.Range)), ((Spell.Skillshot)E).Width, (int)E.Range);
-            if (Q.IsReady() && LaneClearMenu.CheckBoxValue(SpellSlot.Q) && user.HealthPercent > 25)
+            if (Q.IsReady() && LaneClearMenu.CheckBoxValue(SpellSlot.Q) && user.PredictHealthPercent() > 25)
             {
-                if (user.CountEnemiesInRange(1000 + Q.Range) < 2 && Cirarmloc.HitNumber > 2)
+                if (user.CountEnemyHeroesInRangeWithPrediction((int)(1000 + Q.Range)) < 2 && Cirarmloc.HitNumber > 2)
                 {
-                    Q.Cast(Cirarmloc.CastPosition);
+                    var pos = Cirarmloc.CastPosition;
+                    if(pos.IsSafe())
+                        Q.Cast(pos);
                 }
             }
             if (W.IsReady() && LaneClearMenu.CheckBoxValue(SpellSlot.W))
             {
-                if (W.Handle.ToggleState == 1 && user.HealthPercent > 50)
+                if (W.Handle.ToggleState == 1 && user.PredictHealthPercent() > 50)
                 {
                     W.Cast();
                 }
@@ -160,11 +162,13 @@ namespace AramBuddy.Plugins.Champions.Aatrox
             {
                 if (Q.IsReady() && Q.WillKill(target) && KillStealMenu.CheckBoxValue(SpellSlot.Q))
                 {
-                    Q.Cast(target);
+                    var pos = Q.GetPrediction(target).CastPosition;
+                    if(pos.IsSafe())
+                        Q.Cast(target);
                 }
                 if (W.IsReady() && W.WillKill(target) && KillStealMenu.CheckBoxValue(SpellSlot.W))
                 {
-                    if (W.Handle.ToggleState == 1 && user.HealthPercent > 50)
+                    if (W.Handle.ToggleState == 1 && user.PredictHealthPercent() > 50)
                     {
                         W.Cast();
                     }
@@ -186,15 +190,17 @@ namespace AramBuddy.Plugins.Champions.Aatrox
 
         private static void QAOE(Obj_AI_Base target)
         {
-            if (Q.GetPrediction(target).CastPosition.CountEnemiesInRange(((Spell.Skillshot)Q).Width) >= 2)
+            if (Q.GetPrediction(target).CastPosition.CountEnemyHeroesInRangeWithPrediction(((Spell.Skillshot)Q).Width) >= 2)
             {
-                Q.Cast(target, HitChance.Medium);
+                var pos = Q.GetPrediction(target).CastPosition;
+                if (pos.IsSafe())
+                    Q.Cast(target, HitChance.Medium);
             }
         }
 
         private static void RAOE(Menu menu)
         {
-            if(menu.CompareSlider("RAOE", user.CountEnemiesInRange(R.Range)))
+            if(menu.CompareSlider("RAOE", user.CountEnemyHeroesInRangeWithPrediction((int)R.Range)))
             {
                 R.Cast();
             }

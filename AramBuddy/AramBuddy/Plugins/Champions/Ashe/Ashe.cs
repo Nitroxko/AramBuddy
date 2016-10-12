@@ -4,7 +4,7 @@ using EloBuddy.SDK;
 using EloBuddy.SDK.Enumerations;
 using EloBuddy.SDK.Events;
 using EloBuddy.SDK.Menu;
-using static AramBuddy.MainCore.Utility.Misc;
+using static AramBuddy.MainCore.Utility.MiscUtil.Misc;
 
 namespace AramBuddy.Plugins.Champions.Ashe
 {
@@ -28,9 +28,12 @@ namespace AramBuddy.Plugins.Champions.Ashe
                 if (spell != R && spell != E)
                 {
                     HarassMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
-                    HarassMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
                     LaneClearMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
-                    LaneClearMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
+                    if (spell != Q)
+                    {
+                        HarassMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
+                        LaneClearMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
+                    }
                 }
                 KillStealMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
             }
@@ -38,6 +41,21 @@ namespace AramBuddy.Plugins.Champions.Ashe
             Gapcloser.OnGapcloser += Gapcloser_OnGapcloser;
             Interrupter.OnInterruptableSpell += Interrupter_OnInterruptableSpell;
             Dash.OnDash += Dash_OnDash;
+            Orbwalker.OnPostAttack += Orbwalker_OnPostAttack; ;
+        }
+
+        private static void Orbwalker_OnPostAttack(AttackableUnit target, System.EventArgs args)
+        {
+            if (Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Combo) && !ComboMenu.CheckBoxValue(SpellSlot.Q))
+                return;
+            if (Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Harass) && !HarassMenu.CheckBoxValue(SpellSlot.Q))
+                return;
+            if (Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.LaneClear) && !HarassMenu.CheckBoxValue(SpellSlot.Q))
+                return;
+            if (target.IsValidTarget(Config.SafeValue) && Q.IsReady())
+            {
+                Q.Cast();
+            }
         }
 
         private static void Dash_OnDash(Obj_AI_Base sender, Dash.DashEventArgs e)
@@ -67,51 +85,37 @@ namespace AramBuddy.Plugins.Champions.Ashe
 
         public override void Combo()
         {
-            foreach (var spell in SpellList.Where(s => s.IsReady() && ComboMenu.CheckBoxValue(s.Slot)))
+            foreach (var spell in SpellList.Where(s => s.IsReady() && s != E && ComboMenu.CheckBoxValue(s.Slot)))
             {
                 var target = TargetSelector.GetTarget(W.Range, DamageType.Physical);
                 if (target == null || !target.IsKillable(spell.Range))
                     return;
 
-                if (spell.Slot == SpellSlot.Q)
+                var skillshot = spell as Spell.Skillshot;
+                if (skillshot == R)
                 {
-                    Q.Cast();
-                }
-                else
-                {
-                    var skillshot = spell as Spell.Skillshot;
-                    if (skillshot == R)
-                    {
-                        if (user.HealthPercent <= 35)
-                        {
-                            skillshot?.Cast(target, HitChance.Medium);
-                        }
-                    }
-                    else
+                    if (user.PredictHealthPercent() <= 35)
                     {
                         skillshot?.Cast(target, HitChance.Medium);
                     }
+                }
+                else
+                {
+                    skillshot?.Cast(target, HitChance.Medium);
                 }
             }
         }
 
         public override void Harass()
         {
-            foreach (var spell in SpellList.Where(s => s.IsReady() && s != R && HarassMenu.CheckBoxValue(s.Slot) && HarassMenu.CompareSlider(s.Slot + "mana", user.ManaPercent)))
+            foreach (var spell in SpellList.Where(s => s.IsReady() && s == W && HarassMenu.CheckBoxValue(s.Slot) && HarassMenu.CompareSlider(s.Slot + "mana", user.ManaPercent)))
             {
                 var target = TargetSelector.GetTarget(W.Range, DamageType.Physical);
                 if (target == null || !target.IsKillable(spell.Range))
                     return;
 
-                if (spell.Slot == SpellSlot.Q)
-                {
-                    Q.Cast();
-                }
-                else
-                {
-                    var skillshot = spell as Spell.Skillshot;
-                    skillshot.Cast(target, HitChance.Medium);
-                }
+                var skillshot = spell as Spell.Skillshot;
+                skillshot?.Cast(target, HitChance.Medium);
             }
         }
 
@@ -119,17 +123,10 @@ namespace AramBuddy.Plugins.Champions.Ashe
         {
             foreach (var target in EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => m != null && m.IsValidTarget()))
             {
-                foreach (var spell in SpellList.Where(s => s.IsReady() && s != R && LaneClearMenu.CheckBoxValue(s.Slot) && LaneClearMenu.CompareSlider(s.Slot + "mana", user.ManaPercent)))
+                foreach (var spell in SpellList.Where(s => s.IsReady() && s == W && LaneClearMenu.CheckBoxValue(s.Slot) && LaneClearMenu.CompareSlider(s.Slot + "mana", user.ManaPercent)))
                 {
-                    if (spell.Slot == SpellSlot.Q)
-                    {
-                        Q.Cast();
-                    }
-                    else
-                    {
-                        var skillshot = spell as Spell.Skillshot;
-                        skillshot.Cast(target, HitChance.Medium);
-                    }
+                    var skillshot = spell as Spell.Skillshot;
+                    skillshot.Cast(target, HitChance.Medium);
                 }
             }
         }
@@ -149,7 +146,7 @@ namespace AramBuddy.Plugins.Champions.Ashe
         {
             foreach (var target in EntityManager.Heroes.Enemies.Where(e => e != null && e.IsValidTarget()))
             {
-                foreach (var spell in SpellList.Where(s => s.WillKill(target) && s.IsReady() && target.IsKillable(s.Range) && KillStealMenu.CheckBoxValue(s.Slot) && s.Slot != SpellSlot.E))
+                foreach (var spell in SpellList.Where(s => s.WillKill(target) && s != E && s.IsReady() && target.IsKillable(s.Range) && KillStealMenu.CheckBoxValue(s.Slot) && s.Slot != SpellSlot.E))
                 {
                     if (spell.Slot == SpellSlot.Q)
                     {
@@ -158,7 +155,7 @@ namespace AramBuddy.Plugins.Champions.Ashe
                     else
                     {
                         var skillshot = spell as Spell.Skillshot;
-                        skillshot.Cast(target, HitChance.Medium);
+                        skillshot?.Cast(target, HitChance.Medium);
                     }
                 }
             }

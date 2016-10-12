@@ -1,4 +1,4 @@
-﻿using AramBuddy.MainCore.Utility;
+﻿using AramBuddy.MainCore.Utility.MiscUtil;
 using EloBuddy;
 using EloBuddy.SDK;
 
@@ -17,13 +17,13 @@ namespace AramBuddy.MainCore.Logics
                 {
                     if (args.Slot == SpellSlot.R)
                     {
-                        var lastAttack = new Misc.LastAttack(from, null) { Attacker = from, LastAttackSent = Core.GameTickCount, Target = null };
+                        var lastAttack = new Misc.LastAttack(from, target) { Attacker = from, LastAttackTick = Core.GameTickCount, Target = target };
                         Misc.AutoAttacks.Add(lastAttack);
                         return;
                     }
                     if (target != null && from.Team != target.Team)
                     {
-                        var lastAttack = new Misc.LastAttack(from, target) { Attacker = from, LastAttackSent = Core.GameTickCount, Target = target };
+                        var lastAttack = new Misc.LastAttack(from, target) { Attacker = from, LastAttackTick = Core.GameTickCount, Target = target };
                         Misc.AutoAttacks.Add(lastAttack);
                     }
                 }
@@ -33,9 +33,9 @@ namespace AramBuddy.MainCore.Logics
             Obj_AI_Base.OnBasicAttack += delegate(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
                 {
                     var target = args.Target as AIHeroClient;
-                    if (sender != null && target != null)
+                    if (sender != null && target != null && sender.Team != target.Team)
                     {
-                        var lastAttack = new Misc.LastAttack(sender, target) { Attacker = sender, LastAttackSent = Core.GameTickCount, Target = target };
+                        var lastAttack = new Misc.LastAttack(sender, target) { Attacker = sender, LastAttackTick = Core.GameTickCount, Target = target };
                         Misc.AutoAttacks.Add(lastAttack);
                     }
                 };

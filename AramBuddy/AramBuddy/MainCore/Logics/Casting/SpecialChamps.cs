@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using AramBuddy.MainCore.Utility;
+using AramBuddy.MainCore.Utility.MiscUtil;
 using EloBuddy;
 using EloBuddy.SDK;
 
@@ -10,6 +10,7 @@ namespace AramBuddy.MainCore.Logics.Casting
     internal class SpecialChamps
     {
         public static bool IsCastingImportantSpell;
+        public static float LastStartTick;
 
         public class ImportantSpells
         {
@@ -62,10 +63,22 @@ namespace AramBuddy.MainCore.Logics.Casting
             if (!IsCastingImportantSpell)
                 return;
 
-            if (sender.Owner.IsMe && Importantspells.Any(h => h.champ == Player.Instance.Hero && h.slot != args.Slot))
+            var me = Importantspells.FirstOrDefault(s => s.champ == Player.Instance.Hero);
+            if (me != null)
             {
-                args.Process = false;
-                Logger.Send("Blocked " + args.Slot + " - Case Player Channeling Important Spell " + Player.Instance.Hero, Logger.LogLevel.Info);
+                if (sender.Owner.IsMe)
+                {
+                    if (args.Slot == me.slot)
+                    {
+                        IsCastingImportantSpell = true;
+                        Logger.Send("[" + Player.Instance.Hero + "] Player Is Channeling Important Spell");
+                    }
+                    else
+                    {
+                        args.Process = false;
+                        Logger.Send("Blocked " + args.Slot + " - Case Player Channeling Important Spell " + Player.Instance.Hero);
+                    }
+                }
             }
         }
 
@@ -75,14 +88,14 @@ namespace AramBuddy.MainCore.Logics.Casting
                 return;
 
             args.Process = false;
-            Logger.Send("Blocked Command - Case Player Channeling Important Spell " + Player.Instance.Hero, Logger.LogLevel.Info);
+            Logger.Send("Blocked Command - Case Player Channeling Important Spell " + Player.Instance.Hero);
         }
 
         private static void Game_OnTick(EventArgs args)
         {
             Orbwalker.DisableAttacking = IsCastingImportantSpell;
             Orbwalker.DisableMovement = IsCastingImportantSpell;
-            if (IsCastingImportantSpell)
+            if (IsCastingImportantSpell && Core.GameTickCount - LastStartTick > 250 + Game.Ping)
             {
                 if (Player.Instance.Spellbook.IsChanneling && !Config.DisableSpellsCasting && !Program.CustomChamp)
                 {
@@ -114,17 +127,23 @@ namespace AramBuddy.MainCore.Logics.Casting
                 if (!Player.Instance.Spellbook.IsChanneling && !Player.Instance.Spellbook.IsCharging && !Player.Instance.Spellbook.IsCastingSpell)
                 {
                     IsCastingImportantSpell = false;
-                    Logger.Send("No Longer Channeling Important Spell " + Player.Instance.Hero, Logger.LogLevel.Info);
+                    Logger.Send("No Longer Channeling Important Spell " + Player.Instance.Hero);
                 }
             }
         }
 
         private static void Obj_AI_Base_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
-            if (IsCastingImportantSpell || !sender.IsMe || Importantspells.Any(h => h.champ != Player.Instance.Hero || h.slot != args.Slot))
+            if (IsCastingImportantSpell || !sender.IsMe)
                 return;
-            IsCastingImportantSpell = true;
-            Logger.Send("Player Is Channeling Important Spell " + Player.Instance.Hero, Logger.LogLevel.Info);
+
+            var me = Importantspells.FirstOrDefault(s => s.champ == Player.Instance.Hero);
+            if (me != null && me.slot == args.Slot)
+            {
+                IsCastingImportantSpell = true;
+                LastStartTick = Core.GameTickCount;
+                Logger.Send("[" + Player.Instance.Hero + "] Player Is Channeling Important Spell");
+            }
         }
     }
 }

@@ -1,10 +1,9 @@
 ﻿using System.Linq;
-using AramBuddy.KappaEvade;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Events;
 using EloBuddy.SDK.Menu;
-using static AramBuddy.MainCore.Utility.Misc;
+using static AramBuddy.MainCore.Utility.MiscUtil.Misc;
 
 namespace AramBuddy.Plugins.Champions.Alistar
 {
@@ -69,13 +68,6 @@ namespace AramBuddy.Plugins.Champions.Alistar
 
         public override void Active()
         {
-            foreach (var spell in Collision.NewSpells)
-            {
-                if (spell.spell.DangerLevel > 2 && user.IsInDanger(spell) && R.IsReady() && user.CountEnemiesInRange(1000) > 0 && user.HealthPercent < 25)
-                {
-                    R.Cast();
-                }
-            }
         }
 
         public override void Combo()
@@ -91,7 +83,7 @@ namespace AramBuddy.Plugins.Champions.Alistar
             {
                 W.Cast(target);
             }
-            if (R.IsReady() && user.HealthPercent <= 15 && user.CountEnemiesInRange(750) > 1 && ComboMenu.CheckBoxValue(SpellSlot.R))
+            if (R.IsReady() && user.PredictHealthPercent() <= 15 && user.CountEnemyHeroesInRangeWithPrediction(750) > 1 && ComboMenu.CheckBoxValue(SpellSlot.R))
             {
                 R.Cast();
             }

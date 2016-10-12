@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using AramBuddy.MainCore.Utility;
+using AramBuddy.MainCore.Utility.MiscUtil;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Enumerations;
@@ -19,14 +20,18 @@ namespace AramBuddy.Plugins.Champions.Sona
             LaneClearMenu = MenuIni.AddSubMenu("LaneClear");
             KillStealMenu = MenuIni.AddSubMenu("KillSteal");
 
-            foreach (var spell in SpellList.Where(spell => spell == Q))
+            foreach (var spell in SpellList)
             {
-                ComboMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
-                HarassMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
-                HarassMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
-                LaneClearMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
-                LaneClearMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
-                KillStealMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
+                if (spell == Q)
+                {
+                    ComboMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
+                    HarassMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
+                    HarassMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
+                    LaneClearMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
+                    LaneClearMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
+                }
+                if(spell != W && spell != E)
+                    KillStealMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
             }
             AutoMenu.CreateCheckBox("FleeE", "Flee E");
             AutoMenu.CreateCheckBox("GapE", "Anti-GapCloser E");
@@ -36,17 +41,14 @@ namespace AramBuddy.Plugins.Champions.Sona
 
             Gapcloser.OnGapcloser += Gapcloser_OnGapcloser;
             Dash.OnDash += Dash_OnDash;
-            Events.OnIncomingDamage += Events_OnIncomingDamage;
+            //Events.OnIncomingDamage += Events_OnIncomingDamage;
         }
 
         private static void Events_OnIncomingDamage(Events.InComingDamageEventArgs args)
         {
             if (!W.IsReady()) return;
-            foreach (
-                var ally in
-                    EntityManager.Heroes.Allies.Where(a =>
-                        a.IsKillable(W.Range) && args.Target == a && args.Target.Health <= args.InComingDamage)
-                        .Where(ally => AutoMenu.CheckBoxValue("AutoHeal")))
+
+            if (args.Target.IsAlly && args.Target.IsKillable(W.Range) && AutoMenu.CheckBoxValue("AutoHeal") && args.Target.PredictHealth() <= args.InComingDamage)
             {
                 W.Cast();
             }
@@ -79,10 +81,7 @@ namespace AramBuddy.Plugins.Champions.Sona
 
         public override void Active()
         {
-            foreach (
-                var ally in
-                    EntityManager.Heroes.Allies.Where(a => a.IsKillable(W.Range) && a.HealthPercent < 50)
-                        .Where(ally => AutoMenu.CheckBoxValue("AutoHeal")).Where(ally => W.IsReady()))
+            if (EntityManager.Heroes.Allies.Any(a => AutoMenu.CheckBoxValue("AutoHeal") && a.IsKillable(W.Range) && a.PredictHealthPercent() < 50 && W.IsReady()))
             {
                 W.Cast();
             }
@@ -102,7 +101,7 @@ namespace AramBuddy.Plugins.Champions.Sona
             foreach (
                 var spell in
                     SpellList.Where(
-                        s =>
+                        s => s == Q &&
                             s.IsReady() && target.IsKillable(s.Range) &&
                             ComboMenu.CheckBoxValue(s.Slot)))
             {
@@ -120,7 +119,7 @@ namespace AramBuddy.Plugins.Champions.Sona
                 var spell in
                     SpellList.Where(
                         s =>
-                            s.IsReady() && target.IsKillable(s.Range) &&
+                            s.IsReady() && s == Q && target.IsKillable(s.Range) &&
                             ComboMenu.CheckBoxValue(s.Slot)))
             {
                 spell.Cast();
@@ -144,16 +143,20 @@ namespace AramBuddy.Plugins.Champions.Sona
 
         public override void KillSteal()
         {
-            foreach (
-                var spell in
-                    from spell in
-                        SpellList.Where(s => s.IsReady() && KillStealMenu.CheckBoxValue(s.Slot))
-                    from target in
-                        EntityManager.Heroes.Enemies.Where(
-                            m => m != null && m.IsKillable(spell.Range) && spell.WillKill(m))
-                    select spell)
+            foreach (var spell in SpellList.Where(s => s.IsReady() && s != W && s != E && KillStealMenu.CheckBoxValue(s.Slot)))
             {
-                spell.Cast();
+                foreach (var target in EntityManager.Heroes.Enemies.Where(
+                            m => m != null && m.IsKillable(spell.Range) && spell.WillKill(m)))
+                {
+                    if (spell == R)
+                    {
+                        spell.Cast(target, HitChance.Medium);
+                    }
+                    else
+                    {
+                        spell.Cast();
+                    }
+                }
             }
         }
     }

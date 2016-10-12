@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.Net;
-using AramBuddy.MainCore.Utility;
+using AramBuddy.MainCore.Utility.MiscUtil;
 using EloBuddy;
 using EloBuddy.SDK.Notifications;
 using EloBuddy.SDK.Rendering;
@@ -11,6 +11,9 @@ using Version = System.Version;
 
 namespace AramBuddy
 {
+    /// <summary>
+    ///     A class Used For Checking AramBuddy Version
+    /// </summary>
     internal class CheckVersion
     {
         private static Text text;
@@ -26,30 +29,49 @@ namespace AramBuddy
             {
                 var size = Drawing.Width <= 400 || Drawing.Height <= 400 ? 10F : 40F;
                 text = new Text("YOUR ARAMBUDDY IS OUTDATED", new Font("Euphemia", size, FontStyle.Bold)) { Color = Color.White };
-                var WebClient = new WebClient();
-                WebClient.DownloadStringCompleted += delegate(object sender, DownloadStringCompletedEventArgs args) { UpdateMsg = args.Result; };
-                WebClient.DownloadStringTaskAsync(UpdateMsgPath);
-
-                var WebClient2 = new WebClient();
-                WebClient2.DownloadStringCompleted += delegate(object sender, DownloadStringCompletedEventArgs args)
+                using (var WebClient = new WebClient())
+                {
+                    using (var request = WebClient.DownloadStringTaskAsync(UpdateMsgPath))
                     {
-                        if (!args.Result.Contains(CurrentVersion.ToString()))
+                        if (request.IsFaulted || request.IsCanceled)
                         {
-                            Drawing.OnEndScene += delegate
+                            Logger.Send("Wrong Response, Or Request Was Cancelled", Logger.LogLevel.Warn);
+                            Logger.Send(request?.Exception?.InnerException?.Message, Logger.LogLevel.Warn);
+                            Console.WriteLine(request.Result);
+                        }
+                        else
+                        {
+                            UpdateMsg = request.Result;
+                        }
+                    }
+                    using (var request2 = WebClient.DownloadStringTaskAsync(WebVersionPath))
+                    {
+                        if (request2.IsFaulted || request2.IsCanceled)
+                        {
+                            Logger.Send("Wrong Response, Or Request Was Cancelled", Logger.LogLevel.Warn);
+                            Logger.Send(request2?.Exception?.InnerException?.Message, Logger.LogLevel.Warn);
+                            Console.WriteLine(request2.Result);
+                        }
+                        else
+                        {
+                            if (!request2.Result.Contains(CurrentVersion.ToString()))
+                            {
+                                Drawing.OnEndScene += delegate
                                 {
                                     text.Position = new Vector2(Drawing.Width * 0.01f, Drawing.Height * 0.1f);
                                     text.Draw();
                                 };
-                            Outdated = true;
-                            Logger.Send("There is a new Update Available for AramBuddy!", Logger.LogLevel.Warn);
-                            Logger.Send("Update Log: " + UpdateMsg, Logger.LogLevel.Info);
+                                Outdated = true;
+                                Logger.Send("There is a new Update Available for AramBuddy!", Logger.LogLevel.Warn);
+                                Logger.Send("Update Log: " + UpdateMsg);
+                            }
+                            else
+                            {
+                                Logger.Send("Your AramBuddy is updated !");
+                            }
                         }
-                        else
-                        {
-                            Logger.Send("Your AramBuddy is updated !", Logger.LogLevel.Info);
-                        }
-                    };
-                WebClient2.DownloadStringTaskAsync(WebVersionPath);
+                    }
+                }
 
                 Game.OnTick += delegate
                 {

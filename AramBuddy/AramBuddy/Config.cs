@@ -1,8 +1,12 @@
-﻿using AramBuddy.MainCore.Utility;
+﻿using AramBuddy.MainCore.Utility.MiscUtil;
+using EloBuddy.SDK.Menu.Values;
 using static AramBuddy.Program;
 
 namespace AramBuddy
 {
+    /// <summary>
+    ///     A class containing all Configs Used by AramBuddy
+    /// </summary>
     internal class Config
     {
         // Main
@@ -13,7 +17,9 @@ namespace AramBuddy
         public static bool DontStealHR => MenuIni.CheckBoxValue("stealhr");
         public static bool EnableChat => MenuIni.CheckBoxValue("chat");
         public static bool DisableTexture => MenuIni.CheckBoxValue("texture");
-        public static int SafeValue => MenuIni.SliderValue("Safe");
+        public static bool EnableEvade => MenuIni.CheckBoxValue("evade");
+        public static bool Enableff => MenuIni.CheckBoxValue("ff");
+        public static int SafeValue => MenuIni.SliderValue("Safe") + 75;
         public static int HealthRelicHP => MenuIni.SliderValue("HRHP");
         public static int HealthRelicMP => MenuIni.SliderValue("HRMP");
 
@@ -22,6 +28,7 @@ namespace AramBuddy
         public static bool EnableAutoShop => MiscMenu.CheckBoxValue("autoshop");
         public static bool TryFixDive => MiscMenu.CheckBoxValue("fixdive");
         public static bool FixedKite => MiscMenu.CheckBoxValue("kite");
+        public static bool EnableHighPing => MiscMenu.CheckBoxValue("ping");
         public static bool PickDravenAxe => MiscMenu.CheckBoxValue("dravenaxe");
         public static bool PickBardChimes => MiscMenu.CheckBoxValue("bardchime");
         public static bool PickCorkiBomb => MiscMenu.CheckBoxValue("corkibomb");
@@ -32,5 +39,28 @@ namespace AramBuddy
         public static bool SaveChat => MiscMenu.CheckBoxValue("savechat");
         public static bool Tyler1 => MiscMenu.CheckBoxValue("bigbrother");
         public static float Tyler1g => MiscMenu.SliderValue("gold");
+
+        //AutoShop things
+        public static int CurrentBuildServiceid = BuildMenu.Get<ComboBox>("buildsource").CurrentValue;
+
+        public static string CurrentBuildService
+        {
+            get
+            {
+                switch (CurrentBuildServiceid)
+                {
+                    case 0:
+                        return "MetaSrc";
+                    case 1:
+                        return "Championgg";
+                    case 2:
+                        return "KoreanBuilds";
+                    case 3:
+                        return "LoLSkill";
+                    default:
+                        return "";
+                }
+            }
+        }
     }
 }

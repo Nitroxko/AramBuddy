@@ -4,7 +4,7 @@ using EloBuddy.SDK;
 using EloBuddy.SDK.Enumerations;
 using EloBuddy.SDK.Events;
 using EloBuddy.SDK.Menu;
-using static AramBuddy.MainCore.Utility.Misc;
+using static AramBuddy.MainCore.Utility.MiscUtil.Misc;
 
 namespace AramBuddy.Plugins.Champions.Amumu
 {
@@ -51,7 +51,8 @@ namespace AramBuddy.Plugins.Champions.Amumu
 
             if (Q.IsReady() && AutoMenu.CheckBoxValue("GapQ") && (sender.IsKillable(Q.Range) || e.EndPos.IsInRange(user, Q.Range)))
             {
-                Q.Cast(sender, HitChance.Low);
+                if(sender.Position.IsSafe())
+                    Q.Cast(sender, HitChance.Low);
                 return;
             }
             if (R.IsReady() && AutoMenu.CheckBoxValue("GapR") && (sender.IsKillable(R.Range) || e.EndPos.IsInRange(user, R.Range)))
@@ -67,7 +68,8 @@ namespace AramBuddy.Plugins.Champions.Amumu
 
             if (Q.IsReady() && AutoMenu.CheckBoxValue("IntQ") && sender.IsKillable(Q.Range))
             {
-                Q.Cast(sender, HitChance.Low);
+                if (sender.Position.IsSafe())
+                    Q.Cast(sender, HitChance.Low);
                 return;
             }
             if (R.IsReady() && AutoMenu.CheckBoxValue("IntR") && e.DangerLevel > DangerLevel.Low && sender.IsKillable(R.Range))
@@ -83,7 +85,8 @@ namespace AramBuddy.Plugins.Champions.Amumu
 
             if (Q.IsReady() && AutoMenu.CheckBoxValue("GapQ") && (sender.IsKillable(Q.Range) || e.End.IsInRange(user, Q.Range)))
             {
-                Q.Cast(sender, HitChance.Low);
+                if (sender.Position.IsSafe())
+                    Q.Cast(sender, HitChance.Low);
                 return;
             }
             if (R.IsReady() && AutoMenu.CheckBoxValue("GapR") && sender.IsKillable(R.Range))
@@ -111,7 +114,8 @@ namespace AramBuddy.Plugins.Champions.Amumu
 
             if (ComboMenu.CheckBoxValue(SpellSlot.Q) && Q.IsReady())
             {
-                Q.Cast(target, HitChance.Medium);
+                if (target.Position.IsSafe())
+                    Q.Cast(target, HitChance.Low);
             }
             if (ComboMenu.CheckBoxValue(SpellSlot.W) && W.IsReady())
             {
@@ -149,7 +153,8 @@ namespace AramBuddy.Plugins.Champions.Amumu
 
             if (HarassMenu.CheckBoxValue(SpellSlot.Q) && Q.IsReady() && HarassMenu.CompareSlider(Q.Slot + "mana", user.ManaPercent))
             {
-                Q.Cast(target, HitChance.Medium);
+                if (target.Position.IsSafe())
+                    Q.Cast(target, HitChance.Medium);
             }
             if (HarassMenu.CheckBoxValue(SpellSlot.W) && W.IsReady() && HarassMenu.CompareSlider(W.Slot + "mana", user.ManaPercent))
             {
@@ -200,7 +205,8 @@ namespace AramBuddy.Plugins.Champions.Amumu
             {
                 if (Q.IsReady() && target.IsKillable(Q.Range) && Q.WillKill(target) && KillStealMenu.CheckBoxValue(SpellSlot.Q))
                 {
-                    Q.Cast();
+                    if (target.Position.IsSafe())
+                        Q.Cast(target, HitChance.Medium);
                 }
                 if (W.IsReady() && target.IsKillable(W.Range) && W.WillKill(target) && KillStealMenu.CheckBoxValue(SpellSlot.W))
                 {

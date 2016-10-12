@@ -1,5 +1,5 @@
 ﻿using System;
-using AramBuddy.MainCore.Utility;
+using AramBuddy.MainCore.Utility.MiscUtil;
 using EloBuddy.SDK.Menu;
 
 namespace AramBuddy.Plugins.Activator
@@ -14,6 +14,7 @@ namespace AramBuddy.Plugins.Activator
             {
                 MenuIni = MainMenu.AddMenu("AB Activator", "AB Activator");
                 Spells.Summoners.Init();
+                Spells.AutoShield.AutoShield.Init();
                 Items.Potions.Init();
                 Cleanse.Qss.Init();
                 Items.Offence.Init();

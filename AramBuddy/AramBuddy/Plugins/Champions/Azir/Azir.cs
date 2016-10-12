@@ -4,7 +4,7 @@ using EloBuddy.SDK;
 using EloBuddy.SDK.Enumerations;
 using EloBuddy.SDK.Events;
 using EloBuddy.SDK.Menu;
-using static AramBuddy.MainCore.Utility.Misc;
+using static AramBuddy.MainCore.Utility.MiscUtil.Misc;
 
 namespace AramBuddy.Plugins.Champions.Azir
 {
@@ -94,7 +94,7 @@ namespace AramBuddy.Plugins.Champions.Azir
                 }
                 if (R.IsReady() && ComboMenu.CheckBoxValue(R.Slot))
                 {
-                    R.CastLineAoE(target, HitChance.Low, ComboMenu.SliderValue("RAOE"));
+                    R.CastAOE(ComboMenu.SliderValue("RAOE"), R.Range, target);
                 }
             }
         }

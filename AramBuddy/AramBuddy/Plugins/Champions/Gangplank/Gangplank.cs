@@ -6,7 +6,7 @@ using EloBuddy.SDK;
 using EloBuddy.SDK.Enumerations;
 using EloBuddy.SDK.Menu;
 using SharpDX;
-using static AramBuddy.MainCore.Utility.Misc;
+using static AramBuddy.MainCore.Utility.MiscUtil.Misc;
 
 namespace AramBuddy.Plugins.Champions.Gangplank
 {
@@ -153,7 +153,7 @@ namespace AramBuddy.Plugins.Champions.Gangplank
                             {
                                 Q.Cast(KillableBarrel(A));
                             }
-                            if (BarrelsList.OrderBy(b => b.Barrel.Distance(target)).Any(b => b.Barrel.NetworkId != Secondbarrel.Barrel.NetworkId && b.Barrel.Distance(Secondbarrel.Barrel) <= ConnectionRange && b.Barrel.CountEnemiesInRange(E.SetSkillshot().Width) > 0))
+                            if (BarrelsList.OrderBy(b => b.Barrel.Distance(target)).Any(b => b.Barrel.NetworkId != Secondbarrel.Barrel.NetworkId && b.Barrel.Distance(Secondbarrel.Barrel) <= ConnectionRange && b.Barrel.CountEnemyHeroesInRangeWithPrediction(E.SetSkillshot().Width) > 0))
                             {
                                 Q.Cast(KillableBarrel(A));
                             }
@@ -221,14 +221,14 @@ namespace AramBuddy.Plugins.Champions.Gangplank
                                 {
                                     Q.Cast(KillableBarrel(A));
                                 }
-                                if (BarrelsList.OrderBy(b => b.Barrel.Distance(target)).Any(b => b.Barrel.NetworkId != Secondbarrel.Barrel.NetworkId && b.Barrel.Distance(Secondbarrel.Barrel) <= ConnectionRange && b.Barrel.CountEnemiesInRange(E.SetSkillshot().Width) > 0))
+                                if (BarrelsList.OrderBy(b => b.Barrel.Distance(target)).Any(b => b.Barrel.NetworkId != Secondbarrel.Barrel.NetworkId && b.Barrel.Distance(Secondbarrel.Barrel) <= ConnectionRange && b.Barrel.CountEnemyHeroesInRangeWithPrediction(E.SetSkillshot().Width) > 0))
                                 {
                                     Q.Cast(KillableBarrel(A));
                                 }
                             }
                             else
                             {
-                                if (BarrelsList.OrderBy(b => b.Barrel.Distance(target)).Any(b => b.Barrel.NetworkId != KillableBarrel(A).NetworkId && b.Barrel.Distance(KillableBarrel(A)) <= ConnectionRange && b.Barrel.CountEnemiesInRange(E.SetSkillshot().Width) > 0))
+                                if (BarrelsList.OrderBy(b => b.Barrel.Distance(target)).Any(b => b.Barrel.NetworkId != KillableBarrel(A).NetworkId && b.Barrel.Distance(KillableBarrel(A)) <= ConnectionRange && b.Barrel.CountEnemyHeroesInRangeWithPrediction(E.SetSkillshot().Width) > 0))
                                 {
                                     Q.Cast(KillableBarrel(A));
                                 }
@@ -309,7 +309,7 @@ namespace AramBuddy.Plugins.Champions.Gangplank
             {
                 if (E.IsReady() && LaneClearMenu.CheckBoxValue(SpellSlot.E))
                 {
-                    foreach (var minion in EntityManager.MinionsAndMonsters.EnemyMinions.OrderBy(m => m.Health).Where(m => m.IsKillable(E.Range)))
+                    foreach (var minion in EntityManager.MinionsAndMonsters.EnemyMinions.OrderBy(m => m.PredictHealth()).Where(m => m.IsKillable(E.Range)))
                     {
                         var pred = E.GetPrediction(minion);
                         if (EntityManager.MinionsAndMonsters.EnemyMinions.Count(e => e.Distance(pred.CastPosition) <= E.SetSkillshot().Width && BarrelKill(e)) >= LaneClearMenu.SliderValue("EKill"))
@@ -325,7 +325,7 @@ namespace AramBuddy.Plugins.Champions.Gangplank
                 }
                 if (LaneClearMenu.CheckBoxValue(SpellSlot.Q))
                 {
-                    var barrel = BarrelsList.OrderByDescending(b => b.Barrel.CountEnemyMinionsInRange(E.SetSkillshot().Width)).FirstOrDefault(m => KillableBarrel(m) != null && m.Barrel.CountEnemyMinionsInRange(E.SetSkillshot().Width) > 0 && (KillableBarrel(m).IsValidTarget(Q.Range) || KillableBarrel(m).IsInRange(user, user.GetAutoAttackRange())));
+                    var barrel = BarrelsList.OrderByDescending(b => b.Barrel.CountEnemyMinionsInRangeWithPrediction(E.SetSkillshot().Width)).FirstOrDefault(m => KillableBarrel(m) != null && m.Barrel.CountEnemyMinionsInRangeWithPrediction(E.SetSkillshot().Width) > 0 && (KillableBarrel(m).IsValidTarget(Q.Range) || KillableBarrel(m).IsInRange(user, user.GetAutoAttackRange())));
                     if (barrel != null)
                     {
                         var EkillMinions = EntityManager.MinionsAndMonsters.EnemyMinions.Count(m => BarrelKill(m) && BarrelsList.Any(b => b.Barrel.IsInRange(m, E.SetSkillshot().Width)) && m.IsValidTarget())
@@ -366,7 +366,7 @@ namespace AramBuddy.Plugins.Champions.Gangplank
                 {
                     Q.Cast(enemy);
                 }
-                if (R.IsReady() && enemy.CountEnemiesInRange(1000) >= enemy.CountAlliesInRange(1000) && enemy.Distance(user) >= Q.Range + 1000 && KillStealMenu.CheckBoxValue(SpellSlot.R))
+                if (R.IsReady() && enemy.CountEnemyHeroesInRangeWithPrediction(1000) >= enemy.CountEnemyAlliesInRangeWithPrediction(1000) && enemy.Distance(user) >= Q.Range + 1000 && KillStealMenu.CheckBoxValue(SpellSlot.R))
                 {
                     if (KillStealMenu.CheckBoxValue("RSwitch") && Rdamage(enemy) > 0 ? Rdamage(enemy) >= enemy.TotalShieldHealth() : R.WillKill(enemy, KillStealMenu.SliderValue("Rdmg"), Rdamage(enemy)))
                     {
@@ -427,13 +427,13 @@ namespace AramBuddy.Plugins.Champions.Gangplank
         internal static bool BarrelKill(AIHeroClient target)
         {
             //Chat.Print(BarrelDamage(target));
-            return BarrelDamage(target) >= Prediction.Health.GetPrediction(target, Game.Ping);
+            return BarrelDamage(target) >= target.PredictHealth();
         }
 
         internal static bool BarrelKill(Obj_AI_Base target)
         {
             //Chat.Print(BarrelDamage(target));
-            return BarrelDamage(target) >= Prediction.Health.GetPrediction(target, Game.Ping);
+            return BarrelDamage(target) >= target.PredictHealth();
         }
 
         private static void Game_OnTick(EventArgs args)
@@ -446,7 +446,7 @@ namespace AramBuddy.Plugins.Champions.Gangplank
                     BarrelsList.Add(newbarrel);
                 }
             }
-            BarrelsList.RemoveAll(b => b?.Barrel == null || b.Barrel.IsDead || !b.Barrel.IsValid || b.Barrel.Health <= 0);
+            BarrelsList.RemoveAll(b => b?.Barrel == null || b.Barrel.IsDead || !b.Barrel.IsValid || b.Barrel.PredictHealth() <= 0);
         }
 
         internal class Barrels
@@ -512,10 +512,10 @@ namespace AramBuddy.Plugins.Champions.Gangplank
                     var Secondbarrel = BarrelsList.FirstOrDefault(b => b.Barrel.NetworkId != KillableBarrel(A).NetworkId && b.Barrel.Distance(KillableBarrel(A)) <= Gangplank.ConnectionRange && b.Barrel.Distance(target) <= Gangplank.E.SetSkillshot().Width);
                     if (Secondbarrel != null)
                     {
-                        return BarrelsList.Any(b => b.Barrel.NetworkId != Secondbarrel.Barrel.NetworkId && b.Barrel.Distance(Secondbarrel.Barrel) <= Gangplank.ConnectionRange && b.Barrel.CountEnemiesInRange(Gangplank.E.SetSkillshot().Width) > 0) ? KillableBarrel(A) : KillableBarrel(A);
+                        return BarrelsList.Any(b => b.Barrel.NetworkId != Secondbarrel.Barrel.NetworkId && b.Barrel.Distance(Secondbarrel.Barrel) <= Gangplank.ConnectionRange && b.Barrel.CountEnemyHeroesInRangeWithPrediction(Gangplank.E.SetSkillshot().Width) > 0) ? KillableBarrel(A) : KillableBarrel(A);
                     }
 
-                    if (BarrelsList.Any(b => b.Barrel.NetworkId != KillableBarrel(A).NetworkId && b.Barrel.Distance(KillableBarrel(A)) <= Gangplank.ConnectionRange && b.Barrel.CountEnemiesInRange(Gangplank.E.SetSkillshot().Width) > 0))
+                    if (BarrelsList.Any(b => b.Barrel.NetworkId != KillableBarrel(A).NetworkId && b.Barrel.Distance(KillableBarrel(A)) <= Gangplank.ConnectionRange && b.Barrel.CountEnemyHeroesInRangeWithPrediction(Gangplank.E.SetSkillshot().Width) > 0))
                     {
                         return KillableBarrel(A);
                     }

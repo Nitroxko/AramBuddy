@@ -1,6 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using AramBuddy.MainCore.Utility;
+using AramBuddy.MainCore.Utility.MiscUtil;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Enumerations;
@@ -11,13 +13,16 @@ using SharpDX;
 
 namespace AramBuddy.Plugins.Champions.Viktor
 {
-    class Viktor : Base
+    internal class Viktor : Base
     {
+        private static string ViktorBaseRName = "ViktorChaosStorm";
+        private static Obj_GeneralParticleEmitter ViktorRObj;
+
         private static bool IsCastingR
         {
             get
             {
-                return user.HasBuff("ViktorChaosStormTimer");
+                return user.HasBuff("ViktorChaosStormTimer") || (!R.Name.Equals(ViktorBaseRName) && ViktorRObj != null);
             }
         }
         
@@ -61,6 +66,26 @@ namespace AramBuddy.Plugins.Champions.Viktor
             Interrupter.OnInterruptableSpell += Interrupter_OnInterruptableSpell;
             Gapcloser.OnGapcloser += Gapcloser_OnGapcloser;
             Orbwalker.OnUnkillableMinion += Orbwalker_OnUnkillableMinion;
+            GameObject.OnCreate += GameObject_OnCreate;
+            GameObject.OnDelete += GameObject_OnDelete;
+        }
+
+        private static void GameObject_OnDelete(GameObject sender, EventArgs args)
+        {
+            var create = sender as Obj_GeneralParticleEmitter;
+            if (create != null && create.Name.Equals("Viktor_ChaosStorm_green.troy", StringComparison.CurrentCultureIgnoreCase))
+            {
+                ViktorRObj = null;
+            }
+        }
+
+        private static void GameObject_OnCreate(GameObject sender, EventArgs args)
+        {
+            var create = sender as Obj_GeneralParticleEmitter;
+            if(create != null && create.Name.Equals("Viktor_ChaosStorm_green.troy", StringComparison.CurrentCultureIgnoreCase))
+            {
+                ViktorRObj = create;
+            }
         }
 
         private static void Orbwalker_OnUnkillableMinion(Obj_AI_Base target, Orbwalker.UnkillableMinionArgs args)
@@ -98,15 +123,17 @@ namespace AramBuddy.Plugins.Champions.Viktor
             if (sender.IsMe && args.Slot == SpellSlot.Q) Orbwalker.ResetAutoAttack();
         }
 
-        private static float LastCommand;
-
         public override void Active()
         {
-            var target = TargetSelector.GetTarget(1250, DamageType.Magical) ?? EntityManager.Heroes.Enemies.OrderBy(e => e.Distance(Game.CursorPos)).FirstOrDefault(e => e.IsKillable());
-            if (IsCastingR && target != null && Core.GameTickCount - LastCommand > 75)
+            if (ViktorRObj != null && (ViktorRObj.IsDead || !ViktorRObj.IsValid))
             {
-                R.Cast(target);
-                LastCommand = Core.GameTickCount;
+                ViktorRObj = null;
+            }
+
+            var target = TargetSelector.GetTarget(1250, DamageType.Magical) ?? EntityManager.Heroes.Enemies.OrderBy(e => e.Distance(ViktorRObj?.Position ?? Game.CursorPos)).FirstOrDefault(e => e.IsKillable());
+            if (IsCastingR && target != null)
+            {
+                Player.Instance.Spellbook.CastSpell(SpellSlot.R, target.PredictPosition(), true, true);
             }
         }
 
@@ -141,7 +168,7 @@ namespace AramBuddy.Plugins.Champions.Viktor
 
                     foreach (var enemy in EntityManager.Heroes.Enemies.Where(e => e.IsKillable(R.Range + R.SetSkillshot().Width)))
                     {
-                        if (enemy.CountEnemiesInRange(R.SetSkillshot().Width) >= ComboMenu.SliderValue("RAOE"))
+                        if (enemy.CountEnemyHeroesInRangeWithPrediction(R.SetSkillshot().Width) >= ComboMenu.SliderValue("RAOE"))
                         {
                             R.Cast(enemy);
                         }
@@ -217,25 +244,25 @@ namespace AramBuddy.Plugins.Champions.Viktor
     {
         public static void ECast(this AIHeroClient target, int HitCount = 1)
         {
-            if (!Viktor.E.IsReady()) return;
+            if (!Base.E.IsReady()) return;
 
             var rectlist = new List<Geometry.Polygon.Rectangle>();
             rectlist.Clear();
-            var pred = Viktor.E.GetPrediction(target);
+            var pred = Base.E.GetPrediction(target);
 
             if (pred.HitChance < HitChance.Low) return;
 
             Vector3 Start = pred.CastPosition.Distance(Player.Instance) > 525 ? Player.Instance.ServerPosition.Extend(pred.CastPosition, 525).To3D() : target.ServerPosition;
             Vector3 End = pred.CastPosition;
 
-            foreach (var A in EntityManager.Heroes.Enemies.OrderBy(o => o.Health).Where(e => e.IsKillable(Viktor.E.Range) && e.NetworkId != target.NetworkId))
+            foreach (var A in EntityManager.Heroes.Enemies.OrderBy(o => o.PredictHealth()).Where(e => e.IsKillable(Base.E.Range) && e.NetworkId != target.NetworkId))
             {
-                var predmobB = Viktor.E.GetPrediction(A);
+                var predmobB = Base.E.GetPrediction(A);
                 End = Start.Extend(predmobB.CastPosition, 600).To3D();
-                rectlist.Add(new Geometry.Polygon.Rectangle(Start, End, Viktor.E.SetSkillshot().Width));
+                rectlist.Add(new Geometry.Polygon.Rectangle(Start, End, Base.E.SetSkillshot().Width));
             }
 
-            var bestpos = rectlist.OrderByDescending(r => EntityManager.Heroes.Enemies.OrderBy(o => o.Health).Count(m => r.IsInside(m) && m.IsKillable(Viktor.E.Range))).FirstOrDefault();
+            var bestpos = rectlist.OrderByDescending(r => EntityManager.Heroes.Enemies.OrderBy(o => o.PredictHealth()).Count(m => r.IsInside(m) && m.IsKillable(Base.E.Range))).FirstOrDefault();
 
             if (bestpos != null)
             {
@@ -244,56 +271,56 @@ namespace AramBuddy.Plugins.Champions.Viktor
 
                 if (HitCount > 1)
                 {
-                    if (EntityManager.Heroes.Enemies.OrderBy(o => o.Health).Count(m => bestpos.IsInside(m) && m.IsKillable(Viktor.E.Range)) >= HitCount)
+                    if (EntityManager.Heroes.Enemies.OrderBy(o => o.PredictHealth()).Count(m => bestpos.IsInside(m) && m.IsKillable(Base.E.Range)) >= HitCount)
                     {
-                        Viktor.E.CastStartToEnd(End, Start);
+                        Base.E.CastStartToEnd(End, Start);
                     }
                 }
                 else
                 {
-                    Viktor.E.CastStartToEnd(End, Start);
+                    Base.E.CastStartToEnd(End, Start);
                 }
             }
             else
             {
-                    Viktor.E.CastStartToEnd(End, Start);
+                    Base.E.CastStartToEnd(End, Start);
             }
         }
 
 
         public static void ECast(int HitCount = 1)
         {
-            if (!Viktor.E.IsReady()) return;
+            if (!Base.E.IsReady()) return;
 
             var rectlist = new List<Geometry.Polygon.Rectangle>();
             rectlist.Clear();
             Vector3 Start;
             Vector3 End;
-            var mobs = EntityManager.MinionsAndMonsters.EnemyMinions.OrderBy(o => o.Health).Where(e => e.IsKillable(Viktor.E.Range));
+            var mobs = EntityManager.MinionsAndMonsters.EnemyMinions.OrderBy(o => o.PredictHealth()).Where(e => e.IsKillable(Base.E.Range));
             
             foreach (var A in mobs)
             {
-                var predmob = Viktor.E.GetPrediction(A);
+                var predmob = Base.E.GetPrediction(A);
                 Start = predmob.CastPosition.Distance(Player.Instance) > 525 ? Player.Instance.ServerPosition.Extend(predmob.CastPosition, 525).To3D() : A.ServerPosition;
-                var mobs2 = EntityManager.MinionsAndMonsters.EnemyMinions.OrderBy(o => o.Health).Where(e => e.IsKillable(Viktor.E.Range) && e.NetworkId != A.NetworkId && e.IsInRange(A, 600));
+                var mobs2 = EntityManager.MinionsAndMonsters.EnemyMinions.OrderBy(o => o.PredictHealth()).Where(e => e.IsKillable(Base.E.Range) && e.NetworkId != A.NetworkId && e.IsInRange(A, 600));
                 foreach (var B in mobs2)
                 {
-                    var predmobB = Viktor.E.GetPrediction(B);
+                    var predmobB = Base.E.GetPrediction(B);
                     End = Start.Extend(predmobB.CastPosition, 600).To3D();
-                    rectlist.Add(new Geometry.Polygon.Rectangle(Start, End, Viktor.E.SetSkillshot().Width));
+                    rectlist.Add(new Geometry.Polygon.Rectangle(Start, End, Base.E.SetSkillshot().Width));
                 }
             }
 
-            var bestpos = rectlist.OrderByDescending(r => EntityManager.MinionsAndMonsters.EnemyMinions.OrderBy(o => o.Health).Count(m => r.IsInside(m) && m.IsKillable(Viktor.E.Range))).FirstOrDefault();
+            var bestpos = rectlist.OrderByDescending(r => EntityManager.MinionsAndMonsters.EnemyMinions.OrderBy(o => o.PredictHealth()).Count(m => r.IsInside(m) && m.IsKillable(Base.E.Range))).FirstOrDefault();
 
             if (bestpos != null)
             {
-                var mobs3 = EntityManager.MinionsAndMonsters.EnemyMinions.OrderBy(o => o.Health).Count(m => bestpos.IsInside(m) && m.IsKillable(Viktor.E.Range));
+                var mobs3 = EntityManager.MinionsAndMonsters.EnemyMinions.OrderBy(o => o.PredictHealth()).Count(m => bestpos.IsInside(m) && m.IsKillable(Base.E.Range));
                 if (mobs3 >= HitCount)
                 {
                     Start = bestpos.Start.To3D();
                     End = bestpos.End.To3D();
-                    Viktor.E.CastStartToEnd(End, Start);
+                    Base.E.CastStartToEnd(End, Start);
                 }
             }
         }

@@ -1,11 +1,11 @@
 ﻿using System.Linq;
-using AramBuddy.KappaEvade;
+using AramBuddy.Plugins.KappaEvade;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Enumerations;
 using EloBuddy.SDK.Events;
 using EloBuddy.SDK.Menu;
-using static AramBuddy.MainCore.Utility.Misc;
+using static AramBuddy.MainCore.Utility.MiscUtil.Misc;
 
 namespace AramBuddy.Plugins.Champions.Orianna
 {
@@ -42,7 +42,7 @@ namespace AramBuddy.Plugins.Champions.Orianna
 
             KillStealMenu.CreateCheckBox("R", "Use R");
             Interrupter.OnInterruptableSpell += Interrupter_OnInterruptableSpell;
-            SpellsDetector.OnTargetedSpellDetected += SpellsDetector_OnTargetedSpellDetected;
+            //SpellsDetector.OnTargetedSpellDetected += SpellsDetector_OnTargetedSpellDetected;
         }
 
         private static void SpellsDetector_OnTargetedSpellDetected(Obj_AI_Base sender, Obj_AI_Base target, GameObjectProcessSpellCastEventArgs args, Database.TargetedSpells.TSpell spell)
@@ -125,7 +125,7 @@ namespace AramBuddy.Plugins.Champions.Orianna
             if (!AutoMenu.CheckBoxValue("W") || OriannaBall == null || !W.IsReady())
                 return;
 
-            if (EntityManager.Heroes.Enemies.Any(e => e != null && e.PredictPosition().Distance(user) < 400) && user.HealthPercent < 25 && user.ManaPercent > 10)
+            if (EntityManager.Heroes.Enemies.Any(e => e != null && e.PredictPosition().Distance(user) < 400) && user.PredictHealthPercent() < 25 && user.ManaPercent > 10)
             {
                 if (OriannaBall.IsInRange(user, W.Range))
                 {

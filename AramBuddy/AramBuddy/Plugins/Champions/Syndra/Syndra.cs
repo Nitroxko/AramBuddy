@@ -7,7 +7,7 @@ using EloBuddy.SDK.Enumerations;
 using EloBuddy.SDK.Events;
 using EloBuddy.SDK.Menu;
 using SharpDX;
-using static AramBuddy.MainCore.Utility.Misc;
+using static AramBuddy.MainCore.Utility.MiscUtil.Misc;
 
 namespace AramBuddy.Plugins.Champions.Syndra
 {
@@ -17,7 +17,7 @@ namespace AramBuddy.Plugins.Champions.Syndra
         {
             get
             {
-                return ObjectManager.Get<Obj_AI_Minion>().Where(o => o != null && !o.IsDead && o.IsValid && o.Health > 0 && o.BaseSkinName.Equals("SyndraSphere"));
+                return ObjectManager.Get<Obj_AI_Minion>().Where(o => o != null && !o.IsDead && o.IsValid && o.PredictHealth() > 0 && o.BaseSkinName.Equals("SyndraSphere"));
             }
         }
 
@@ -222,7 +222,7 @@ namespace AramBuddy.Plugins.Champions.Syndra
 
             if (Etarget != null && E.IsReady() && ComboMenu.CheckBoxValue(SpellSlot.E))
             {
-                if (Etarget.IsKillable(E.Range) && user.HealthPercent <= 20)
+                if (Etarget.IsKillable(E.Range) && user.PredictHealthPercent() <= 20)
                 {
                     E.Cast(Etarget, 25);
                     return;
@@ -273,7 +273,7 @@ namespace AramBuddy.Plugins.Champions.Syndra
                     Eball.Cast(SelectBall(Etarget));
                     return;
                 }
-                if (Etarget.IsKillable(E.Range) && user.HealthPercent <= 20)
+                if (Etarget.IsKillable(E.Range) && user.PredictHealthPercent() <= 20)
                 {
                     E.Cast(Etarget, 25);
                 }
@@ -371,7 +371,7 @@ namespace AramBuddy.Plugins.Champions.Syndra
                         return;
                     }
                 }
-                if (R.IsReady() && target.IsKillable(R.Range) && RDamage(target) >= target.Health && KillStealMenu.CheckBoxValue(SpellSlot.R))
+                if (R.IsReady() && target.IsKillable(R.Range) && RDamage(target) >= target.PredictHealth() && KillStealMenu.CheckBoxValue(SpellSlot.R))
                 {
                     R.Cast(target);
                     return;
@@ -423,7 +423,7 @@ namespace AramBuddy.Plugins.Champions.Syndra
             var index = Player.GetSpell(SpellSlot.R).Level - 1;
             var mindmg = new float[] { 270, 405, 540 }[index] + 0.6f * ap;
             var maxdmg = new float[] { 630, 975, 1260 }[index] + 1.4f * ap;
-            var perballdmg = (new float[] { 90, 135, 180 }[index] + 0.2f * ap) * BallsList.Count();
+            var perballdmg = (new float[] { 90, 135, 180 }[index] + 0.2f * ap) * R.Handle.Ammo;
 
             return Player.Instance.CalculateDamageOnUnit(target, DamageType.Magical, Math.Max(mindmg, maxdmg) + perballdmg) - 15;
         }
@@ -444,7 +444,7 @@ namespace AramBuddy.Plugins.Champions.Syndra
         {
             if (W.Handle.ToggleState == 1)
             {
-                var pick = EntityManager.MinionsAndMonsters.CombinedAttackable.FirstOrDefault(m => m.IsValidTarget(W.Range) && m.Health > 5) ?? BallsList.FirstOrDefault(b => W.IsInRange(b));
+                var pick = EntityManager.MinionsAndMonsters.CombinedAttackable.FirstOrDefault(m => m.IsValidTarget(W.Range) && m.PredictHealth() > 5) ?? BallsList.FirstOrDefault(b => W.IsInRange(b));
                 if (pick != null)
                 {
                     W.Cast(pick);
@@ -460,7 +460,7 @@ namespace AramBuddy.Plugins.Champions.Syndra
         {
             if (W.Handle.ToggleState == 1)
             {
-                var pick = EntityManager.MinionsAndMonsters.CombinedAttackable.FirstOrDefault(m => m.IsValidTarget(W.Range) && m.Health > 5) ?? BallsList.FirstOrDefault(b => W.IsInRange(b));
+                var pick = EntityManager.MinionsAndMonsters.CombinedAttackable.FirstOrDefault(m => m.IsValidTarget(W.Range) && m.PredictHealth() > 5) ?? BallsList.FirstOrDefault(b => W.IsInRange(b));
                 if (pick != null)
                 {
                     W.Cast(pick);

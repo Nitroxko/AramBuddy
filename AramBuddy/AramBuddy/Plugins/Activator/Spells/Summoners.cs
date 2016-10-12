@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using AramBuddy.MainCore.Utility;
+﻿using AramBuddy.MainCore.Utility.MiscUtil;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Menu;
@@ -36,9 +31,9 @@ namespace AramBuddy.Plugins.Activator.Spells
             if (args.Target == null || !args.Target.IsKillable() || args.Target.Distance(Player.Instance) > 800) return;
 
             var damagepercent = args.InComingDamage / args.Target.TotalShieldHealth() * 100;
-            var death = args.InComingDamage >= args.Target.Health && args.Target.HealthPercent < 99;
+            var death = args.InComingDamage >= args.Target.PredictHealth() && args.Target.PredictHealthPercent() < 99;
 
-            if (SummMenu.CheckBoxValue("HealAllies") && args.Target.IsAlly && !args.Target.IsMe && (SummMenu.SliderValue("allyhp") >= args.Target.HealthPercent || death))
+            if (SummMenu.CheckBoxValue("HealAllies") && args.Target.IsAlly && !args.Target.IsMe && (SummMenu.SliderValue("allyhp") >= args.Target.PredictHealthPercent() || death))
             {
                 SummonerSpells.Heal.Cast();
                 return;
@@ -46,12 +41,12 @@ namespace AramBuddy.Plugins.Activator.Spells
 
             if (args.Target.IsMe)
             {
-                if (SummMenu.CheckBoxValue("HealSelf") && SummonerSpells.Heal.IsReady() && (SummMenu.SliderValue("HealHP") >= args.Target.HealthPercent || death))
+                if (SummMenu.CheckBoxValue("HealSelf") && SummonerSpells.Heal.IsReady() && (SummMenu.SliderValue("HealHP") >= args.Target.PredictHealthPercent() || death))
                 {
                     SummonerSpells.Heal.Cast();
                     return;
                 }
-                if (SummMenu.CheckBoxValue("Barrier") && SummonerSpells.Barrier.IsReady() && (SummMenu.SliderValue("BarrierHP") >= Player.Instance.HealthPercent || death))
+                if (SummMenu.CheckBoxValue("Barrier") && SummonerSpells.Barrier.IsReady() && (SummMenu.SliderValue("BarrierHP") >= Player.Instance.PredictHealthPercent() || death))
                 {
                     SummonerSpells.Barrier.Cast();
                 }

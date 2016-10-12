@@ -4,12 +4,28 @@ using EloBuddy.SDK;
 using EloBuddy.SDK.Enumerations;
 using EloBuddy.SDK.Events;
 using EloBuddy.SDK.Menu;
-using static AramBuddy.MainCore.Utility.Misc;
+using static AramBuddy.MainCore.Utility.MiscUtil.Misc;
 
 namespace AramBuddy.Plugins.Champions.Annie
 {
     internal class Annie : Base
     {
+        private static bool CastedR
+        {
+            get
+            {
+                return AnnieTibbers != null || !R.Name.Equals("InfernalGuardian");
+            }
+        }
+
+        private static Obj_AI_Minion AnnieTibbers
+        {
+            get
+            {
+                return ObjectManager.Get<Obj_AI_Minion>().FirstOrDefault(m => m.IsValidTarget() && m.BaseSkinName.Equals("AnnieTibbers") && m.Buffs.Any(b => b.Caster.IsMe));
+            }
+        }
+
         static Annie()
         {
             MenuIni = MainMenu.AddMenu(MenuName, MenuName);
@@ -49,7 +65,7 @@ namespace AramBuddy.Plugins.Champions.Annie
 
         private static void Obj_AI_Base_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
-            if (sender == null || !sender.IsMe || sender.IsDead)
+            if (sender == null || args.Target == null || !sender.IsMe || sender.IsDead)
                 return;
 
             if (AutoMenu.CheckBoxValue("SaveStun") && user.HasBuff("pyromania_particle") && args.Target.Type == GameObjectType.obj_AI_Minion)
@@ -125,13 +141,22 @@ namespace AramBuddy.Plugins.Champions.Annie
 
         public override void Active()
         {
+            if (CastedR)
+            {
+                var target = TargetSelector.GetTarget(EntityManager.Heroes.Enemies.Where(e => e.IsKillable(1000)), DamageType.Magical)
+                             ?? EntityManager.Heroes.Enemies.OrderBy(e => e.Distance(Player.Instance)).FirstOrDefault(e => e.IsKillable());
+                if (target != null)
+                {
+                    R.Cast(target);
+                }
+            }
             R.SetSkillshot().CastAOE(ComboMenu.SliderValue("RAOE"));
         }
 
         public override void Combo()
         {
             var target = TargetSelector.GetTarget(Q.Range, DamageType.Magical);
-            if (target == null || !target.IsKillable(Q.Range))
+            if (target == null || !target.IsKillable(Q.Range)) return;
 
             if (ComboMenu.CheckBoxValue(SpellSlot.Q) && Q.IsReady())
             {
@@ -150,7 +175,7 @@ namespace AramBuddy.Plugins.Champions.Annie
 
             if (!ComboMenu.CheckBoxValue(SpellSlot.R) || !R.IsReady() || !target.IsKillable(R.Range)) return;
 
-            if (target.CountEnemiesInRange(R.SetSkillshot().Width) >= ComboMenu.SliderValue("RAOE"))
+            if (target.CountEnemyHeroesInRangeWithPrediction(R.SetSkillshot().Width) >= ComboMenu.SliderValue("RAOE"))
             {
                 R.Cast(target);
             }
@@ -160,13 +185,14 @@ namespace AramBuddy.Plugins.Champions.Annie
         {
             var target = TargetSelector.GetTarget(Q.Range, DamageType.Magical);
             if (target == null || !target.IsKillable(Q.Range))
+                return;
 
             if (HarassMenu.CheckBoxValue(SpellSlot.Q) && Q.IsReady() && HarassMenu.CompareSlider(Q.Slot + "mana", user.ManaPercent))
             {
                 Q.Cast(target);
             }
             if (!HarassMenu.CheckBoxValue(SpellSlot.W) || !W.IsReady() ||
-                !HarassMenu.CompareSlider(W.Slot + "mana", user.ManaPercent)) return;
+                !HarassMenu.CompareSlider("Wmana", user.ManaPercent)) return;
 
             if (target.IsKillable(W.Range))
             {
@@ -176,7 +202,7 @@ namespace AramBuddy.Plugins.Champions.Annie
 
         public override void LaneClear()
         {
-            foreach (var target in EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => m != null && m.IsValidTarget()))
+            foreach (var target in EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => m != null && m.IsKillable()))
             {
                 var lineFarmLoc = EntityManager.MinionsAndMonsters.GetLineFarmLocation(EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => m.IsKillable(W.Range)), W.SetSkillshot().Width, (int)W.Range);
                 if (Q.IsReady() && target.IsKillable(Q.Range) && LaneClearMenu.CheckBoxValue(SpellSlot.Q) && LaneClearMenu.CompareSlider(Q.Slot + "mana", user.ManaPercent) 
@@ -197,7 +223,7 @@ namespace AramBuddy.Plugins.Champions.Annie
 
         public override void KillSteal()
         {
-            foreach (var target in EntityManager.Heroes.Enemies.Where(e => e != null && e.IsValidTarget()))
+            foreach (var target in EntityManager.Heroes.Enemies.Where(e => e != null && e.IsKillable()))
             {
                 if (Q.IsReady() && target.IsKillable(Q.Range) && Q.WillKill(target) && KillStealMenu.CheckBoxValue(SpellSlot.Q))
                 {

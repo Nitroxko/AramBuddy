@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using AramBuddy.MainCore.Utility;
+using AramBuddy.MainCore.Utility.MiscUtil;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Enumerations;
@@ -14,6 +14,7 @@ namespace AramBuddy.Plugins.Champions.Kalista
     internal class Kalista : Base
     {
         private static readonly string appdata = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\";
+        private static string filename = Game.GameId + "Kalista.dat";
         private static readonly bool Created;
         private static float LastE;
         private static AIHeroClient BoundHero;
@@ -43,9 +44,9 @@ namespace AramBuddy.Plugins.Champions.Kalista
                 Directory.CreateDirectory(appdata);
             }
 
-            if (!File.Exists(appdata + Game.GameId + ".dat"))
+            if (!File.Exists(appdata + filename))
             {
-                File.Create(appdata + Game.GameId + ".dat");
+                File.Create(appdata + filename);
                 Created = true;
             }
 
@@ -101,9 +102,9 @@ namespace AramBuddy.Plugins.Champions.Kalista
 
         private static void Events_OnGameEnd(bool args)
         {
-            if (File.Exists(appdata + Game.GameId + ".dat"))
+            if (File.Exists(appdata + filename))
             {
-                File.Delete(appdata + Game.GameId + ".dat");
+                File.Delete(appdata + filename);
             }
         }
 
@@ -111,7 +112,7 @@ namespace AramBuddy.Plugins.Champions.Kalista
         {
             if (sender != null && sender.IsMe && args.Target != null && args.Target.IsAlly && args.SData.Name.Equals("KalistaPSpellCast", StringComparison.CurrentCultureIgnoreCase))
             {
-                File.WriteAllText(appdata + Game.GameId + ".dat", args.Target.NetworkId.ToString());
+                File.WriteAllText(appdata + filename, args.Target.NetworkId.ToString());
             }
         }
 
@@ -131,7 +132,7 @@ namespace AramBuddy.Plugins.Champions.Kalista
         {
             if (sender == null || !sender.IsEnemy || e.End.Distance(user) > 1000 || !R.IsReady()) return;
 
-            if (user.HealthPercent <= 20 || user.CountEnemiesInRange(1000) > user.CountAlliesInRange(1000))
+            if (user.PredictHealthPercent() <= 20 || user.CountEnemyHeroesInRangeWithPrediction(1000) > user.CountEnemyAlliesInRangeWithPrediction(1000))
                 R.Cast();
         }
 
@@ -181,9 +182,9 @@ namespace AramBuddy.Plugins.Champions.Kalista
             }
             if (BoundHero == null && Created)
             {
-                if (File.Exists(appdata + Game.GameId + ".dat"))
+                if (File.Exists(appdata + filename))
                 {
-                    var read = File.ReadAllLines(appdata + Game.GameId + ".dat");
+                    var read = File.ReadAllLines(appdata + filename);
                     BoundHero = EntityManager.Heroes.Allies.FirstOrDefault(a => read.Contains(a.NetworkId.ToString()));
                 }
             }
@@ -291,8 +292,8 @@ namespace AramBuddy.Plugins.Champions.Kalista
 
         private static void Gapclose()
         {
-            Orbwalker.ForcedTarget = user.CountEnemiesInRange(user.GetAutoAttackRange()) < 1 ?
-                EntityManager.MinionsAndMonsters.CombinedAttackable.OrderBy(m => m.Distance(Game.CursorPos)).FirstOrDefault(m => !m.IsDead && m.IsEnemy && m.Health > 0 && m.IsKillable(user.GetAutoAttackRange())) : null;
+            Orbwalker.ForcedTarget = user.CountEnemyHeroesInRangeWithPrediction((int)user.GetAutoAttackRange()) < 1 ?
+                EntityManager.MinionsAndMonsters.CombinedAttackable.OrderBy(m => m.Distance(Game.CursorPos)).FirstOrDefault(m => !m.IsDead && m.IsEnemy && m.PredictHealth() > 0 && m.IsKillable(user.GetAutoAttackRange())) : null;
         }
 
         private static void QCast(Obj_AI_Base target, bool transfer = false, int HitCount = -1)

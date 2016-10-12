@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
-using AramBuddy.KappaEvade;
-using AramBuddy.MainCore.Utility;
+using AramBuddy.MainCore.Utility.MiscUtil;
+using AramBuddy.Plugins.KappaEvade;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Enumerations;
@@ -62,8 +62,8 @@ namespace AramBuddy.Plugins.Champions.Lulu
             Gapcloser.OnGapcloser += Gapcloser_OnGapcloser;
             Interrupter.OnInterruptableSpell += Interrupter_OnInterruptableSpell;
             Dash.OnDash += Dash_OnDash;
-            SpellsDetector.OnTargetedSpellDetected += SpellsDetector_OnTargetedSpellDetected;
-            Game.OnTick += Lulu_SkillshotDetector;
+            //SpellsDetector.OnTargetedSpellDetected += SpellsDetector_OnTargetedSpellDetected;
+            //Game.OnTick += Lulu_SkillshotDetector;
         }
         
         private static Spell.Skillshot Q1 { get; }
@@ -88,7 +88,7 @@ namespace AramBuddy.Plugins.Champions.Lulu
                 foreach (
                     var ally in
                         from ally in
-                            EntityManager.Heroes.Allies.Where(a => a.IsKillable(R.Range) && a.HealthPercent < 10)
+                            EntityManager.Heroes.Allies.Where(a => a.IsKillable(R.Range) && a.PredictHealthPercent() < 10)
                         from spell in Collision.NewSpells.Where(ally.IsInDanger)
                         select ally)
                 {
@@ -135,7 +135,7 @@ namespace AramBuddy.Plugins.Champions.Lulu
             }
 
             if (!AutoMenu.CheckBoxValue("Rsave") || !R.IsReady() || spells.DangerLevel <= 2) return;
-            foreach (var ally in EntityManager.Heroes.Allies.Where(a => a.IsKillable(R.Range) && a.HealthPercent < 10))
+            foreach (var ally in EntityManager.Heroes.Allies.Where(a => a.IsKillable(R.Range) && a.PredictHealthPercent() < 10))
             {
                 R.Cast(ally);
             }
@@ -199,7 +199,7 @@ namespace AramBuddy.Plugins.Champions.Lulu
                             E.Cast(sender);
                     }
                     if (AutoMenu.CheckBoxValue("GapR") && R.IsReady() && e.End.IsInRange(user, 300) &&
-                        user.HealthPercent < 15)
+                        user.PredictHealthPercent() < 15)
                     {
                         R.Cast(user);
                     }
@@ -226,7 +226,7 @@ namespace AramBuddy.Plugins.Champions.Lulu
                         EntityManager.Heroes.Allies.Where(a => a.IsKillable(R.Range))
                             .Where(
                                 ally =>
-                                    ally.CountEnemiesInRange(300) >= ComboMenu.SliderValue("RAOE") &&
+                                    ally.CountEnemyHeroesInRangeWithPrediction(300) >= ComboMenu.SliderValue("RAOE") &&
                                     ComboMenu.CheckBoxValue("R")))
                 {
                     R.Cast(ally);

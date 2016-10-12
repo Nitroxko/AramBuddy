@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using AramBuddy.MainCore.Utility;
+using AramBuddy.MainCore.Utility.MiscUtil;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Menu;
-using static AramBuddy.Plugins.Activator.Database;
+using static AramBuddy.Plugins.Activator.Items.Database;
 
 namespace AramBuddy.Plugins.Activator.Items
 {
@@ -13,7 +14,7 @@ namespace AramBuddy.Plugins.Activator.Items
     {
         private static readonly List<Item> HPItems = new List<Item> { Botrk, Cutlass, Hextech_Gunblade };
 
-        private static readonly List<Item> DmgItems = new List<Item> { Hextech_GLP };
+        private static readonly List<Item> DmgItems = new List<Item> { Hextech_GLP, Hextech_ProtoBelt };
 
         private static readonly List<Item> AAItems = new List<Item> { Hydra, TitanicHydra, Tiamat, Youmuus };
 
@@ -48,15 +49,16 @@ namespace AramBuddy.Plugins.Activator.Items
             {
                 if (Player.Instance.IsDead) return;
 
-                if (!Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Combo))
-                    return;
-                foreach (var i in HPItems.Where(a => a.ItemReady(Offen) && Offen.SliderValue(a.Id + "hp") >= Player.Instance.HealthPercent))
+                foreach (var i in HPItems.Where(a => a.ItemReady(Offen) && Offen.SliderValue(a.Id + "hp") >= Player.Instance.PredictHealthPercent()))
                 {
                     var target = TargetSelector.GetTarget(i.Range, DamageType.Magical);
                     if (target != null && target.IsKillable(i.Range))
                         i.Cast(target);
                     return;
                 }
+
+                if (!Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Combo))
+                    return;
 
                 foreach (var i in DmgItems.Where(a => a.ItemReady(Offen)))
                 {

@@ -40,12 +40,12 @@ namespace AramBuddy.Plugins.Champions
 
         public virtual void Game_OnTick(System.EventArgs args)
         {
-            if (user.IsDead)
+            if (user.IsDead || Program.GameEnded)
                 return;
 
             var activemode = Orbwalker.ActiveModesFlags;
-            this.Active();
             this.KillSteal();
+            this.Active();
             switch (activemode)
             {
                 case Orbwalker.ActiveModes.Combo:

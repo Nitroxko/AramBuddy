@@ -3,7 +3,7 @@
 using System;
 using System.IO;
 using System.Linq;
-using AramBuddy.MainCore.Utility;
+using AramBuddy.MainCore.Utility.MiscUtil;
 using EloBuddy;
 using EloBuddy.SDK;
 
@@ -17,6 +17,11 @@ namespace AramBuddy.AutoShop.Sequences
         ///     Returns True if you can buy items from the shop
         /// </summary>
         public static bool CanShop;
+
+        /// <summary>
+        ///     Returns True if we have full build
+        /// </summary>
+        public static bool FullBuild;
 
         /// <summary>
         ///     Returns Next Item Name.
@@ -38,7 +43,8 @@ namespace AramBuddy.AutoShop.Sequences
         {
             try
             {
-                if (!Config.EnableAutoShop) return false;
+                if (!Config.EnableAutoShop)
+                    return false;
 
                 // Check if we've reached the end of the build
                 if (build.BuildData.Length < GetIndex() + 1)
@@ -65,14 +71,17 @@ namespace AramBuddy.AutoShop.Sequences
                         Shop.BuyItem(itembuy);
 
                         // Notify the user that the item has been bought and of the value of the item
-                        Logger.Send("Item bought: " + itembuy + " - Item Value: " + new Item(itembuy).ItemInfo.Gold.Total, Logger.LogLevel.Info);
+                        Logger.Send("Item bought: " + itembuy + " - Item Value: " + new Item(itembuy).ItemInfo.Gold.Total);
 
                         NextItem = new Item(itembuy).ItemInfo.Name;
                         NextItemValue = new Item(itembuy).ItemInfo.Gold.Total;
                     }
 
                     // Notify the user that the build is finished
-                    Logger.Send("Build is finished - Cannot buy any more items!", Logger.LogLevel.Info);
+                    Logger.Send("Build is finished - Cannot buy any more items!");
+
+                    // Set Build to true
+                    FullBuild = true;
 
                     // Return false because we could not buy items
                     return false;
@@ -98,10 +107,15 @@ namespace AramBuddy.AutoShop.Sequences
                     IncrementIndex();
 
                     // Notify the user that the item has been bought and of the value of the item
-                    Logger.Send("Item bought: " + item.Value.Name + " - Item Value: " + currentprice, Logger.LogLevel.Info);
+                    Logger.Send("Item bought: " + item.Value.Name + " - Item Value: " + currentprice);
+
+
+                    var deathtime = Player.Instance.DeathTimer() * 1000;
+
+                    var rnd = (float)(new Random().Next(Math.Max(500, (int)(deathtime * 0.075f)), Math.Max(1000, (int)(deathtime * 0.25f))) + Game.Ping);
 
                     // Try to buy more than one item if we can afford it
-                    Core.DelayAction(() => BuyNextItem(build), new Random().Next(900, 2750) + Game.Ping);
+                    Core.DelayAction(() => BuyNextItem(build), (int)rnd);
 
                     // Success
                     return true;

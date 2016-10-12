@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using AramBuddy.MainCore.Logics.Casting;
-using AramBuddy.MainCore.Utility;
+using AramBuddy.MainCore.Utility.MiscUtil;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Menu.Values;
@@ -59,29 +59,30 @@ namespace AramBuddy.MainCore.Logics
             {
                 CurrentMode = Modes.Harass;
             }
-            else if (Combo)
-            {
-                CurrentMode = Modes.Combo;
-            }
             else if (None)
             {
                 CurrentMode = Modes.None;
             }
 
+            if (Combo)
+            {
+                CurrentMode = Modes.Combo;
+            }
+
             // Modes Switch
             switch (CurrentMode)
             {
+                case Modes.Combo:
+                    Orbwalker.ActiveModesFlags = Orbwalker.ActiveModes.Combo;
+                    break;
                 case Modes.Flee:
                     Orbwalker.ActiveModesFlags = Orbwalker.ActiveModes.Flee;
-                    break;
-                case Modes.LaneClear:
-                    Orbwalker.ActiveModesFlags = Orbwalker.ActiveModes.LaneClear;
                     break;
                 case Modes.Harass:
                     Orbwalker.ActiveModesFlags = Orbwalker.ActiveModes.Harass;
                     break;
-                case Modes.Combo:
-                    Orbwalker.ActiveModesFlags = Orbwalker.ActiveModes.Combo;
+                case Modes.LaneClear:
+                    Orbwalker.ActiveModesFlags = Orbwalker.ActiveModes.LaneClear;
                     break;
                 case Modes.None:
                     Orbwalker.ActiveModesFlags = Orbwalker.ActiveModes.None;
@@ -91,9 +92,34 @@ namespace AramBuddy.MainCore.Logics
                     break;
             }
 
-            if (!DisableSpellsCasting && !Program.CustomChamp)
+            if (!DisableSpellsCasting)
             {
-                ModesBase();
+                FlashAndGhost();
+                if (!Program.CustomChamp)
+                {
+                    ModesBase();
+                }
+            }
+        }
+
+        public static void FlashAndGhost()
+        {
+            if (Flee && Player.Instance.PredictHealth() > 0)
+            {
+                if (SummonerSpells.Ghost.IsReady() && Program.SpellsMenu["Ghost"].Cast<CheckBox>().CurrentValue && SummonerSpells.Ghost.Slot != SpellSlot.Unknown
+                    && Player.Instance.CountEnemyHeroesInRangeWithPrediction(SafeValue) > 0)
+                {
+                    Logger.Send("Cast Ghost FleeMode CountEnemyHeroesInRangeWithPrediction " + Player.Instance.CountEnemyHeroesInRangeWithPrediction(SafeValue));
+                    SummonerSpells.Ghost.Cast();
+                }
+                if (SummonerSpells.Flash.IsReady() && Program.SpellsMenu["Flash"].Cast<CheckBox>().CurrentValue && SummonerSpells.Flash.Slot != SpellSlot.Unknown
+                    && (Player.Instance.PredictHealthPercent() < 20 && Player.Instance.CountEnemyHeroesInRangeWithPrediction(SafeValue, Game.Ping + 250) > 0
+                    || Player.Instance.CountEnemyHeroesInRangeWithPrediction(SafeValue, Game.Ping + 250) - Player.Instance.CountEnemyHeroesInRangeWithPrediction(SafeValue, Game.Ping + 250) > 2)
+                    && ObjectsManager.AllySpawn != null)
+                {
+                    Logger.Send("Cast Flash FleeMode HealthPercent " + (int)Player.Instance.PredictHealthPercent());
+                    Player.CastSpell(SummonerSpells.Flash.Slot, Player.Instance.PredictPosition().Extend(ObjectsManager.AllySpawn, 400).To3D());
+                }
             }
         }
         
@@ -121,19 +147,19 @@ namespace AramBuddy.MainCore.Logics
         /// </summary>
         public static void ModesBase()
         {
-            // Casting the summoner spells
-            if (Player.Instance.CountEnemiesInRange(1250) > 0 && Player.Instance.HealthPercent <= 25 && (Combo || Harass || Flee))
+            /* Casting the summoner spells // No Longer Neaded
+            if (Player.Instance.CountEnemyHeroesInRangeWithPrediction(SafeValue) > 0 && Player.Instance.PredictHealthPercent() <= 25 && (Combo || Harass || Flee))
             {
                 if (SummonerSpells.Heal.IsReady() && Program.SpellsMenu["Heal"].Cast<CheckBox>().CurrentValue && SummonerSpells.Heal.Slot != SpellSlot.Unknown)
                 {
-                    Logger.Send("Cast Heal HealthPercent " + (int)Player.Instance.HealthPercent, Logger.LogLevel.Info);
+                    Logger.Send("Cast Heal HealthPercent " + (int)Player.Instance.PredictHealthPercent());
                     SummonerSpells.Heal.Cast();
                 }
                 else
                 {
                     if (SummonerSpells.Barrier.IsReady() && Program.SpellsMenu["Barrier"].Cast<CheckBox>().CurrentValue && SummonerSpells.Barrier.Slot != SpellSlot.Unknown)
                     {
-                        Logger.Send("Cast Barrier HealthPercent " + (int)Player.Instance.HealthPercent, Logger.LogLevel.Info);
+                        Logger.Send("Cast Barrier HealthPercent " + (int)Player.Instance.PredictHealthPercent());
                         SummonerSpells.Barrier.Cast();
                     }
                 }
@@ -141,45 +167,28 @@ namespace AramBuddy.MainCore.Logics
 
             if (Player.Instance.ManaPercent < 50 && SummonerSpells.Clarity.IsReady() && Program.SpellsMenu["Clarity"].Cast<CheckBox>().CurrentValue && SummonerSpells.Clarity.Slot != SpellSlot.Unknown)
             {
-                Logger.Send("Cast Clarity ManaPercent " + (int)Player.Instance.ManaPercent, Logger.LogLevel.Info);
+                Logger.Send("Cast Clarity ManaPercent " + (int)Player.Instance.ManaPercent);
                 SummonerSpells.Clarity.Cast();
             }
-
-            if (Flee)
-            {
-                if (SummonerSpells.Ghost.IsReady() && Program.SpellsMenu["Ghost"].Cast<CheckBox>().CurrentValue && SummonerSpells.Ghost.Slot != SpellSlot.Unknown
-                    && Player.Instance.CountEnemiesInRange(800) > 0)
-                {
-                    Logger.Send("Cast Ghost FleeMode CountEnemiesInRange " + Player.Instance.CountEnemiesInRange(800), Logger.LogLevel.Info);
-                    SummonerSpells.Ghost.Cast();
-                }
-                if (SummonerSpells.Flash.IsReady() && Program.SpellsMenu["Flash"].Cast<CheckBox>().CurrentValue && SummonerSpells.Flash.Slot != SpellSlot.Unknown && Player.Instance.HealthPercent < 20
-                    && ObjectsManager.AllySpawn != null)
-                {
-                    Logger.Send("Cast Flash FleeMode HealthPercent " + (int)Player.Instance.HealthPercent, Logger.LogLevel.Info);
-                    SummonerSpells.Flash.Cast(Player.Instance.PredictPosition().Extend(ObjectsManager.AllySpawn, 400).To3D());
-                }
-            }
             if (SummonerSpells.Cleanse.IsReady() && Program.SpellsMenu["Cleanse"].Cast<CheckBox>().CurrentValue && SummonerSpells.Cleanse.Slot != SpellSlot.Unknown && Player.Instance.IsCC()
-                && Player.Instance.CountEnemiesInRange(1250) > 0 && Player.Instance.HealthPercent <= 80)
+                && Player.Instance.CountEnemyHeroesInRangeWithPrediction(SafeValue) > 0 && Player.Instance.PredictHealthPercent() <= 80)
             {
-                Logger.Send("Cast Cleanse FleeMode Player CC'ed HealthPercent " + (int)Player.Instance.HealthPercent + " CountEnemiesInRange " + Player.Instance.CountEnemiesInRange(1250), Logger.LogLevel.Info);
+                Logger.Send("Cast Cleanse FleeMode Player CC'ed HealthPercent " + (int)Player.Instance.PredictHealthPercent() + " CountEnemyHeroesInRangeWithPrediction " + Player.Instance.CountEnemyHeroesInRangeWithPrediction(SafeValue));
                 SummonerSpells.Cleanse.Cast();
-            }
+            }*/
 
             foreach (var spell in Spelllist.Where(s => s != null && s.IsReady() && !s.IsSaver() && !s.IsTP()))
             {
                 if (Combo || (Harass && (Player.Instance.ManaPercent > 60 || Player.Instance.ManaPercent.Equals(0))))
                 {
-                    SpellsCasting.Casting(spell, TargetSelector.GetTarget(spell.Range, DamageType.Mixed));
+                    SpellsCasting.Casting(spell, TargetSelector.GetTarget((spell as Spell.Chargeable)?.MaximumRange ?? spell.Range, spell.DamageType));
                 }
                 if (spell.Slot != SpellSlot.R)
                 {
                     if (LaneClear)
                     {
-                        var spell1 = spell;
                         foreach (var minion in
-                            EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => m.IsValidTarget(spell1.Range) && (Player.Instance.ManaPercent > 60 || Player.Instance.ManaPercent.Equals(0))))
+                            EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => m.IsValidTarget(spell.Range) && (Player.Instance.ManaPercent > 60 || Player.Instance.ManaPercent.Equals(0))))
                         {
                             SpellsCasting.Casting(spell, minion);
                         }
@@ -187,7 +196,7 @@ namespace AramBuddy.MainCore.Logics
                 }
                 if (Flee && spell.IsCC() && spell.IsReady())
                 {
-                    SpellsCasting.Casting(spell, TargetSelector.GetTarget(spell.Range, DamageType.Mixed));
+                    SpellsCasting.Casting(spell, TargetSelector.GetTarget(spell.Range, spell.DamageType));
                 }
             }
         }
@@ -199,9 +208,10 @@ namespace AramBuddy.MainCore.Logics
         {
             get
             {
-                return (Misc.TeamTotal(Player.Instance.PredictPosition()) > Misc.TeamTotal(Player.Instance.PredictPosition(), true) && Misc.SafeToAttack
-                       && Player.Instance.CountAlliesInRange(1000) >= Player.Instance.CountEnemiesInRange(1000) && Player.Instance.CountEnemiesInRange(1000) > 0
-                       && ((Player.Instance.PredictPosition().UnderEnemyTurret() && Misc.SafeToDive) || !Player.Instance.UnderEnemyTurret())) || Player.Instance.IsZombie();
+                return (Misc.SafeToAttack && Player.Instance.IsSafe() && Player.Instance.CountEnemyHeroesInRangeWithPrediction(1000) > 0
+                    && (Player.Instance.CountEnemyAlliesInRangeWithPrediction(SafeValue) > 1 || Core.GameTickCount - Brain.LastTeamFight < 1500
+                    || Misc.TeamTotal(Player.Instance.PredictPosition()) >= Misc.TeamTotal(Player.Instance.PredictPosition(), true)))
+                    || Player.Instance.IsZombie();
             }
         }
 
@@ -212,8 +222,11 @@ namespace AramBuddy.MainCore.Logics
         {
             get
             {
-                return  Misc.SafeToAttack && (Misc.TeamTotal(Player.Instance.PredictPosition()) < Misc.TeamTotal(Player.Instance.PredictPosition(), true) || Player.Instance.IsUnderHisturret())
-                       && Player.Instance.CountEnemiesInRange(1000) > 0 && ((Player.Instance.PredictPosition().UnderEnemyTurret() && Misc.SafeToDive) || !Player.Instance.PredictPosition().UnderEnemyTurret()) && !Flee;
+                return Core.GameTickCount - Brain.LastTeamFight > 1500 && Misc.SafeToAttack && Player.Instance.IsSafe() && Player.Instance.CountEnemyHeroesInRangeWithPrediction(SafeValue + 100) > 0
+                    && ((Player.Instance.IsUnderHisturret() && EntityManager.Heroes.Enemies.Any(e => e.IsKillable() && e.UnderEnemyTurret()))
+                        || EntityManager.Heroes.Enemies.Where(e => e.IsKillable()).All(e => e.Distance(Player.Instance) > (SafeValue > 400 ? SafeValue - 400 : 400))
+                        || Misc.TeamTotal(Player.Instance.PredictPosition(), true) > Misc.TeamTotal(Player.Instance.PredictPosition())
+                        || (EntityManager.Heroes.Enemies.Any(e => e.IsKillable(Player.Instance.GetAutoAttackRange(e)) && Player.Instance.AlliesMoreThanEnemies())));
             }
         }
 
@@ -224,8 +237,13 @@ namespace AramBuddy.MainCore.Logics
         {
             get
             {
-                return Misc.SafeToAttack && Player.Instance.CountEnemiesInRange(1000) <= 1 && !Combo && !Flee && (Player.Instance.CountAlliesInRange(800) > 1 || Player.Instance.CountMinions() > 0)
-                       && (Player.Instance.CountMinions(true) > 0 || AttackObject);
+                return Misc.SafeToAttack && Player.Instance.IsSafe() && Core.GameTickCount - Brain.LastTeamFight > 1500
+                    && (Player.Instance.PredictHealthPercent() > 20 || Player.Instance.CountEnemyHeroesInRangeWithPrediction(SafeValue) < 2)
+                    && (Player.Instance.CountEnemyMinionsInRangeWithPrediction(SafeValue) > 0 || AttackObject)
+                    && (Player.Instance.CountAllyMinionsInRangeWithPrediction(SafeValue) > 0 || Player.Instance.IsUnderHisturret() || Player.Instance.CountEnemyAlliesInRangeWithPrediction(SafeValue) > 1)
+                    && (Player.Instance.CountEnemyHeroesInRangeWithPrediction(SafeValue) <= 1 || Player.Instance.AlliesMoreThanEnemies() || Player.Instance.IsUnderHisturret()
+                    || Misc.TeamTotal(Player.Instance.PredictPosition()) >= Misc.TeamTotal(Player.Instance.PredictPosition(), true)
+                    || Player.Instance.CountEnemyAlliesInRangeWithPrediction(SafeValue) >= Player.Instance.CountEnemyHeroesInRangeWithPrediction(SafeValue));
             }
         }
 
@@ -236,10 +254,8 @@ namespace AramBuddy.MainCore.Logics
         {
             get
             {
-                return !Player.Instance.IsUnderHisturret()
-                       && ((Misc.TeamTotal(Player.Instance.PredictPosition()) < Misc.TeamTotal(Player.Instance.PredictPosition(), true) && Player.Instance.CountAlliesInRange(800) < 2)
-                           || (Player.Instance.UnderEnemyTurret() && !Misc.SafeToDive) || (Player.Instance.CountEnemiesInRange(800) > Player.Instance.CountAlliesInRange(800))
-                           || (Player.Instance.HealthPercent < 15 && (Player.Instance.UnderEnemyTurret() || Player.Instance.CountEnemiesInRange(1000) > 1)));
+                return !Player.Instance.IsUnderHisturret() && (Player.Instance.EnemiesMoreThanAllies() && Player.Instance.PredictHealthPercent() < 75
+                    && Misc.TeamTotal(Player.Instance.PredictPosition(), true) > Misc.TeamTotal(Player.Instance.PredictPosition()) || !Player.Instance.IsSafe());
             }
         }
 
@@ -261,9 +277,11 @@ namespace AramBuddy.MainCore.Logics
         {
             get
             {
-                return (ObjectsManager.EnemyNexues != null && ObjectsManager.EnemyNexues.IsInRange(Player.Instance, Player.Instance.GetAutoAttackRange() + ObjectsManager.EnemyNexues.BoundingRadius * 3))
+                return CurrentMode != Modes.Combo && (ObjectsManager.EnemyNexues != null && ObjectsManager.EnemyNexues.IsInRange(Player.Instance, Player.Instance.GetAutoAttackRange() + ObjectsManager.EnemyNexues.BoundingRadius * 3))
                        || (ObjectsManager.EnemyInhb != null && ObjectsManager.EnemyInhb.IsInRange(Player.Instance, Player.Instance.GetAutoAttackRange() + ObjectsManager.EnemyInhb.BoundingRadius * 3))
-                       || (ObjectsManager.EnemyTurret != null && ObjectsManager.EnemyTurret.IsInRange(Player.Instance, Player.Instance.GetAutoAttackRange() + ObjectsManager.EnemyTurret.BoundingRadius * 3));
+                       || (ObjectsManager.EnemyTurret != null && ObjectsManager.EnemyTurret.IsInRange(Player.Instance, Player.Instance.GetAutoAttackRange() + ObjectsManager.EnemyTurret.BoundingRadius * 3))
+                       || EntityManager.Heroes.Enemies.Count(e => e.IsDead) == 5 || (EntityManager.Heroes.Enemies.Count(e => e.IsDead) >= 3
+                       && EntityManager.Heroes.Allies.Count(a => a.IsActive() && a.IsValidTarget(SafeValue)) >= EntityManager.Heroes.Enemies.Count(a => a.IsValidTarget(SafeValue)));
             }
         }
     }

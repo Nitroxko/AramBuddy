@@ -1,6 +1,6 @@
 ﻿#region
 
-using AramBuddy.MainCore.Utility;
+using AramBuddy.MainCore.Utility.MiscUtil;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 

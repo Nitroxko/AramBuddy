@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using AramBuddy.MainCore.Utility;
+using AramBuddy.MainCore.Utility.MiscUtil;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Enumerations;
@@ -128,7 +129,7 @@ namespace AramBuddy.Plugins.Champions.Caitlyn
 
                 if (spell.Slot == SpellSlot.R)
                 {
-                    if (target.CountEnemiesInRange(300) == 0)
+                    if (target.CountEnemyHeroesInRangeWithPrediction(300) == 0)
                     {
                         R.Cast(target);
                     }
@@ -177,7 +178,7 @@ namespace AramBuddy.Plugins.Champions.Caitlyn
                 {
                     if (spell.Slot == SpellSlot.R)
                     {
-                        if (target.CountEnemiesInRange(300) == 0)
+                        if (target.CountEnemyHeroesInRangeWithPrediction(300) == 0)
                             spell.Cast(target);
                     }
                     else

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
-using AramBuddy.KappaEvade;
-using AramBuddy.MainCore.Utility;
+using AramBuddy.MainCore.Utility.MiscUtil;
+using AramBuddy.Plugins.KappaEvade;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Constants;
@@ -25,6 +25,12 @@ namespace AramBuddy
         /// </summary>
         /// <param name="args">The arguments the event provides</param>
         public delegate void OnGameStartHandler(EventArgs args);
+
+        /// <summary>
+        ///     A handler for the OnSurrenderEnd event
+        /// </summary>
+        /// <param name="win">The arguments the event provides</param>
+        public delegate void OnSurrenderEndHandler(bool win);
 
         /// <summary>
         ///     A handler for the InComingDamage event
@@ -75,26 +81,38 @@ namespace AramBuddy
                         return;
                     }
 
-                    // Get the enemy nexus
-                    var nexus = ObjectManager.Get<Obj_HQ>();
+                    // Gets a dead nexus
+                    // and the nexus is dead or its health is equal to 0
+                    var nexus = ObjectManager.Get<Obj_HQ>().FirstOrDefault(n => n.Health <= 0 || n.IsDead);
 
                     // Check and return if the nexus is null
                     if (nexus == null)
                     {
                         return;
                     }
+                    
+                    // We win if the enemy nexues is dead
+                    var win = nexus.IsEnemy;
 
-                    // If the nexus is dead or its health is equal to 0
-                    if (nexus.Any(n => n.IsDead || n.Health.Equals(0)))
+                    // Invoke the event
+                    OnGameEnd?.Invoke(win);
+
+                    // Set gameEndNotified to true, as the event has been completed
+                    gameEndNotified = true;
+
+                    Logger.Send("GameEnded [Nexues Distroyed] ! " + (win ? "Victory !" : ""));
+                };
+
+            Chat.OnClientSideMessage += delegate(ChatClientSideMessageEventArgs eventArgs)
+                {
+                    var win = eventArgs.Message.Contains("Enemy");
+                    if (eventArgs.Message.ToLower().Contains(" team agreed to a surrender with ") && !gameEndNotified)
                     {
-                        var win = ObjectManager.Get<Obj_HQ>().Any(n => n.IsEnemy && n.Health.Equals(0));
-                        // Invoke the event
+                        OnSurrenderEnd?.Invoke(win);
                         OnGameEnd?.Invoke(win);
-
-                        // Set gameEndNotified to true, as the event has been completed
                         gameEndNotified = true;
 
-                        Logger.Send("Game ended! " + (win ? "Victory !" : ""), Logger.LogLevel.Info);
+                        Logger.Send("GameEnded [Surrender] ! " + (win ? "Victory !" : ""));
                     }
                 };
 
@@ -160,7 +178,7 @@ namespace AramBuddy
                     {
                         //OnGameStart(EventArgs.Empty);
 
-                        Logger.Send("Game started!", Logger.LogLevel.Info);
+                        Logger.Send("Game started!");
                     }
                 };
 
@@ -171,11 +189,16 @@ namespace AramBuddy
         ///     Fires when the game has ended
         /// </summary>
         public static event OnGameEndHandler OnGameEnd;
-
+        
         /// <summary>
         /// Fires when the game has started
         /// </summary>
         public static event OnGameStartHandler OnGameStart;
+
+        /// <summary>
+        ///     Fires when a team Surrender
+        /// </summary>
+        public static event OnGameEndHandler OnSurrenderEnd;
 
         /// <summary>
         /// Fires when There is In Coming Damage to an ally

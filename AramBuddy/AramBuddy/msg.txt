@@ -1,1 +1,1 @@
-Fixed the bot not moving !
+Reworked big parts of the code !

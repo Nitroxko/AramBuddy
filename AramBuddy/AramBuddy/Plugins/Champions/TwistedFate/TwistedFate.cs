@@ -3,9 +3,8 @@ using System.Linq;
 using AramBuddy.MainCore.Logics;
 using EloBuddy;
 using EloBuddy.SDK;
-using EloBuddy.SDK.Enumerations;
 using EloBuddy.SDK.Menu;
-using static AramBuddy.MainCore.Utility.Misc;
+using static AramBuddy.MainCore.Utility.MiscUtil.Misc;
 
 namespace AramBuddy.Plugins.Champions.TwistedFate
 {
@@ -23,7 +22,7 @@ namespace AramBuddy.Plugins.Champions.TwistedFate
             LaneClearMenu = MenuIni.AddSubMenu("LaneClear");
             KillStealMenu = MenuIni.AddSubMenu("KillSteal");
             
-            foreach (var spell in SpellList)
+            foreach (var spell in SpellList.Where(s => s != E && s != R))
             {
                 ComboMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
                 HarassMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
@@ -33,6 +32,18 @@ namespace AramBuddy.Plugins.Champions.TwistedFate
                 KillStealMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
             }
             Obj_AI_Base.OnProcessSpellCast += Obj_AI_Base_OnProcessSpellCast;
+            Orbwalker.OnPreAttack += Orbwalker_OnPreAttack;
+        }
+
+        private static void Orbwalker_OnPreAttack(AttackableUnit target, EventArgs args)
+        {
+            var t = target as AIHeroClient;
+            if(t == null) return;
+            
+            if (ComboMenu.CheckBoxValue(W.Slot))
+            {
+                SetectCard(t);
+            }
         }
 
         private static void Obj_AI_Base_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
@@ -53,17 +64,21 @@ namespace AramBuddy.Plugins.Champions.TwistedFate
         private static void SetectCard(Obj_AI_Base target)
         {
             var card = "Blue";
-            if (user.CountEnemiesInRange(1000) > 1 && user.ManaPercent > 10)
+            if (user.CountEnemyHeroesInRangeWithPrediction(Config.SafeValue) > 0 && user.ManaPercent > 10)
             {
                 card = "Gold";
             }
-            if (target.CountEnemiesInRange(300) > 1 && user.ManaPercent > 10 && user.HealthPercent > 40)
+            if (target.CountEnemyHeroesInRangeWithPrediction(300) > 1 && user.ManaPercent > 10 && user.PredictHealthPercent() > 40)
             {
                 card = "Red";
             }
-            if (user.CountEnemiesInRange(1000) <= 1 && user.ManaPercent < 30 && user.HealthPercent > 50)
+            if (user.CountEnemyHeroesInRangeWithPrediction(Config.SafeValue) <= 1 && user.ManaPercent < 30 && user.PredictHealthPercent() > 50)
             {
                 card = "Blue";
+            }
+            if (target is AIHeroClient && target.UnderTurret())
+            {
+                card = "Gold";
             }
             StartSelecting(card);
         }
@@ -95,6 +110,10 @@ namespace AramBuddy.Plugins.Champions.TwistedFate
 
         public override void Active()
         {
+            if (Core.GameTickCount - lastcasted > 7500)
+            {
+                Selecting = false;
+            }
             if (Selecting && ModesManager.None)
             {
                 var target = TargetSelector.GetTarget(1000, DamageType.Magical);
@@ -113,7 +132,7 @@ namespace AramBuddy.Plugins.Champions.TwistedFate
 
             if (Q.IsReady() && ComboMenu.CheckBoxValue(Q.Slot))
             {
-                Q.Cast(target, HitChance.Low);
+                Q.CastAOE(1, Q.Range, target);
             }
             if (ComboMenu.CheckBoxValue(W.Slot) && target.IsKillable(W.Range))
             {
@@ -129,7 +148,7 @@ namespace AramBuddy.Plugins.Champions.TwistedFate
 
             if (Q.IsReady() && HarassMenu.CheckBoxValue(Q.Slot) && HarassMenu.CompareSlider(Q.Slot + "mana", user.ManaPercent))
             {
-                Q.Cast(target, HitChance.Low);
+                Q.CastAOE(1, Q.Range, target);
             }
             if (HarassMenu.CheckBoxValue(W.Slot) && target.IsKillable(W.Range))
             {
@@ -163,7 +182,7 @@ namespace AramBuddy.Plugins.Champions.TwistedFate
             {
                 if (Q.IsReady() && KillStealMenu.CheckBoxValue(Q.Slot) && target.IsKillable(Q.Range) && Q.WillKill(target))
                 {
-                    Q.Cast(target, 30);
+                    Q.CastAOE(1, Q.Range, target);
                 }
                 if (KillStealMenu.CheckBoxValue(W.Slot) && target.IsKillable(W.Range) && W.WillKill(target))
                 {

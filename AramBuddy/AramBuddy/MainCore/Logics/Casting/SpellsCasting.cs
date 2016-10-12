@@ -1,5 +1,5 @@
 ﻿using System.Linq;
-using AramBuddy.MainCore.Utility;
+using AramBuddy.MainCore.Utility.MiscUtil;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Events;
@@ -19,10 +19,11 @@ namespace AramBuddy.MainCore.Logics.Casting
 
             if(spellBase.DontWaste() && ModesManager.LaneClear) return;
 
-            if (spellBase.IsDangerDash() && target.CountAlliesInRange(1000) >= target.CountEnemiesInRange(1000)
+            if (spellBase.IsDangerDash() && target.CountEnemyAlliesInRangeWithPrediction(1000) >= target.CountEnemyHeroesInRangeWithPrediction(1000)
                 && (target.PredictPosition().UnderEnemyTurret() && Misc.SafeToDive || !target.PredictPosition().UnderEnemyTurret()))
             {
-                spellBase.Cast(target);
+                if(target.Position.IsSafe() && target.Position.SafeDive())
+                    spellBase.Cast(target);
                 return;
             }
 
@@ -31,7 +32,35 @@ namespace AramBuddy.MainCore.Logics.Casting
 
             if (spellBase.IsDash())
             {
-                spellBase.Cast(target.PredictPosition().Extend(Player.Instance, 300).To3D());
+                if (target.Distance(Player.Instance) > 400 && Player.Instance.PredictHealthPercent() > 50)
+                {
+                    var chargeable = spellBase as Spell.Chargeable;
+                    if (chargeable != null)
+                    {
+                        if (!chargeable.IsCharging)
+                        {
+                            if(target.Position.IsSafe() && target.Position.SafeDive())
+                                chargeable.StartCharging();
+                            return;
+                        }
+                        if (chargeable.IsInRange(target))
+                        {
+                            if (target.Position.IsSafe() && target.Position.SafeDive())
+                                chargeable.Cast(target);
+                            return;
+                        }
+                        return;
+                    }
+                    var pos = target.PredictPosition().Extend(Player.Instance, 300).To3D();
+                    if(pos.IsSafe() && pos.SafeDive())
+                        spellBase.Cast(target.PredictPosition().Extend(Player.Instance, 300).To3D());
+                }
+                else
+                {
+                    var pos = Player.Instance.ServerPosition.Extend(ObjectsManager.AllySpawn, 300).To3D();
+                    if (pos.IsSafe() && pos.SafeDive())
+                        spellBase.Cast(pos);
+                }
                 return;
             }
 
@@ -150,8 +179,8 @@ namespace AramBuddy.MainCore.Logics.Casting
                 if (hit != null)
                 {
                     var spelldamage = enemy.GetSpellDamage(hit, args.Slot);
-                    var damagepercent = (spelldamage / hit.Health) * 100;
-                    var death = damagepercent >= hit.HealthPercent || spelldamage >= hit.Health || caster.GetAutoAttackDamage(hit, true) >= hit.Health;
+                    var damagepercent = (spelldamage / hit.PredictHealth()) * 100;
+                    var death = damagepercent >= hit.PredictHealthPercent() || spelldamage >= hit.PredictHealth() || caster.GetAutoAttackDamage(hit, true) >= hit.PredictHealth();
 
                     if (death || damagepercent >= 40)
                     {
@@ -162,8 +191,8 @@ namespace AramBuddy.MainCore.Logics.Casting
                 if (target != null && target.IsValidTarget(spell.Range) && target.IsAlly)
                 {
                     var spelldamage = enemy.GetSpellDamage(target, args.Slot);
-                    var damagepercent = (spelldamage / target.Health) * 100;
-                    var death = damagepercent >= target.HealthPercent || spelldamage >= target.Health || caster.GetAutoAttackDamage(target, true) >= target.Health;
+                    var damagepercent = (spelldamage / target.PredictHealth()) * 100;
+                    var death = damagepercent >= target.PredictHealthPercent() || spelldamage >= target.PredictHealth() || caster.GetAutoAttackDamage(target, true) >= target.PredictHealth();
 
                     if (death || damagepercent >= 10)
                     {
@@ -193,8 +222,8 @@ namespace AramBuddy.MainCore.Logics.Casting
                     return;
                 }
 
-                var aaprecent = (caster.GetAutoAttackDamage(target, true) / target.Health) * 100;
-                var death = caster.GetAutoAttackDamage(target, true) >= target.Health || aaprecent >= target.HealthPercent;
+                var aaprecent = (caster.GetAutoAttackDamage(target, true) / target.PredictHealth()) * 100;
+                var death = caster.GetAutoAttackDamage(target, true) >= target.PredictHealth() || aaprecent >= target.PredictHealthPercent();
 
                 if ((death || aaprecent >= 10) && target.IsValidTarget(spell.Range))
                 {

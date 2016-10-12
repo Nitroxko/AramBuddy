@@ -1,22 +1,17 @@
 ﻿using System;
 using System.Linq;
 using AramBuddy.MainCore.Logics.Casting;
-using AramBuddy.MainCore.Utility;
+using AramBuddy.MainCore.Utility.MiscUtil;
 using EloBuddy;
 using EloBuddy.SDK;
 using SharpDX;
-using static AramBuddy.MainCore.Utility.Misc;
+using static AramBuddy.MainCore.Utility.MiscUtil.Misc;
 using static AramBuddy.Config;
 
 namespace AramBuddy.MainCore.Logics
 {
     internal class Pathing
     {
-        /// <summary>
-        ///     Returns LastTeamFight Time.
-        /// </summary>
-        public static float LastTeamFight;
-
         /// <summary>
         ///     Bot movements position.
         /// </summary>
@@ -32,15 +27,17 @@ namespace AramBuddy.MainCore.Logics
                 Program.Moveto = "Teleporting";
                 Teleport.Cast();
             }
-
-            if (TeamFight)
-            {
-                LastTeamFight = Core.GameTickCount;
-            }
             
             // If player is Zombie moves follow nearest Enemy.
             if (Player.Instance.IsZombie())
             {
+                var ZombieTarget = TargetSelector.GetTarget(1000, DamageType.True);
+                if (ZombieTarget != null)
+                {
+                    Program.Moveto = "ZombieTarget";
+                    Position = ZombieTarget.PredictPosition();
+                    return;
+                }
                 if (ObjectsManager.NearestEnemy != null)
                 {
                     Program.Moveto = "NearestEnemy";
@@ -64,9 +61,9 @@ namespace AramBuddy.MainCore.Logics
             }
 
             // Moves to HealthRelic if the bot needs heal.
-            if ((Player.Instance.HealthPercent <= HealthRelicHP || (Player.Instance.ManaPercent <= HealthRelicMP && !Player.Instance.IsNoManaHero())) && ObjectsManager.HealthRelic != null
+            if ((Player.Instance.PredictHealthPercent() <= HealthRelicHP || (Player.Instance.ManaPercent <= HealthRelicMP && !Player.Instance.IsNoManaHero())) && ObjectsManager.HealthRelic != null
                 && ((DontStealHR && !EntityManager.Heroes.Allies
-                .Any(a => Player.Instance.Health > a.Health && a.Path.LastOrDefault().IsInRange(ObjectsManager.HealthRelic, ObjectsManager.HealthRelic.BoundingRadius + a.BoundingRadius)
+                .Any(a => Player.Instance.PredictHealth() > a.PredictHealth() && a.Path.LastOrDefault().IsInRange(ObjectsManager.HealthRelic, ObjectsManager.HealthRelic.BoundingRadius + a.BoundingRadius)
                 && !a.IsMe && a.IsValidTarget() && !a.IsDead)) || !DontStealHR))
             {
                 var formana = Player.Instance.ManaPercent < HealthRelicMP && !Player.Instance.IsNoManaHero();
@@ -168,17 +165,18 @@ namespace AramBuddy.MainCore.Logics
             }
 
             // Stays Under tower if the bot health under 10%.
-            if ((ModesManager.Flee || (Player.Instance.HealthPercent < 10 && Player.Instance.CountAlliesInRange(3000) < 3)) && EntityManager.Heroes.Enemies.Count(e => !e.IsDead && e.IsValidTarget(SafeValue + 200)) > 0)
+            if ((ModesManager.CurrentMode == ModesManager.Modes.Flee || (Player.Instance.PredictHealthPercent() < 10 && Player.Instance.CountEnemyAlliesInRangeWithPrediction(SafeValue + 2000) < 3))
+                && EntityManager.Heroes.Enemies.Count(e => e.IsValid && !e.IsDead && e.IsInRange(Player.Instance, SafeValue + 200)) > 0)
             {
                 if (ObjectsManager.SafeAllyTurret != null)
                 {
-                    Program.Moveto = "SafeAllyTurret";
+                    Program.Moveto = "SafeAllyTurretFlee";
                     Position = ObjectsManager.SafeAllyTurret.PredictPosition().Random().Extend(ObjectsManager.AllySpawn.Position.Random(), 400).To3D();
                     return;
                 }
                 if (ObjectsManager.AllySpawn != null)
                 {
-                    Program.Moveto = "AllySpawn";
+                    Program.Moveto = "AllySpawnFlee";
                     Position = ObjectsManager.AllySpawn.Position.Random();
                     return;
                 }
@@ -208,43 +206,53 @@ namespace AramBuddy.MainCore.Logics
         public static bool MeleeLogic()
         {
             // if there is a TeamFight follow NearestEnemy.
-            if (Core.GameTickCount - LastTeamFight < 1000 && Player.Instance.HealthPercent > 25 && !ModesManager.Flee && ObjectsManager.NearestEnemy != null && TeamTotal(ObjectsManager.NearestEnemy.PredictPosition()) >= TeamTotal(ObjectsManager.NearestEnemy.PredictPosition(), true)
-                && (ObjectsManager.NearestEnemy.PredictPosition().UnderEnemyTurret() && SafeToDive || !ObjectsManager.NearestEnemy.PredictPosition().UnderEnemyTurret()))
+            if (Core.GameTickCount - Brain.LastTeamFight < 1500 && Player.Instance.PredictHealthPercent() > 25 && !ModesManager.Flee && ObjectsManager.NearestEnemy != null
+                && TeamTotal(ObjectsManager.NearestEnemy.PredictPosition()) >= TeamTotal(ObjectsManager.NearestEnemy.PredictPosition(), true)
+                && ObjectsManager.NearestEnemy.CountEnemyAlliesInRangeWithPrediction(800) > 1)
             {
                 // if there is a TeamFight move from NearestEnemy to nearestally.
                 if (ObjectsManager.SafestAllyToFollow != null)
                 {
-                    Program.Moveto = "NearestEnemyToNearestAlly";
-                    Position = ObjectsManager.NearestEnemy.PredictPosition().Extend(ObjectsManager.SafestAllyToFollow.PredictPosition(), KiteDistance(ObjectsManager.NearestEnemy)).To3D();
-                    return true;
+                    var pos = ObjectsManager.NearestEnemy.KitePos(ObjectsManager.SafestAllyToFollow);
+                    if (pos.IsSafe())
+                    {
+                        Program.Moveto = "NearestEnemyToNearestAlly";
+                        Position = pos;
+                        return true;
+                    }
                 }
                 // if there is a TeamFight move from NearestEnemy to AllySpawn.
                 if (ObjectsManager.AllySpawn != null)
                 {
-                    Program.Moveto = "NearestEnemyToAllySpawn";
-                    Position = ObjectsManager.NearestEnemy.PredictPosition().Extend(ObjectsManager.AllySpawn.Position, KiteDistance(ObjectsManager.NearestEnemy)).To3D();
-                    return true;
+                    var pos = ObjectsManager.NearestEnemy.KitePos(ObjectsManager.AllySpawn);
+                    if (pos.IsSafe())
+                    {
+                        Program.Moveto = "NearestEnemyToAllySpawn";
+                        Position = pos;
+                        return true;
+                    }
                 }
             }
 
             // Tower Defence
-            if (Player.Instance.IsUnderHisturret() && ObjectsManager.FarthestAllyTurret != null && Player.Instance.HealthPercent >= 20)
+            if (Player.Instance.IsUnderHisturret() && ObjectsManager.FarthestAllyTurret != null && Player.Instance.PredictHealthPercent() >= 20 && !(ModesManager.None || ModesManager.Flee))
             {
-                if (ObjectsManager.FarthestAllyTurret.CountEnemiesInRange(ObjectsManager.FarthestAllyTurret.GetAutoAttackRange() + 50) > 0)
+                if (ObjectsManager.FarthestAllyTurret.CountEnemyHeroesInRangeWithPrediction((int)ObjectsManager.FarthestAllyTurret.GetAutoAttackRange(Player.Instance) + 50) > 0)
                 {
-                    var enemy = EntityManager.Heroes.Enemies.OrderBy(o => o.Distance(ObjectsManager.FarthestAllyTurret)).FirstOrDefault(e => e.IsKillable(3000));
+                    var enemy = EntityManager.Heroes.Enemies.OrderBy(o => o.Distance(ObjectsManager.AllySpawn)).FirstOrDefault(e => e.IsKillable(3000));
                     if (enemy != null && enemy.UnderEnemyTurret() && TeamTotal(enemy.PredictPosition()) >= TeamTotal(enemy.PredictPosition(), true))
                     {
                         Program.Moveto = "EnemyUnderTurret";
-                        Position = enemy.PredictPosition().Extend(ObjectsManager.AllySpawn, KiteDistance(enemy)).To3D();
+                        Position = enemy.KitePos(ObjectsManager.AllySpawn);
                         return true;
                     }
                 }
             }
 
             // if Can AttackObject then start attacking THE DAMN OBJECT FFS.
-            if (ObjectsManager.NearestEnemyObject != null && Player.Instance.HealthPercent > 20
-                && (TeamTotal(ObjectsManager.NearestEnemyObject.Position) > TeamTotal(ObjectsManager.NearestEnemyObject.Position, true) || ObjectsManager.NearestEnemyObject.CountEnemiesInRange(SafeValue + 100) < 1))
+            if (ObjectsManager.NearestEnemyObject != null && Player.Instance.PredictHealthPercent() > 20 && ModesManager.AttackObject
+                && (TeamTotal(ObjectsManager.NearestEnemyObject.Position) > TeamTotal(ObjectsManager.NearestEnemyObject.Position, true)
+                || ObjectsManager.NearestEnemyObject.CountEnemyHeroesInRangeWithPrediction(SafeValue + 100) < 1))
             {
                 var extendto = new Vector3();
                 if (ObjectsManager.AllySpawn != null)
@@ -259,7 +267,7 @@ namespace AramBuddy.MainCore.Logics
                 {
                     extendto = ObjectsManager.NearestAlly.Position;
                 }
-                var extendtopos = ObjectsManager.NearestEnemyObject.Position.Extend(extendto, KiteDistance(ObjectsManager.NearestEnemyObject)).To3D();
+                var extendtopos = ObjectsManager.NearestEnemyObject.KitePos(extendto);
                 var rect = new Geometry.Polygon.Rectangle(Player.Instance.ServerPosition, ObjectsManager.NearestEnemyObject.Position, 400);
                 var Enemy = EntityManager.Heroes.Enemies.Any(a => a != null && a.IsValid && !a.IsDead && new Geometry.Polygon.Circle(a.PredictPosition(), a.GetAutoAttackRange(Player.Instance)).Points.Any(p => rect.IsInside(p)));
                 if (!Enemy)
@@ -306,10 +314,10 @@ namespace AramBuddy.MainCore.Logics
             }
             
             // if Minion exsists moves to Minion.
-            if (ObjectsManager.Minion != null)
+            if (ObjectsManager.AllyMinion != null)
             {
-                Program.Moveto = "Minion";
-                Position = ObjectsManager.Minion.PredictPosition().Random();
+                Program.Moveto = "AllyMinion";
+                Position = ObjectsManager.AllyMinion.PredictPosition().Random();
                 return true;
             }
 
@@ -361,43 +369,52 @@ namespace AramBuddy.MainCore.Logics
         public static bool RangedLogic()
         {
             // TeamFighting Logic.
-            if (Core.GameTickCount - LastTeamFight < 1000 && Player.Instance.HealthPercent > 25 && !ModesManager.Flee && ObjectsManager.NearestEnemy != null && TeamTotal(ObjectsManager.NearestEnemy.PredictPosition()) >= TeamTotal(ObjectsManager.NearestEnemy.PredictPosition(), true)
-                && (ObjectsManager.NearestEnemy.PredictPosition().UnderEnemyTurret() && SafeToDive || !ObjectsManager.NearestEnemy.PredictPosition().UnderEnemyTurret()))
+            if (Core.GameTickCount - Brain.LastTeamFight < 1000 && Player.Instance.PredictHealthPercent() > 25 && !ModesManager.Flee && ObjectsManager.NearestEnemy != null
+                && EntityManager.Heroes.Allies.Any(a => a.IsValidTarget() && a.Distance(ObjectsManager.NearestEnemy) < Player.Instance.Distance(ObjectsManager.NearestEnemy) && !a.IsMe)
+                && TeamTotal(ObjectsManager.NearestEnemy.PredictPosition()) >= TeamTotal(ObjectsManager.NearestEnemy.PredictPosition(), true) && ObjectsManager.NearestEnemy.CountEnemyAlliesInRangeWithPrediction(SafeValue) > 1)
             {
                 // if there is a TeamFight move from NearestEnemy to nearestally.
                 if (ObjectsManager.SafestAllyToFollow2 != null)
                 {
-                    Program.Moveto = "NearestEnemyToNearestAlly";
-                    Position = ObjectsManager.NearestEnemy.PredictPosition().Extend(ObjectsManager.SafestAllyToFollow2.PredictPosition(), KiteDistance(ObjectsManager.NearestEnemy)).To3D();
-                    return true;
+                    var pos = ObjectsManager.NearestEnemy.KitePos(ObjectsManager.SafestAllyToFollow2);
+                    if (pos.IsSafe())
+                    {
+                        Program.Moveto = "NearestEnemyToNearestAlly";
+                        Position = pos;
+                        return true;
+                    }
                 }
                 // if there is a TeamFight move from NearestEnemy to AllySpawn.
                 if (ObjectsManager.AllySpawn != null)
                 {
-                    Program.Moveto = "NearestEnemyToAllySpawn";
-                    Position = ObjectsManager.NearestEnemy.PredictPosition().Extend(ObjectsManager.AllySpawn.Position, KiteDistance(ObjectsManager.NearestEnemy)).To3D();
-                    return true;
+                    var pos = ObjectsManager.NearestEnemy.KitePos(ObjectsManager.AllySpawn);
+                    if (pos.IsSafe())
+                    {
+                        Program.Moveto = "NearestEnemyToAllySpawn";
+                        Position = pos;
+                        return true;
+                    }
                 }
             }
 
             // Tower Defence
-            if (Player.Instance.IsUnderHisturret() && ObjectsManager.FarthestAllyTurret != null && Player.Instance.HealthPercent >= 20)
+            if (Player.Instance.IsUnderHisturret() && ObjectsManager.FarthestAllyTurret != null && Player.Instance.PredictHealthPercent() >= 20)
             {
-                if (ObjectsManager.FarthestAllyTurret.CountEnemiesInRange(ObjectsManager.FarthestAllyTurret.GetAutoAttackRange() + 50) > 0)
+                if (ObjectsManager.FarthestAllyTurret.CountEnemyHeroesInRangeWithPrediction((int)ObjectsManager.FarthestAllyTurret.GetAutoAttackRange() + 50) > 0)
                 {
                     var enemy = EntityManager.Heroes.Enemies.OrderBy(o => o.Distance(ObjectsManager.FarthestAllyTurret)).FirstOrDefault(e => e.IsKillable(3000));
                     if (enemy != null && enemy.UnderEnemyTurret() && TeamTotal(enemy.PredictPosition()) >= TeamTotal(enemy.PredictPosition(), true))
                     {
-                        Program.Moveto = "EnemyUnderTurret";
-                        Position = enemy.PredictPosition().Extend(ObjectsManager.AllySpawn, KiteDistance(enemy)).To3D();
+                        Program.Moveto = "DefendingTower";
+                        Position = enemy.KitePos(ObjectsManager.AllySpawn);
                         return true;
                     }
                 }
             }
 
             // if Can AttackObject then start attacking THE DAMN OBJECT FFS.
-            if (ObjectsManager.NearestEnemyObject != null && Player.Instance.HealthPercent > 20
-                && (TeamTotal(ObjectsManager.NearestEnemyObject.Position) > TeamTotal(ObjectsManager.NearestEnemyObject.Position, true) || ObjectsManager.NearestEnemyObject.CountEnemiesInRange(SafeValue + 100) < 1))
+            if (ObjectsManager.NearestEnemyObject != null && Player.Instance.PredictHealthPercent() > 20 && ModesManager.AttackObject
+                && (TeamTotal(ObjectsManager.NearestEnemyObject.Position) > TeamTotal(ObjectsManager.NearestEnemyObject.Position, true) || ObjectsManager.NearestEnemyObject.CountEnemyHeroesInRangeWithPrediction(SafeValue + 100) < 1))
             {
                 var extendto = new Vector3();
                 if (ObjectsManager.AllySpawn != null)
@@ -412,7 +429,7 @@ namespace AramBuddy.MainCore.Logics
                 {
                     extendto = ObjectsManager.NearestAlly.Position;
                 }
-                var extendtopos = ObjectsManager.NearestEnemyObject.Position.Extend(extendto, KiteDistance(ObjectsManager.NearestEnemyObject)).To3D();
+                var extendtopos = ObjectsManager.NearestEnemyObject.KitePos(extendto);
                 var rect = new Geometry.Polygon.Rectangle(Player.Instance.ServerPosition, ObjectsManager.NearestEnemyObject.Position, 400);
                 var Enemy = EntityManager.Heroes.Enemies.Any(a => a != null && a.IsValid && !a.IsDead && new Geometry.Polygon.Circle(a.PredictPosition(), a.GetAutoAttackRange(Player.Instance)).Points.Any(p => rect.IsInside(p)));
                 if (!Enemy)
@@ -453,12 +470,12 @@ namespace AramBuddy.MainCore.Logics
             if (ObjectsManager.SafestAllyToFollow2 != null)
             {
                 Program.Moveto = "SafestAllyToFollow2";
-                Position = ObjectsManager.SafestAllyToFollow2.PredictPosition().Random();
+                Position = ObjectsManager.SafestAllyToFollow2.PredictPosition().Extend(ObjectsManager.AllySpawn, 100).Random();
                 return true;
             }
 
             // if NearestEnemyMinion exsists moves to NearestEnemyMinion.
-            if (ObjectsManager.NearestEnemyMinion != null && ObjectsManager.AllySpawn != null && ModesManager.LaneClear && Player.Instance.HealthPercent > 20)
+            if (ObjectsManager.NearestEnemyMinion != null && ObjectsManager.AllySpawn != null && ModesManager.LaneClear && Player.Instance.PredictHealthPercent() > 20)
             {
                 Program.Moveto = "NearestEnemyMinion";
                 Position = ObjectsManager.NearestEnemyMinion.PredictPosition().Extend(ObjectsManager.AllySpawn.Position.Random(), KiteDistance(ObjectsManager.NearestEnemyMinion)).To3D();
@@ -466,10 +483,10 @@ namespace AramBuddy.MainCore.Logics
             }
 
             // if Minion not exsist picks other to follow.
-            if (ObjectsManager.Minion != null)
+            if (ObjectsManager.AllyMinion != null)
             {
-                Program.Moveto = "Minion";
-                Position = ObjectsManager.Minion.PredictPosition().Random();
+                Program.Moveto = "AllyMinion";
+                Position = ObjectsManager.AllyMinion.PredictPosition().Extend(ObjectsManager.AllySpawn, 100).Random();
                 return true;
             }
             
@@ -477,7 +494,7 @@ namespace AramBuddy.MainCore.Logics
             if (ObjectsManager.SecondTurret != null)
             {
                 Program.Moveto = "SecondTurret";
-                Position = ObjectsManager.SecondTurret.ServerPosition.Extend(ObjectsManager.AllySpawn, 400).To3D().Random();
+                Position = ObjectsManager.SecondTurret.ServerPosition.Extend(ObjectsManager.AllySpawn, 425).To3D().Random();
                 return true;
             }
 
@@ -485,7 +502,7 @@ namespace AramBuddy.MainCore.Logics
             if (ObjectsManager.SafeAllyTurret != null)
             {
                 Program.Moveto = "SafeAllyTurret";
-                Position = ObjectsManager.SafeAllyTurret.ServerPosition.Extend(ObjectsManager.AllySpawn, 400).To3D().Random();
+                Position = ObjectsManager.SafeAllyTurret.ServerPosition.Extend(ObjectsManager.AllySpawn, 425).To3D().Random();
                 return true;
             }
 
@@ -493,7 +510,7 @@ namespace AramBuddy.MainCore.Logics
             if (ObjectsManager.ClosesetAllyTurret != null)
             {
                 Program.Moveto = "ClosesetAllyTurret";
-                Position = ObjectsManager.ClosesetAllyTurret.ServerPosition.Extend(ObjectsManager.AllySpawn, 400).To3D().Random();
+                Position = ObjectsManager.ClosesetAllyTurret.ServerPosition.Extend(ObjectsManager.AllySpawn, 425).To3D().Random();
                 return true;
             }
 
@@ -512,24 +529,30 @@ namespace AramBuddy.MainCore.Logics
         /// </summary>
         public static void MoveTo(Vector3 pos)
         {
+            var pos2 = pos;
+            if (pos.Distance(Player.Instance.Path.LastOrDefault()) > 2000)
+            {
+                pos2 = Player.Instance.ServerPosition.Extend(pos, new Random().Next(500, 1500)).To3D();
+            }
+
             // This to prevent the bot from spamming unnecessary movements.
             var rnddis = new Random().Next(45, 75);
-            if (!Player.Instance.Path.LastOrDefault().IsInRange(pos, rnddis) && !Player.Instance.IsInRange(pos, rnddis) /*&& Core.GameTickCount - lastmove >= new Random().Next(100 + Game.Ping, 600 + Game.Ping)*/)
+            if ((!Player.Instance.Path.LastOrDefault().IsInRange(pos2, rnddis) || !Player.Instance.IsMoving) && !Player.Instance.IsInRange(pos2, rnddis) /*&& Core.GameTickCount - lastmove >= new Random().Next(100 + Game.Ping, 600 + Game.Ping)*/)
             {
                 // This to prevent diving.
-                if (pos.UnderEnemyTurret() && !SafeToDive)
+                if (pos2.UnderEnemyTurret() && !SafeToDive)
                 {
                     //return;
                 }
-
+                
                 // This to prevent Walking into walls, buildings or traps.
-                if (pos.IsWall() || pos.IsBuilding() || ObjectsManager.EnemyTraps.Any(t => t.Trap.IsInRange(pos, t.Trap.BoundingRadius * 2)))
+                if ((pos2.IsWall() || pos2.IsBuilding() || ObjectsManager.EnemyTraps.Any(t => t.Trap.IsInRange(pos2, t.Trap.BoundingRadius * 2))) && !Brain.RunningItDownMid)
                 {
                     return;
                 }
 
                 // Issues Movement Commands.
-                Orbwalker.OrbwalkTo(pos);
+                Orbwalker.OrbwalkTo(pos2);
             }
         }
     }

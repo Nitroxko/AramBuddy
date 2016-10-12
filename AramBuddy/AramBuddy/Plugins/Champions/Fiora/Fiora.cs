@@ -1,10 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using AramBuddy.KappaEvade;
-using AramBuddy.MainCore.Utility;
+using AramBuddy.MainCore.Utility.MiscUtil;
+using AramBuddy.Plugins.KappaEvade;
 using EloBuddy;
 using EloBuddy.SDK;
-using EloBuddy.SDK.Enumerations;
 using EloBuddy.SDK.Menu;
 using SharpDX;
 
@@ -33,7 +32,7 @@ namespace AramBuddy.Plugins.Champions.Fiora
                 }
                 KillStealMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
             }
-            Events.OnIncomingDamage += Events_OnIncomingDamage;
+            //Events.OnIncomingDamage += Events_OnIncomingDamage;
             //SpellsDetector.OnTargetedSpellDetected += SpellsDetector_OnTargetedSpellDetected;
             Orbwalker.OnPostAttack += Orbwalker_OnPostAttack;
         }
@@ -50,15 +49,15 @@ namespace AramBuddy.Plugins.Champions.Fiora
             }
             else
             {
-                var target = EntityManager.Heroes.Enemies.OrderBy(a => a.Health).FirstOrDefault(e => e != null && e.IsKillable(W.Range));
+                var target = EntityManager.Heroes.Enemies.OrderBy(a => a.PredictHealth()).FirstOrDefault(e => e != null && e.IsKillable(W.Range));
                 if (target != null)
                 {
                     CastPos = W.GetPrediction(target).CastPosition;
                 }
             }
 
-            var DamagePercent = (args.InComingDamage / user.Health) * 100;
-            if (args.InComingDamage >= user.Health || DamagePercent > 20)
+            var DamagePercent = (args.InComingDamage / user.PredictHealth()) * 100;
+            if (args.InComingDamage >= user.PredictHealth() || DamagePercent > 20)
             {
                 W.Cast(CastPos);
             }
@@ -139,7 +138,7 @@ namespace AramBuddy.Plugins.Champions.Fiora
                     Q.Cast(pos);
                 }
             }
-            if (target.HealthPercent <= 50 && target.IsKillable(R.Range) && R.IsReady() && ComboMenu.CheckBoxValue(R.Slot))
+            if (target.PredictHealthPercent() <= 50 && target.IsKillable(R.Range) && R.IsReady() && ComboMenu.CheckBoxValue(R.Slot))
             {
                 R.Cast(target);
             }
@@ -182,7 +181,7 @@ namespace AramBuddy.Plugins.Champions.Fiora
 
         public override void Flee()
         {
-            if (user.CountEnemiesInRange(1000) > 0 && Q.IsReady())
+            if (user.CountEnemyHeroesInRangeWithPrediction(1000) > 0 && Q.IsReady())
             {
                 Q.Cast(user.ServerPosition.Extend(ObjectsManager.AllySpawn.Position.Random(), Q.RangeSquared).To3D());
             }
