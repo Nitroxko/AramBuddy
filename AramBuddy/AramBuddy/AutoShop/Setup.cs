@@ -52,6 +52,7 @@ namespace AramBuddy.AutoShop
         {
             try
             {
+                var service = Config.CurrentBuildService == "" ? "" : "\\" + Config.CurrentBuildService;
                 Buy.CanShop = !Player.Instance.Buffs.Any(b => b.DisplayName.Equals("aramshopdisableplayer", StringComparison.CurrentCultureIgnoreCase)) || Player.Instance.IsDead;
                 //var useDefaultBuild = false;
                 // When the game starts
@@ -74,16 +75,16 @@ namespace AramBuddy.AutoShop
                     Builds.Add(parsed, File.ReadAllText(build));
                 }
 
-                if (!Directory.Exists(BuildPath + "\\" + Config.CurrentBuildService))
+                if (!Directory.Exists(BuildPath + service))
                 {
-                    Directory.CreateDirectory(BuildPath + "\\" + Config.CurrentBuildService);
+                    Directory.CreateDirectory(BuildPath + service);
                 }
 
                 // Loop through all the builds in the build path directory
-                foreach (var build in Directory.GetFiles(BuildPath + "\\" + Config.CurrentBuildService))
+                foreach (var build in Directory.GetFiles(BuildPath + service))
                 {
                     // Get the name of the champion from the build
-                    var parsed = build.Replace(".json", "").Replace(BuildPath + "\\" + Config.CurrentBuildService + "\\", "");
+                    var parsed = build.Replace(".json", "").Replace(BuildPath + service + "\\", "");
 
                     // Add the build to the Builds dictionary in a ChampionName : BuildData format
                     if(!Builds.ContainsKey(parsed))
@@ -95,7 +96,10 @@ namespace AramBuddy.AutoShop
                 {
                     // If not, warn the user
                     Logger.Send("There are no builds for your champion. " + Player.Instance.ChampionName, Logger.LogLevel.Warn);
-                    Build.GetBuildFromService();
+                    if(service != "")
+                        Build.GetBuildFromService();
+                    else
+                        UseDefaultBuild();
                 }
 
                 /*if (useDefaultBuild)

@@ -422,10 +422,17 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
         {
             get
             {
+                var lasthitableminion =
+                    Orbwalker.PriorityLastHitWaitingMinionsList.OrderBy(m => m.Distance(Player.Instance))
+                        .FirstOrDefault(
+                            m =>
+                            m.IsKillable(Player.Instance.GetAutoAttackRange(m) + 125) && Misc.TeamTotal(m.PredictPosition()) >= Misc.TeamTotal(m.PredictPosition(), true)
+                            && m.CountAllyMinionsInRangeWithPrediction(Config.SafeValue) > 0 && m.IsSafe());
+
                 var lasthitminion = Orbwalker.LastHitMinionsList.OrderBy(m => m.Distance(Player.Instance)).FirstOrDefault(m => m.IsKillable(Player.Instance.GetAutoAttackRange(m) + 125)
                 && Misc.TeamTotal(m.PredictPosition()) >= Misc.TeamTotal(m.PredictPosition(), true) && m.CountAllyMinionsInRangeWithPrediction(Config.SafeValue) > 0 && m.IsSafe());
 
-                return lasthitminion ?? EntityManager.MinionsAndMonsters.EnemyMinions.OrderBy(m => m.Distance(Player.Instance))
+                return lasthitminion ?? lasthitableminion ?? EntityManager.MinionsAndMonsters.EnemyMinions.OrderBy(m => m.Distance(Player.Instance))
                                             .FirstOrDefault(m => m.IsKillable() && Misc.TeamTotal(m.PredictPosition()) >= Misc.TeamTotal(m.PredictPosition(), true)
                                             && m.CountAllyMinionsInRangeWithPrediction(Config.SafeValue) > 0 && m.IsSafe());
             }
