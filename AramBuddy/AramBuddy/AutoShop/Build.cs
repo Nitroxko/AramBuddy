@@ -118,14 +118,14 @@ namespace AramBuddy.AutoShop
 
                 using (var WebClient = new WebClient())
                 {
-                    using (var request = WebClient.DownloadStringTaskAsync("https://raw.githubusercontent.com/plsfixrito/AramBuddy/master/DefaultBuilds/" + Config.CurrentBuildService + "/" + filename))
+                    using (var request = WebClient.DownloadStringTaskAsync("https://raw.githubusercontent.com/plsfixrito/AramBuddy/master/DefaultBuilds/" + Program.CurrentPatch + "\\" + Config.CurrentBuildService + "/" + filename))
                     {
                         if (request != null && !request.IsCanceled && !request.IsFaulted)
                         {
                             if (request.Result.Contains("data"))
                             {
-                                File.WriteAllText(Setup.BuildPath + "\\" + Config.CurrentBuildService + "\\" + filename, request.Result);
-                                Setup.Builds.Add(CleanUpChampionName(Player.Instance.ChampionName), File.ReadAllText(Setup.BuildPath + "\\" + Config.CurrentBuildService + "\\" + filename));
+                                File.WriteAllText(Setup.BuildPath + "\\" + Program.CurrentPatch + "\\" + Config.CurrentBuildService + "\\" + filename, request.Result);
+                                Setup.Builds.Add(CleanUpChampionName(Player.Instance.ChampionName), File.ReadAllText(Setup.BuildPath + "\\" + Program.CurrentPatch + "\\" + Config.CurrentBuildService + "\\" + filename));
                                 Logger.Send("Created Build for " + Player.Instance.ChampionName);
                                 Setup.CustomBuildService();
                             }

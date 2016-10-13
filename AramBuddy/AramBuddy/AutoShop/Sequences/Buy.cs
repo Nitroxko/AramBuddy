@@ -13,6 +13,12 @@ namespace AramBuddy.AutoShop.Sequences
 {
     internal class Buy
     {
+
+        /// <summary>
+        ///     Returns The Current Item Index
+        /// </summary>
+        public static int CurrentItemIndex;
+
         /// <summary>
         ///     Returns True if you can buy items from the shop
         /// </summary>
@@ -95,6 +101,7 @@ namespace AramBuddy.AutoShop.Sequences
                 var currentprice = theitem.ItemInfo.Gold.Base + ia;
                 NextItem = theitem.ItemInfo.Name;
                 NextItemValue = currentprice;
+                CurrentItemIndex = GetIndex() + 1;
 
                 // Check if we can buy the item
                 if ((item.Value != null) && CanShop && (item.Key != ItemId.Unknown) && item.Value.ValidForPlayer && item.Value.InStore && item.Value.Gold.Purchasable && item.Value.AvailableForMap
@@ -112,7 +119,7 @@ namespace AramBuddy.AutoShop.Sequences
 
                     var deathtime = Player.Instance.DeathTimer() * 1000;
 
-                    var rnd = (float)(new Random().Next(Math.Max(500, (int)(deathtime * 0.075f)), Math.Max(1000, (int)(deathtime * 0.25f))) + Game.Ping);
+                    var rnd = (float)(new Random().Next(Math.Max(500, (int)(deathtime * 0.05f)), Math.Max(1000, (int)(deathtime * 0.1f))) + Game.Ping);
 
                     // Try to buy more than one item if we can afford it
                     Core.DelayAction(() => BuyNextItem(build), (int)rnd);

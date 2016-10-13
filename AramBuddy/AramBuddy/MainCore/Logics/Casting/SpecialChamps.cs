@@ -29,7 +29,7 @@ namespace AramBuddy.MainCore.Logics.Casting
         public static List<ImportantSpells> Importantspells = new List<ImportantSpells>
         {
             new ImportantSpells(Champion.Taliyah, SpellSlot.R, false),
-            new ImportantSpells(Champion.TahmKench, SpellSlot.R, false),
+            new ImportantSpells(Champion.TahmKench, SpellSlot.R, true),
             new ImportantSpells(Champion.TwistedFate, SpellSlot.R, false),
             new ImportantSpells(Champion.Ryze, SpellSlot.R, false),
             new ImportantSpells(Champion.AurelionSol, SpellSlot.E, false),
@@ -70,6 +70,7 @@ namespace AramBuddy.MainCore.Logics.Casting
                 {
                     if (args.Slot == me.slot)
                     {
+                        LastStartTick = Core.GameTickCount;
                         IsCastingImportantSpell = true;
                         Logger.Send("[" + Player.Instance.Hero + "] Player Is Channeling Important Spell");
                     }
@@ -95,7 +96,7 @@ namespace AramBuddy.MainCore.Logics.Casting
         {
             Orbwalker.DisableAttacking = IsCastingImportantSpell;
             Orbwalker.DisableMovement = IsCastingImportantSpell;
-            if (IsCastingImportantSpell && Core.GameTickCount - LastStartTick > 250 + Game.Ping)
+            if (IsCastingImportantSpell)
             {
                 if (Player.Instance.Spellbook.IsChanneling && !Config.DisableSpellsCasting && !Program.CustomChamp)
                 {
@@ -107,6 +108,7 @@ namespace AramBuddy.MainCore.Logics.Casting
                             Player.CastSpell(SpellSlot.R, target.PredictPosition());
                         }
                     }
+
                     if (Importantspells.Any(s => s.champ == Player.Instance.Hero))
                     {
                         if (Player.Instance.Hero == Champion.Velkoz)
@@ -124,7 +126,7 @@ namespace AramBuddy.MainCore.Logics.Casting
                     }
                 }
 
-                if (!Player.Instance.Spellbook.IsChanneling && !Player.Instance.Spellbook.IsCharging && !Player.Instance.Spellbook.IsCastingSpell)
+                if (!Player.Instance.Spellbook.IsChanneling && !Player.Instance.Spellbook.IsCharging && !Player.Instance.Spellbook.IsCastingSpell && Core.GameTickCount - LastStartTick > 500 + Game.Ping)
                 {
                     IsCastingImportantSpell = false;
                     Logger.Send("No Longer Channeling Important Spell " + Player.Instance.Hero);

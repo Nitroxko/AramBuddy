@@ -52,7 +52,7 @@ namespace AramBuddy.AutoShop
         {
             try
             {
-                var service = Config.CurrentBuildService == "" ? "" : "\\" + Config.CurrentBuildService;
+                var service = Config.CurrentBuildService == "" ? "" : "\\" + Program.CurrentPatch + "\\" + Config.CurrentBuildService;
                 Buy.CanShop = !Player.Instance.Buffs.Any(b => b.DisplayName.Equals("aramshopdisableplayer", StringComparison.CurrentCultureIgnoreCase)) || Player.Instance.IsDead;
                 //var useDefaultBuild = false;
                 // When the game starts
@@ -107,11 +107,12 @@ namespace AramBuddy.AutoShop
 
                 // Check if the parse of the build for the champion completed successfully and output it to public
                 // variable CurrentChampionBuild
-                if (Builds.Any(b => b.Key == Player.Instance.ChampionName) && Builds.FirstOrDefault(b => b.Key == Player.Instance.ChampionName).Value.TryParseData(out CurrentChampionBuild))
+                if (Builds.Any(b => Build.CleanUpChampionName(b.Key) == Build.CleanUpChampionName(Player.Instance.ChampionName)) && Builds.FirstOrDefault(b => Build.CleanUpChampionName(b.Key) == Build.CleanUpChampionName(Player.Instance.ChampionName)).Value.TryParseData(out CurrentChampionBuild))
                 {
                     // If the parse is successful, notify the user that the initialization process is finished
+                    Logger.Send(Program.CurrentPatch + " " + Player.Instance.ChampionName + " Build Loaded !");
                     Logger.Send("AutoShop has been fully and succesfully initialized!");
-
+                    
                     // and set up event listeners
                     SetUpEventListeners();
                     Buy.BuyNextItem(CurrentChampionBuild);
@@ -281,7 +282,7 @@ namespace AramBuddy.AutoShop
         {
             var deathtime = Player.Instance.DeathTimer() * 1000;
             // To Prevent Instantly buying item when event is fired
-            var rnd = (float)(new Random().Next(Math.Max(500, (int)(deathtime * 0.075f)), Math.Max(1000, (int)(deathtime * 0.25f))) + Game.Ping);
+            var rnd = (float)(new Random().Next(Math.Max(500, (int)(deathtime * 0.05f)), Math.Max(1000, (int)(deathtime * 0.1f))) + Game.Ping);
 
             // Notify the user that we are going to try to buy items now
             Logger.Send("Can buy items: " + (rnd / 1000).ToString("F1") + " Second/s Delay", Logger.LogLevel.Event);

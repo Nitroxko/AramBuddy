@@ -25,6 +25,7 @@ namespace AramBuddy
 {
     internal class Program
     {
+        public static string CurrentPatch = "6.20.1";
         public static bool CrashAIODetected;
         public static bool CustomChamp;
         public static bool Loaded;
@@ -38,6 +39,9 @@ namespace AramBuddy
         public static string Moveto;
 
         public static Menu MenuIni, SpellsMenu, MiscMenu, BuildMenu;
+
+        private static float textsize;
+        private static Text text;
 
         private static void Main()
         {
@@ -60,6 +64,9 @@ namespace AramBuddy
                     Chat.Print(Game.MapId + " IS NOT Supported By AramBuddy !");
                     return;
                 }
+
+                textsize = Drawing.Width <= 400 || Drawing.Height <= 400 ? 10F : 40F;
+                text = new Text("YOUR ORBWALKER IS DISABLED", new Font("Euphemia", textsize, FontStyle.Bold)) { Color = System.Drawing.Color.White, Position = new Vector2(Drawing.Width * 0.3f, Drawing.Height * 0.2f) };
 
                 Chat.OnClientSideMessage += delegate (ChatClientSideMessageEventArgs eventArgs)
                 {
@@ -248,6 +255,7 @@ namespace AramBuddy
                 var texture = MenuIni.CreateCheckBox("texture", "Disable In-Game Texture (Less RAM/CPU)", false);
                 var evade = MenuIni.CreateCheckBox("evade", "Evade Integration[BETA]");
                 var ff = MenuIni.CreateCheckBox("ff", "Vote Surrender With Team Always");
+                var cameralock = MenuIni.CreateCheckBox("cameralock", "Lock Camera Always");
 
                 MenuIni.AddSeparator(0);
                 var Safe = MenuIni.CreateSlider("Safe", "Safe Slider (Recommended 1250)", 1250, 0, 2500);
@@ -290,6 +298,7 @@ namespace AramBuddy
                         texture.CurrentValue = false;
                         evade.CurrentValue = true;
                         ff.CurrentValue = true;
+                        cameralock.CurrentValue = true;
                         Safe.CurrentValue = 1250;
                         HRHP.CurrentValue = 75;
                         HRMP.CurrentValue = 15;
@@ -328,9 +337,7 @@ namespace AramBuddy
                 Logger.Send("Program Error At CreateMenu", ex, Logger.LogLevel.Error);
             }
         }
-
-        private static readonly float textsize = Drawing.Width <= 400 || Drawing.Height <= 400 ? 10F : 40F;
-        private static readonly Text text = new Text("YOUR ORBWALKER IS DISABLED", new Font("Euphemia", textsize, FontStyle.Bold)) { Color = System.Drawing.Color.White, Position = new Vector2(Drawing.Width * 0.3f, Drawing.Height * 0.2f) };
+        
         private static void Drawing_OnEndScene(EventArgs args)
         {
             try
@@ -361,7 +368,7 @@ namespace AramBuddy
                 var IsSafe = /*" | IsSafe: " + (Player.Instance.IsSafe() && Pathing.Position.IsSafe())*/ "";
                 var LastTeamFight = " | LastTeamFight: " + (int)(Core.GameTickCount - Brain.LastTeamFight);
                 var MovementCommands = " | Movement Commands Issued: " + MoveToCommands;
-                var nextitem = " | Next Item: " + AutoShop.Sequences.Buy.NextItem + " | Value: " + AutoShop.Sequences.Buy.NextItemValue;
+                var nextitem = " | Next Item: " + AutoShop.Sequences.Buy.CurrentItemIndex + " - " + AutoShop.Sequences.Buy.NextItem + " | Value: " + AutoShop.Sequences.Buy.NextItemValue;
 
                 Drawing.DrawText(Drawing.Width * 0.2f, Drawing.Height * 0.025f, System.Drawing.Color.White,
                     AllyTeamTotal + EnemyTeamTotal + "\n"
@@ -452,11 +459,10 @@ namespace AramBuddy
 
                     Brain.Decisions();
 
-                    /* 10/10 would use Camera API again
-                    if (Pathing.Position != null && Pathing.Position.IsValid())
+                    if (CameraLock && !Camera.Locked)
                     {
-                        Camera.ScreenPosition = Pathing.Position.WorldToScreen();
-                    }*/
+                        Camera.Locked = true;
+                    }
                 }
             }
             catch (Exception ex)
