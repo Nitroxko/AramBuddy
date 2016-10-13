@@ -118,7 +118,7 @@ namespace AramBuddy.AutoShop
 
                 using (var WebClient = new WebClient())
                 {
-                    using (var request = WebClient.DownloadStringTaskAsync("https://raw.githubusercontent.com/plsfixrito/AramBuddy/master/DefaultBuilds/" + Program.CurrentPatch + "\\" + Config.CurrentBuildService + "/" + filename))
+                    using (var request = WebClient.DownloadStringTaskAsync("https://raw.githubusercontent.com/plsfixrito/AramBuddyBuilds/master/" + Program.CurrentPatch + "\\" + Config.CurrentBuildService + "/" + filename))
                     {
                         if (request != null && !request.IsCanceled && !request.IsFaulted)
                         {
@@ -199,7 +199,7 @@ namespace AramBuddy.AutoShop
         /// </summary>
         public static readonly string[] Tank =
             {
-                "Alistar", "Amumu", "Blitzcrank", "Bard", "Braum", "ChoGath", "Darius", "DrMundo", "Garen", "Gnar", "Hecarim", "Kled", "Illaoi", "Irelia", "JarvanIV",
+                "Alistar", "Amumu", "Blitzcrank", "Bard", "Braum", "ChoGath", "Darius", "DrMundo", "Garen", "Gnar", "Hecarim", "Kled", "Illaoi", "Irelia", "Ivern", "JarvanIV",
                 "Leona", "Malphite", "Maokai", "Nasus", "Nautilus", "Nunu", "Poppy", "Rammus", "RekSai", "Renekton", "Sejuani", "Shaco", "Shen", "Shyvana", "Singed", "Sion", "Skarner", "TahmKench",
                 "Taric", "Thresh", "Trundle", "Udyr", "Vi", "Volibear", "Warwick", "Yorick", "Zac"
             };
