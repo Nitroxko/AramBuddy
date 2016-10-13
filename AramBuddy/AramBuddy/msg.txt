@@ -1,1 +1,1 @@
-Reworked big parts of the code !
+Added Camera Lock option !
