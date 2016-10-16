@@ -9,4 +9,4 @@ http://www.elobuddy.net/
 Become the hope of your team. Dominate.
 
 ## Installation
-[![Download](icon.png)](http://elobuddy.net/) Open in EloBuddy
+[![Download](icon.png)](elobuddy:plsfixrito/AramBuddy) Open in EloBuddy
