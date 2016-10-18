@@ -226,7 +226,7 @@ namespace AramBuddy.Plugins.Champions.Lulu
                         EntityManager.Heroes.Allies.Where(a => a.IsKillable(R.Range))
                             .Where(
                                 ally =>
-                                    ally.CountEnemyHeroesInRangeWithPrediction(300) >= ComboMenu.SliderValue("RAOE") &&
+                                    ally.CountEnemyHeros(300) >= ComboMenu.SliderValue("RAOE") &&
                                     ComboMenu.CheckBoxValue("R")))
                 {
                     R.Cast(ally);

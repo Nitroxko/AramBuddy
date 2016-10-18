@@ -70,7 +70,7 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
                     break;
             }
             Console.WriteLine(text + str);
-            Console.WriteLine(ex.InnerException?.Message);
+            Console.WriteLine(ex);
             Console.ResetColor();
             Misc.SaveLogs(text + str, Misc.AramBuddyDirectories.AramBuddyLogs);
         }

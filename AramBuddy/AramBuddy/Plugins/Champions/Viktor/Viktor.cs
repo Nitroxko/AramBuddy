@@ -168,7 +168,7 @@ namespace AramBuddy.Plugins.Champions.Viktor
 
                     foreach (var enemy in EntityManager.Heroes.Enemies.Where(e => e.IsKillable(R.Range + R.SetSkillshot().Width)))
                     {
-                        if (enemy.CountEnemyHeroesInRangeWithPrediction(R.SetSkillshot().Width) >= ComboMenu.SliderValue("RAOE"))
+                        if (enemy.CountEnemyHeros(R.SetSkillshot().Width) >= ComboMenu.SliderValue("RAOE"))
                         {
                             R.Cast(enemy);
                         }

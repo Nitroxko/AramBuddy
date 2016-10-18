@@ -50,7 +50,18 @@ namespace AramBuddy.AutoShop.Sequences
             try
             {
                 if (!Config.EnableAutoShop)
+                {
+                    Logger.Send("AutoShop Is Disabled from the menu !", Logger.LogLevel.Warn);
                     return false;
+                }
+
+                if (Player.Instance.IsZombie)
+                {
+                    var rndm = (float)new Random().Next(500, 3000);
+                    Logger.Send("Cant Buy Items! - Case: Zombie, Trying Again After " + (rndm / 1000).ToString("F1") + " Second/s", Logger.LogLevel.Warn);
+                    Core.DelayAction(() => BuyNextItem(build), (int)rndm);
+                    return false;
+                }
 
                 // Check if we've reached the end of the build
                 if (build.BuildData.Length < GetIndex() + 1)
@@ -97,15 +108,31 @@ namespace AramBuddy.AutoShop.Sequences
                 var itemname = build.BuildData.ElementAt(GetIndex());
                 var item = Item.ItemData.FirstOrDefault(i => i.Value.Name == itemname);
                 var theitem = new Item(item.Key);
-                var ia = theitem.GetComponents().Where(a => !a.IsOwned(Player.Instance)).Sum(i => i.ItemInfo.Gold.Total);
-                var currentprice = theitem.ItemInfo.Gold.Base + ia;
                 NextItem = theitem.ItemInfo.Name;
-                NextItemValue = currentprice;
+                NextItemValue = theitem.GoldRequired();
                 CurrentItemIndex = GetIndex() + 1;
 
+                var deathtime = Player.Instance.DeathTimer() * 1000;
+                var rnd = (float)(new Random().Next(Math.Max(500, (int)(deathtime * 0.05f)), Math.Max(1000, (int)(deathtime * 0.1f))) + Game.Ping);
+
+                if (!item.Value.AvailableForMap || !item.Value.InStore)
+                {
+                    // Increment the static item index
+                    IncrementIndex();
+
+                    // Notify the user that we skipped the item
+                    Logger.Send("Item Skipped: " + item.Value.Name + " - Case: Not Available in Aram.", Logger.LogLevel.Warn);
+
+                    // Try to buy more than one item if we can afford it
+                    Core.DelayAction(() => BuyNextItem(build), (int)rnd);
+
+                    // Success
+                    return true;
+                }
+
                 // Check if we can buy the item
-                if ((item.Value != null) && CanShop && (item.Key != ItemId.Unknown) && item.Value.ValidForPlayer && item.Value.InStore && item.Value.Gold.Purchasable && item.Value.AvailableForMap
-                    && (Player.Instance.Gold >= currentprice))
+                if ((item.Value != null) && CanShop && (item.Key != ItemId.Unknown) && item.Value.ValidForPlayer && item.Value.Gold.Purchasable
+                    && (Player.Instance.Gold >= NextItemValue))
                 {
                     // Buy the actual item from the shop
                     Shop.BuyItem(item.Key);
@@ -114,12 +141,7 @@ namespace AramBuddy.AutoShop.Sequences
                     IncrementIndex();
 
                     // Notify the user that the item has been bought and of the value of the item
-                    Logger.Send("Item bought: " + item.Value.Name + " - Item Value: " + currentprice);
-
-
-                    var deathtime = Player.Instance.DeathTimer() * 1000;
-
-                    var rnd = (float)(new Random().Next(Math.Max(500, (int)(deathtime * 0.05f)), Math.Max(1000, (int)(deathtime * 0.1f))) + Game.Ping);
+                    Logger.Send("Item bought: " + item.Value.Name + " - Item Value: " + NextItemValue);
 
                     // Try to buy more than one item if we can afford it
                     Core.DelayAction(() => BuyNextItem(build), (int)rnd);
@@ -134,7 +156,7 @@ namespace AramBuddy.AutoShop.Sequences
             catch (Exception ex)
             {
                 // Exception has been cought; Notify the user of the error and print the exception to the console
-                Logger.Send("Exception occurred in AutoShop on buying the next item: " + Environment.NewLine, ex, Logger.LogLevel.Error);
+                Logger.Send("Exception occurred in AutoShop on buying the next item: ", ex, Logger.LogLevel.Error);
 
                 // Warn the user that AutoShop may not be functioning correctly
                 Logger.Send("Exception occurred during AutoShop buy sequence. AutoShop will most likely NOT work properly!", Logger.LogLevel.Warn);
@@ -170,7 +192,7 @@ namespace AramBuddy.AutoShop.Sequences
             catch (Exception ex)
             {
                 // Exception has been cought; Notify the user of the error and print the exception to the console
-                Logger.Send("Exception occurred in AutoShop on creating build index file:" + Environment.NewLine, ex, Logger.LogLevel.Error);
+                Logger.Send("Exception occurred in AutoShop on creating build index file:", ex, Logger.LogLevel.Error);
 
                 // Warn the user that AutoShop may not be functioning correctly
                 Logger.Send("Exception occurred during AutoShop buy sequence. AutoShop will most likely NOT work properly!", Logger.LogLevel.Warn);

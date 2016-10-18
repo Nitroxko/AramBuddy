@@ -158,7 +158,7 @@ namespace AramBuddy.Plugins.Champions.Blitzcrank
                         EntityManager.Heroes.Enemies.Where(e => e.IsKillable(R.Range))
                             .Where(
                                 e =>
-                                    e.CountEnemyHeroesInRangeWithPrediction(300) >= ComboMenu.SliderValue("RAOE") &&
+                                    e.CountEnemyHeros(300) >= ComboMenu.SliderValue("RAOE") &&
                                     ComboMenu.CheckBoxValue("UseRaoe")))
                 {
                     R.Cast();

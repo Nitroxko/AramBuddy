@@ -284,7 +284,7 @@ namespace AramBuddy.Plugins.Champions.Syndra
         {
             if (Q.IsReady() && LaneClearMenu.CheckBoxValue(SpellSlot.Q) && LaneClearMenu.CompareSlider("Qmana", user.ManaPercent))
             {
-                var qminions = EntityManager.MinionsAndMonsters.GetCircularFarmLocation(Q.LaneMinions(), Q.SetSkillshot().Width * 2, (int)Q.Range, Q.CastDelay, Q.SetSkillshot().Speed);
+                var qminions = Q.SetSkillshot().GetBestCircularCastPosition(Q.LaneMinions());
                 if (qminions.HitNumber >= LaneClearMenu.SliderValue("Qhit"))
                 {
                     Q.Cast(qminions.CastPosition);
@@ -293,7 +293,7 @@ namespace AramBuddy.Plugins.Champions.Syndra
 
             if (W.IsReady() && LaneClearMenu.CheckBoxValue(SpellSlot.W) && LaneClearMenu.CompareSlider("Wmana", user.ManaPercent))
             {
-                var wminions = EntityManager.MinionsAndMonsters.GetCircularFarmLocation(W.LaneMinions(), W.SetSkillshot().Width * 2, (int)W.Range, W.CastDelay, W.SetSkillshot().Speed);
+                var wminions = W.SetSkillshot().GetBestCircularCastPosition(W.LaneMinions());
                 if (wminions.HitNumber + 1 >= LaneClearMenu.SliderValue("Whit"))
                 {
                     WCast(wminions.CastPosition);
@@ -304,7 +304,7 @@ namespace AramBuddy.Plugins.Champions.Syndra
             {
                 foreach (var ball in BallsList)
                 {
-                    var Eminions = EntityManager.MinionsAndMonsters.GetLineFarmLocation(Eball.LaneMinions(), Eball.Width, (int)Eball.Range, ball.ServerPosition.Extend(user, 100));
+                    var Eminions = Eball.SetSkillshot().GetBestLinearCastPosition(Eball.LaneMinions(), 0, ball.ServerPosition.To2D());
                     if (Eminions.HitNumber >= LaneClearMenu.SliderValue("Ehit"))
                     {
                         Eball.Cast(ball.ServerPosition);

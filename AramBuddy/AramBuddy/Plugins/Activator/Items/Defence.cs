@@ -43,7 +43,7 @@ namespace AramBuddy.Plugins.Activator.Items
             {
                 if (Player.Instance.IsDead) return;
 
-                if (Randuins.ItemReady(Def) && Def.CompareSlider(Randuins.Id + "hp", Player.Instance.PredictHealthPercent()) && Player.Instance.CountEnemyHeroesInRangeWithPrediction((int)Randuins.Range) > 0
+                if (Randuins.ItemReady(Def) && Def.CompareSlider(Randuins.Id + "hp", Player.Instance.PredictHealthPercent()) && Player.Instance.CountEnemyHeros((int)Randuins.Range) > 0
                     && Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Combo))
                 {
                     Randuins.Cast();

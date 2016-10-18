@@ -274,21 +274,27 @@ namespace AramBuddy.AutoShop
             Buy.ResetIndex();
         }
 
+        private static float LastBuyAllow;
+
         /// <summary>
         ///     Fired when buying is allowed
         /// </summary>
         /// <param name="args">Arguments of the event</param>
         private static void Events_OnBuyAllow(EventArgs args)
         {
-            var deathtime = Player.Instance.DeathTimer() * 1000;
-            // To Prevent Instantly buying item when event is fired
-            var rnd = (float)(new Random().Next(Math.Max(500, (int)(deathtime * 0.05f)), Math.Max(1000, (int)(deathtime * 0.1f))) + Game.Ping);
+            if (Core.GameTickCount - LastBuyAllow > 500)
+            {
+                var deathtime = Player.Instance.DeathTimer() * 1000;
+                // To Prevent Instantly buying item when event is fired
+                var rnd = (float)(new Random().Next(Math.Max(500, (int)(deathtime * 0.05f)) / 3, Math.Max(1000, (int)(deathtime * 0.1f))) + Game.Ping);
 
-            // Notify the user that we are going to try to buy items now
-            Logger.Send("Can buy items: " + (rnd / 1000).ToString("F1") + " Second/s Delay", Logger.LogLevel.Event);
+                // Notify the user that we are going to try to buy items now
+                Logger.Send("Can buy items: " + (rnd / 1000).ToString("F1") + " Second/s Delay", Logger.LogLevel.Event);
 
-            // Attempt to buy as many consecutive items on the build as we can
-            Core.DelayAction(() => Buy.BuyNextItem(CurrentChampionBuild), (int)rnd);
+                // Attempt to buy as many consecutive items on the build as we can
+                Core.DelayAction(() => Buy.BuyNextItem(CurrentChampionBuild), (int)rnd);
+                LastBuyAllow = Core.GameTickCount;
+            }
         }
     }
 }

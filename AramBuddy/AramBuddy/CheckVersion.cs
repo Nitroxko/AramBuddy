@@ -27,6 +27,7 @@ namespace AramBuddy
         {
             try
             {
+                Logger.Send("Checking For Updates..");
                 var size = Drawing.Width <= 400 || Drawing.Height <= 400 ? 10F : 40F;
                 text = new Text("YOUR ARAMBUDDY IS OUTDATED", new Font("Euphemia", size, FontStyle.Bold)) { Color = Color.White };
                 using (var WebClient = new WebClient())

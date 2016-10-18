@@ -175,7 +175,7 @@ namespace AramBuddy.Plugins.Champions.Annie
 
             if (!ComboMenu.CheckBoxValue(SpellSlot.R) || !R.IsReady() || !target.IsKillable(R.Range)) return;
 
-            if (target.CountEnemyHeroesInRangeWithPrediction(R.SetSkillshot().Width) >= ComboMenu.SliderValue("RAOE"))
+            if (target.CountEnemyHeros(R.SetSkillshot().Width) >= ComboMenu.SliderValue("RAOE"))
             {
                 R.Cast(target);
             }

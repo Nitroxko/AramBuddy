@@ -64,15 +64,15 @@ namespace AramBuddy.Plugins.Champions.TwistedFate
         private static void SetectCard(Obj_AI_Base target)
         {
             var card = "Blue";
-            if (user.CountEnemyHeroesInRangeWithPrediction(Config.SafeValue) > 0 && user.ManaPercent > 10)
+            if (user.CountEnemyHeros(Config.SafeValue) > 0 && user.ManaPercent > 10)
             {
                 card = "Gold";
             }
-            if (target.CountEnemyHeroesInRangeWithPrediction(300) > 1 && user.ManaPercent > 10 && user.PredictHealthPercent() > 40)
+            if (target.CountEnemyHeros(300) > 1 && user.ManaPercent > 10 && user.PredictHealthPercent() > 40)
             {
                 card = "Red";
             }
-            if (user.CountEnemyHeroesInRangeWithPrediction(Config.SafeValue) <= 1 && user.ManaPercent < 30 && user.PredictHealthPercent() > 50)
+            if (user.CountEnemyHeros(Config.SafeValue) <= 1 && user.ManaPercent < 30 && user.PredictHealthPercent() > 50)
             {
                 card = "Blue";
             }
@@ -158,7 +158,7 @@ namespace AramBuddy.Plugins.Champions.TwistedFate
 
         public override void LaneClear()
         {
-            var linefarmloc = EntityManager.MinionsAndMonsters.GetLineFarmLocation(EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => m.IsKillable(Q.Range)), Q.SetSkillshot().Width, (int)Q.Range);
+            var linefarmloc = Q.SetSkillshot().GetBestLinearCastPosition(Q.LaneMinions());
             if (Q.IsReady() && linefarmloc.HitNumber > 1 && LaneClearMenu.CheckBoxValue(SpellSlot.Q) && LaneClearMenu.CompareSlider(Q.Slot + "mana", user.ManaPercent))
             {
                 Q.Cast(linefarmloc.CastPosition);

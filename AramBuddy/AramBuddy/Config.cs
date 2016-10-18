@@ -13,6 +13,7 @@ namespace AramBuddy
         public static bool EnableActivator => MenuIni.CheckBoxValue("activator");
         public static bool EnableDebug => MenuIni.CheckBoxValue("debug");
         public static bool DisableSpellsCasting => MenuIni.CheckBoxValue("DisableSpells");
+        public static bool EnableCustomPlugins => MenuIni.CheckBoxValue("CustomPlugin");
         public static bool QuitOnGameEnd => MenuIni.CheckBoxValue("quit");
         public static bool DontStealHR => MenuIni.CheckBoxValue("stealhr");
         public static bool EnableChat => MenuIni.CheckBoxValue("chat");

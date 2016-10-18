@@ -86,8 +86,6 @@ namespace AramBuddy
                     }
                 };
                 
-                Misc.CreateAramBuddyFile(Game.GameId + ".dat", Misc.AramBuddyDirectories.Temp);
-
                 // Creates The Menu
                 CreateMenu();
 
@@ -99,21 +97,6 @@ namespace AramBuddy
                 
                 // Initialize the AutoShop.
                 AutoShop.Setup.Init();
-
-                /*
-                Chat.OnInput += delegate (ChatInputEventArgs msg)
-                {
-                    if (msg.Input.Equals("Load Custom", StringComparison.CurrentCultureIgnoreCase) && !CustomChamp)
-                    {
-                        var Instance = (Base)Activator.CreateInstance(null, "AramBuddy.Plugins.Champions." + Player.Instance.Hero + "." + Player.Instance.Hero).Unwrap();
-                        if (Instance != null)
-                        {
-                            CustomChamp = true;
-                            msg.Process = false;
-                            Logger.Send("Loaded Custom Champion " + Player.Instance.Hero);
-                        }
-                    }
-                };*/
                 
                 Timer = Game.Time;
                 TimeToStart = new Random().Next(10000, 30000) + Game.Ping;
@@ -153,11 +136,6 @@ namespace AramBuddy
                     Logger.Send("Closing the Game in: " + (rnd / 1000).ToString("F1") + " Second/s", Logger.LogLevel.Event);
                     Core.DelayAction(() => Game.QuitGame(), rnd);
                 }
-
-                if (File.Exists(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\ " + Game.GameId + ".dat"))
-                {
-                    File.Delete(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\ " + Game.GameId + ".dat");
-                }
             }
             catch (Exception ex)
             {
@@ -184,7 +162,7 @@ namespace AramBuddy
                     }
                 }
 
-                if (!DisableSpellsCasting)
+                if (EnableCustomPlugins)
                 {
                     try
                     {
@@ -249,6 +227,7 @@ namespace AramBuddy
                 var debug = MenuIni.CreateCheckBox("debug", "Enable Debugging Mode");
                 var activator = MenuIni.CreateCheckBox("activator", "Enable Built-In Activator");
                 var DisableSpells = MenuIni.CreateCheckBox("DisableSpells", "Disable Built-in Casting Logic", false);
+                var CustomPlugin = MenuIni.CreateCheckBox("CustomPlugin", "Enable Custom Plugins");
                 var quit = MenuIni.CreateCheckBox("quit", "Quit On Game End");
                 var stealhr = MenuIni.CreateCheckBox("stealhr", "Dont Steal Health Relics From Allies", false);
                 var chat = MenuIni.CreateCheckBox("chat", "Send Start / End msg In-Game Chat", false);
@@ -292,6 +271,7 @@ namespace AramBuddy
                         debug.CurrentValue = true;
                         activator.CurrentValue = true;
                         DisableSpells.CurrentValue = false;
+                        CustomPlugin.CurrentValue = true;
                         quit.CurrentValue = true;
                         stealhr.CurrentValue = false;
                         chat.CurrentValue = true;
@@ -324,6 +304,12 @@ namespace AramBuddy
                 
                 corkibomb.IsVisible = false; // disable for now
 
+                SpellsMenu.AddGroupLabel("Built-In Casting Logic:");
+                SpellsMenu.CreateCheckBox("combo", "Use Spells in Combo Mode");
+                SpellsMenu.CreateCheckBox("harass", "Use Spells in Harass Mode");
+                SpellsMenu.CreateCheckBox("flee", "Use Spells in Flee Mode");
+                SpellsMenu.CreateCheckBox("laneclear", "Use Spells in Lane Clear Mode");
+                SpellsMenu.AddSeparator(0);
                 SpellsMenu.AddGroupLabel("SummonerSpells");
                 SpellsMenu.Add("Heal", new CheckBox("Use Heal"));
                 SpellsMenu.Add("Barrier", new CheckBox("Use Barrier"));
@@ -357,7 +343,7 @@ namespace AramBuddy
                 var AllyTeamTotal = " | AllyTeamTotal: " + (int)Misc.TeamTotal(Player.Instance.PredictPosition());
                 var EnemyTeamTotal = " | EnemyTeamTotal: " + (int)Misc.TeamTotal(Player.Instance.PredictPosition(), true);
                 var MoveTo = " | MoveTo: " + Moveto;
-                var ActiveMode = " | ActiveMode: " + Orbwalker.ActiveModesFlags;
+                var ActiveMode = " | ActiveMode: " + ModesManager.CurrentMode;
                 var Alone = " | Alone: " + Brain.Alone();
                 var AttackObject = " | AttackObject: " + ModesManager.AttackObject;
                 var LastTurretAttack = " | LastTurretAttack: " + (Core.GameTickCount - Brain.LastTurretAttack);
@@ -369,6 +355,7 @@ namespace AramBuddy
                 var LastTeamFight = " | LastTeamFight: " + (int)(Core.GameTickCount - Brain.LastTeamFight);
                 var MovementCommands = " | Movement Commands Issued: " + MoveToCommands;
                 var nextitem = " | Next Item: " + AutoShop.Sequences.Buy.CurrentItemIndex + " - " + AutoShop.Sequences.Buy.NextItem + " | Value: " + AutoShop.Sequences.Buy.NextItemValue;
+                var fullbuild = " | FullBuild: " + AutoShop.Sequences.Buy.FullBuild;
 
                 Drawing.DrawText(Drawing.Width * 0.2f, Drawing.Height * 0.025f, System.Drawing.Color.White,
                     AllyTeamTotal + EnemyTeamTotal + "\n"
@@ -377,7 +364,7 @@ namespace AramBuddy
                     + castingimportantspell + lagging + "\n"
                     + LastTurretAttack + LastTeamFight + "\n"
                     + MovementCommands + MoveTo + "\n"
-                    + nextitem);
+                    + nextitem + fullbuild + "\n");
 
                 Drawing.DrawText(
                     Game.CursorPos.WorldToScreen().X + 50,
@@ -451,7 +438,7 @@ namespace AramBuddy
                 }
                 else
                 {
-                    if (Player.Instance.IsDead || GameEnded)
+                    if ((!Player.Instance.IsZombie() && Player.Instance.IsDead) || GameEnded)
                     {
                         Orbwalker.ActiveModesFlags = Orbwalker.ActiveModes.None;
                         return;

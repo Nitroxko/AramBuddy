@@ -42,7 +42,7 @@ namespace AramBuddy.Plugins.Champions.Akali
             {
                 Q.Cast(target);
             }
-            if (W.IsReady() && ComboMenu.CheckBoxValue(SpellSlot.W) && user.CountEnemyHeroesInRangeWithPrediction(1000) > 1)
+            if (W.IsReady() && ComboMenu.CheckBoxValue(SpellSlot.W) && user.CountEnemyHeros(1000) > 1)
             {
                 W.Cast(user.PredictPosition());
             }
@@ -50,7 +50,7 @@ namespace AramBuddy.Plugins.Champions.Akali
             {
                 E.Cast();
             }
-            if (R.IsReady() && target.IsKillable(R.Range) && ComboMenu.CheckBoxValue(SpellSlot.R) && target.CountEnemyAlliesInRangeWithPrediction(750) > 1)
+            if (R.IsReady() && target.IsKillable(R.Range) && ComboMenu.CheckBoxValue(SpellSlot.R) && target.CountAllyHeros(750) > 1)
             {
                 R.Cast(target);
             }
@@ -65,7 +65,7 @@ namespace AramBuddy.Plugins.Champions.Akali
             {
                 Q.Cast(target);
             }
-            if (W.IsReady() && HarassMenu.CheckBoxValue(SpellSlot.W) && user.CountEnemyHeroesInRangeWithPrediction(1000) > 1)
+            if (W.IsReady() && HarassMenu.CheckBoxValue(SpellSlot.W) && user.CountEnemyHeros(1000) > 1)
             {
                 W.Cast(user.PredictPosition());
             }
@@ -83,7 +83,7 @@ namespace AramBuddy.Plugins.Champions.Akali
                 {
                     Q.Cast(target);
                 }
-                if (W.IsReady() && LaneClearMenu.CheckBoxValue(SpellSlot.W) && user.CountEnemyHeroesInRangeWithPrediction(1000) > 1)
+                if (W.IsReady() && LaneClearMenu.CheckBoxValue(SpellSlot.W) && user.CountEnemyHeros(1000) > 1)
                 {
                     W.Cast(user.PredictPosition());
                 }

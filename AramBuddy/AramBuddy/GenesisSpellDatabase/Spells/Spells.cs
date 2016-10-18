@@ -210,11 +210,11 @@ namespace GenesisSpellLibrary.Spells
             {
                 return false;
             }
-            if (target.CountEnemyHeroesInRangeWithPrediction(R.SetSkillshot().Width, R.CastDelay) > 1)
+            if (target.CountEnemyHeros(R.SetSkillshot().Width, R.CastDelay) > 1)
             {
                 R.Cast(target, 45);
             }
-            return target.CountEnemyHeroesInRangeWithPrediction(R.SetSkillshot().Width, R.CastDelay) > 1;
+            return target.CountEnemyHeros(R.SetSkillshot().Width, R.CastDelay) > 1;
         }
     }
 
@@ -446,7 +446,7 @@ namespace GenesisSpellLibrary.Spells
             this.Q = new Spell.Skillshot(SpellSlot.Q, 825, SkillShotType.Circular, 300, 1000, 250);
             this.W = new Spell.Skillshot(SpellSlot.W, 600, SkillShotType.Linear, 250, 1000, 70) { AllowedCollisionCount = int.MaxValue };
             //W2 = new Spell.Skillshot(SpellSlot.W, 1800, SkillShotType.Linear, 250, 1000, 70);
-            this.E = new Spell.Active(SpellSlot.E, 600);
+            this.E = new Spell.Skillshot(SpellSlot.E, 600, SkillShotType.Cone);
             this.R = new Spell.Skillshot(SpellSlot.R, 1300, SkillShotType.Linear, 200, 1950, 40) { AllowedCollisionCount = 0 };
             this.EisDash = true;
         }
@@ -1640,6 +1640,7 @@ namespace GenesisSpellLibrary.Spells
             this.R = new Spell.Targeted(SpellSlot.R, 2500);
             // R1 = new Spell.Targeted(SpellSlot.R, R.Range);
             this.WisSaver = true;
+            this.RisDangerDash = true;
         }
     }
 
@@ -2255,11 +2256,13 @@ namespace GenesisSpellLibrary.Spells
 
         public Taric()
         {
-            this.Q = new Spell.Skillshot(SpellSlot.Q, 750, SkillShotType.Linear, 250, 1000, 80);
-            this.W = new Spell.Active(SpellSlot.W, 400);
-            this.E = new Spell.Targeted(SpellSlot.E, 625);
-            this.R = new Spell.Active(SpellSlot.R, 400);
-            this.QisCC = true;
+            Q = new Spell.Active(SpellSlot.Q, 350);
+            W = new Spell.Targeted(SpellSlot.W, 800);
+            E = new Spell.Skillshot(SpellSlot.E, 580, SkillShotType.Linear, 250, int.MaxValue, 140);
+            R = new Spell.Active(SpellSlot.R, 400);
+            this.QisSaver = true;
+            this.WisSaver = true;
+            this.EisCC = true;
             this.RisSaver = true;
         }
     }

@@ -132,7 +132,7 @@ namespace AramBuddy.Plugins.Champions.Kalista
         {
             if (sender == null || !sender.IsEnemy || e.End.Distance(user) > 1000 || !R.IsReady()) return;
 
-            if (user.PredictHealthPercent() <= 20 || user.CountEnemyHeroesInRangeWithPrediction(1000) > user.CountEnemyAlliesInRangeWithPrediction(1000))
+            if (user.PredictHealthPercent() <= 20 || user.CountEnemyHeros(1000) > user.CountAllyHeros(1000))
                 R.Cast();
         }
 
@@ -292,7 +292,7 @@ namespace AramBuddy.Plugins.Champions.Kalista
 
         private static void Gapclose()
         {
-            Orbwalker.ForcedTarget = user.CountEnemyHeroesInRangeWithPrediction((int)user.GetAutoAttackRange()) < 1 ?
+            Orbwalker.ForcedTarget = user.CountEnemyHeros((int)user.GetAutoAttackRange()) < 1 ?
                 EntityManager.MinionsAndMonsters.CombinedAttackable.OrderBy(m => m.Distance(Game.CursorPos)).FirstOrDefault(m => !m.IsDead && m.IsEnemy && m.PredictHealth() > 0 && m.IsKillable(user.GetAutoAttackRange())) : null;
         }
 

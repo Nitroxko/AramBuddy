@@ -270,7 +270,7 @@ namespace AramBuddy.Plugins.Champions.Yasuo
         private static bool ECast(Obj_AI_Base target)
         {
             if (((EndPos(target).UnderEnemyTurret() && Misc.SafeToDive) || !EndPos(target).UnderEnemyTurret())
-                && EndPos(target).CountEnemyAlliesInRangeWithPrediction(Config.SafeValue) >= EndPos(target).CountEnemyHeroesInRangeWithPrediction(Config.SafeValue) && EndPos(target).IsSafe())
+                && EndPos(target).CountAllyHeros(Config.SafeValue) >= EndPos(target).CountEnemyHeros(Config.SafeValue) && EndPos(target).IsSafe())
             {
                 return E.Cast(target);
             }

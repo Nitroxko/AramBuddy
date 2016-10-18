@@ -83,7 +83,7 @@ namespace AramBuddy.Plugins.Champions.Alistar
             {
                 W.Cast(target);
             }
-            if (R.IsReady() && user.PredictHealthPercent() <= 15 && user.CountEnemyHeroesInRangeWithPrediction(750) > 1 && ComboMenu.CheckBoxValue(SpellSlot.R))
+            if (R.IsReady() && user.PredictHealthPercent() <= 15 && user.CountEnemyHeros(750) > 1 && ComboMenu.CheckBoxValue(SpellSlot.R))
             {
                 R.Cast();
             }

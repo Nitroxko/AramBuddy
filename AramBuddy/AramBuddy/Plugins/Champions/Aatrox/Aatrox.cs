@@ -118,10 +118,10 @@ namespace AramBuddy.Plugins.Champions.Aatrox
 
         public override void LaneClear()
         {
-            var Cirarmloc = EntityManager.MinionsAndMonsters.GetCircularFarmLocation(EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => m.IsKillable(E.Range)), ((Spell.Skillshot)E).Width, (int)E.Range);
+            var Cirarmloc = Q.SetSkillshot().GetBestCircularCastPosition(Q.LaneMinions());
             if (Q.IsReady() && LaneClearMenu.CheckBoxValue(SpellSlot.Q) && user.PredictHealthPercent() > 25)
             {
-                if (user.CountEnemyHeroesInRangeWithPrediction((int)(1000 + Q.Range)) < 2 && Cirarmloc.HitNumber > 2)
+                if (user.CountEnemyHeros((int)(1000 + Q.Range)) < 2 && Cirarmloc.HitNumber > 2)
                 {
                     var pos = Cirarmloc.CastPosition;
                     if(pos.IsSafe())
@@ -139,7 +139,8 @@ namespace AramBuddy.Plugins.Champions.Aatrox
                     W.Cast();
                 }
             }
-            var linefarmloc = EntityManager.MinionsAndMonsters.GetLineFarmLocation(EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => m.IsKillable(E.Range)), ((Spell.Skillshot)E).Width, (int)E.Range);
+            
+            var linefarmloc = E.SetSkillshot().GetBestLinearCastPosition(E.LaneMinions());
             if (E.IsReady() && linefarmloc.HitNumber > 1 && LaneClearMenu.CheckBoxValue(SpellSlot.E))
             {
                 E.Cast(linefarmloc.CastPosition);
@@ -190,7 +191,7 @@ namespace AramBuddy.Plugins.Champions.Aatrox
 
         private static void QAOE(Obj_AI_Base target)
         {
-            if (Q.GetPrediction(target).CastPosition.CountEnemyHeroesInRangeWithPrediction(((Spell.Skillshot)Q).Width) >= 2)
+            if (Q.GetPrediction(target).CastPosition.CountEnemyHeros(((Spell.Skillshot)Q).Width) >= 2)
             {
                 var pos = Q.GetPrediction(target).CastPosition;
                 if (pos.IsSafe())
@@ -200,7 +201,7 @@ namespace AramBuddy.Plugins.Champions.Aatrox
 
         private static void RAOE(Menu menu)
         {
-            if(menu.CompareSlider("RAOE", user.CountEnemyHeroesInRangeWithPrediction((int)R.Range)))
+            if(menu.CompareSlider("RAOE", user.CountEnemyHeros((int)R.Range)))
             {
                 R.Cast();
             }

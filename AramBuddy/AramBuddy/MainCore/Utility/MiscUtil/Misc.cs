@@ -52,15 +52,15 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
             {
                 EnemyTeamTotal = 0;
                 AllyTeamTotal = 0;
-                var enemyturrets = EntityManager.Turrets.Enemies.Where(t => !t.IsDead && t.PredictHealth() > 0 && t.CountEnemyHeroesInRangeWithPrediction((int)t.GetAutoAttackRange()) > 1)
+                var enemyturrets = EntityManager.Turrets.Enemies.Where(t => !t.IsDead && t.PredictHealth() > 0 && t.CountEnemyHeros((int)t.GetAutoAttackRange()) > 1)
                     .Sum(turret => turret.PredictHealth() + turret.TotalAttackDamage + turret.GetAutoAttackDamage(Player.Instance, true));
-                var allyturrets = EntityManager.Turrets.Allies.Where(t => !t.IsDead && t.PredictHealth() > 0 && t.CountEnemyAlliesInRangeWithPrediction((int)t.GetAutoAttackRange()) > 1 && t.Distance(Player.Instance) <= 1000).
+                var allyturrets = EntityManager.Turrets.Allies.Where(t => !t.IsDead && t.PredictHealth() > 0 && t.CountAllyHeros((int)t.GetAutoAttackRange()) > 1 && t.Distance(Player.Instance) <= 1000).
                     Sum(turret => turret.PredictHealth() + turret.TotalAttackDamage + turret.GetAutoAttackDamage(Player.Instance, true));
 
-                var enemyminions = EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => !m.IsDead && m.IsValid && !m.IsCC() && m.PredictHealth() > 0 && m.IsInRange(Position, Config.SafeValue) && m.CountEnemyHeroesInRangeWithPrediction(700) > 1)
+                var enemyminions = EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => !m.IsDead && m.IsValid && !m.IsCC() && m.PredictHealth() > 0 && m.IsInRange(Position, Config.SafeValue) && m.CountEnemyHeros(700) > 1)
                     .Sum(minion => (minion.PredictHealth() * 0.30f) + minion.Armor + minion.SpellBlock + minion.TotalMagicalDamage + minion.TotalAttackDamage - minion.Distance(Position) * 0.35f);
                 var allyminions = EntityManager.MinionsAndMonsters.AlliedMinions.Where(m => !m.IsDead && m.IsValid && !m.IsCC() && m.PredictHealth() > 0 && m.IsInRange(Position, Config.SafeValue)
-                && m.CountEnemyAlliesInRangeWithPrediction(700) > 1) .Sum(minion => (minion.PredictHealth() * 0.30f) + minion.Armor + minion.SpellBlock + minion.TotalMagicalDamage + minion.TotalAttackDamage - minion.Distance(Position) * 0.35f);
+                && m.CountAllyHeros(700) > 1) .Sum(minion => (minion.PredictHealth() * 0.30f) + minion.Armor + minion.SpellBlock + minion.TotalMagicalDamage + minion.TotalAttackDamage - minion.Distance(Position) * 0.35f);
 
                 var enemyheros = EntityManager.Heroes.Enemies.Where(e => !e.IsDead && e.IsValid && !e.IsCC() && e.IsInRange(Position, Config.SafeValue))
                         .Sum(enemy => enemy.PredictHealth() + (enemy.Mana * 0.25f) + enemy.Armor + enemy.SpellBlock + enemy.TotalMagicalDamage + enemy.TotalAttackDamage + enemy.GetAutoAttackDamage(Player.Instance, true) - enemy.Distance(Position) * 0.35f);
@@ -125,7 +125,7 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
         /// </summary>
         public static List<Champion> ZombieHeros = new List<Champion>
         {
-            Champion.KogMaw, Champion.Sion
+            Champion.KogMaw, Champion.Sion, Champion.Karthus
         };
 
         /// <summary>
@@ -145,7 +145,7 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
             {
                 var attackrange = ObjectsManager.EnemyTurret.GetAutoAttackRange(Player.Instance);
                 return ObjectsManager.EnemyTurret != null && Player.Instance.PredictHealthPercent() > 15 && Core.GameTickCount - Brain.LastTurretAttack > 3000
-                       && (ObjectsManager.EnemyTurret.CountAllyMinionsInRangeWithPrediction((int)attackrange) > 2 || ObjectsManager.EnemyTurret.CountEnemyAlliesInRangeWithPrediction((int)attackrange) > 1
+                       && (ObjectsManager.EnemyTurret.CountAllyMinionsInRangeWithPrediction((int)attackrange) > 2 || ObjectsManager.EnemyTurret.CountAllyHeros((int)attackrange) > 1
                        || ObjectsManager.EnemyTurret.IsAttackPlayer() && Core.GameTickCount - ObjectsManager.EnemyTurret.LastPlayerAttack() < 1000);
             }
         }
@@ -211,7 +211,7 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
             get
             {
                 return EntityManager.Heroes.Allies.Count(a => 
-                a.IsAttackPlayer() && a.CountEnemyAlliesInRangeWithPrediction(Config.SafeValue) > 1
+                a.IsAttackPlayer() && a.CountAllyHeros(Config.SafeValue) > 1
                 && a.IsValidTarget() && Player.Instance.PredictHealthPercent() > 20 && !a.IsMe) >= 2;
             }
         }
@@ -274,6 +274,41 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
                 return target.BaseSkinName + "(" + target.Name + ")";
             }
             return target.BaseSkinName;
+        }
+
+        public static int CountEnemyHeros(this Vector3 Pos, float range = 1200, int time = 250)
+        {
+            return Pos.CountEnemyHeroesInRangeWithPrediction((int)range, time);
+        }
+
+        public static int CountEnemyHeros(this Vector2 Pos, float range = 1200, int time = 250)
+        {
+            return Pos.To3DWorld().CountEnemyHeros(range, time);
+        }
+
+        public static int CountEnemyHeros(this Obj_AI_Base target, float range = 1200, int time = 250)
+        {
+            return target.PredictPosition(time).CountEnemyHeros(range, time);
+        }
+
+        public static int CountEnemyHeros(this GameObject target, float range = 1200, int time = 250)
+        {
+            return target.Position.CountEnemyHeros(range, time);
+        }
+
+        public static int CountAllyHeros(this Vector3 Pos, float range = 1200, int time = 250)
+        {
+            return EntityManager.Heroes.Allies.Count(e => e.IsValidTarget() && e.PredictPosition(time).IsInRange(Pos, range));
+        }
+
+        public static int CountAllyHeros(this Obj_AI_Base target, float range = 1200, int time = 250)
+        {
+            return target.PredictPosition(time).CountAllyHeros(range, time);
+        }
+
+        public static int CountAllyHeros(this GameObject target, float range = 1200, int time = 250)
+        {
+            return target.Position.CountAllyHeros(range, time);
         }
 
         public static bool IsAirborne(this Obj_AI_Base target)
@@ -343,7 +378,7 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
             }
             else
             {
-                pos = ObjectsManager.SafestAllyToFollow2 != null ? target.Position.Extend(ObjectsManager.SafestAllyToFollow2.PredictPosition(), KiteDistance(target)).To3D() 
+                pos = ObjectsManager.SafeAllyToFollow != null ? target.Position.Extend(ObjectsManager.SafeAllyToFollow.PredictPosition(), KiteDistance(target)).To3D() 
                     : target.Position.Extend(ObjectsManager.AllySpawn, KiteDistance(target)).To3D();
             }
             if (pos != Vector3.Zero && ObjectsManager.AllySpawn.Distance(pos) > ObjectsManager.AllySpawn.Distance(Player.Instance) || pos.IsWall() || pos.IsBuilding())
@@ -490,6 +525,7 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
                 default:
                     return;
             }
+
             var file = "[" + Player.Instance.Name + " " + Player.Instance.ChampionName + "] - [" + DateTime.Now.ToString("yy-MM-dd") + "] " + Game.GameId + ".txt";
             using (var stream = new StreamWriter(dir + file, true))
             {
@@ -559,26 +595,6 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
 
             return (Player.Instance.GetAutoAttackRange() * (Player.Instance.GetAutoAttackRange() < 425 ? 0.5f : 0.8f)) + extra;
         }
-        
-        public static bool Added(this AIHeroClient target)
-        {
-            return false; // disabled for now
-            var read = File.ReadAllLines(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\ " + Game.GameId + ".dat");
-            if (target.IsAlly && EntityManager.Heroes.Allies.Count(a => read.Contains(a.NetworkId.ToString())) > 3)
-            {
-                return false;
-            }
-            return read.Contains(target.NetworkId.ToString());
-        }
-
-        public static void Add(this AIHeroClient target)
-        {
-            return; // disabled for now
-            using (var stream = new StreamWriter(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\EloBuddy\\AramBuddy\\temp\\ " + Game.GameId + ".dat", true))
-            {
-                stream.WriteLine(target.NetworkId);
-            }
-        }
 
         public static List<string> NoManaHeros = new List<string>
         {
@@ -596,13 +612,13 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
         public static bool AlliesMoreThanEnemies(this GameObject target, int range = -1)
         {
             range = range.Equals(-1) ? Config.SafeValue : range;
-            return target.CountEnemyAlliesInRangeWithPrediction(range) >= target.CountEnemyHeroesInRangeWithPrediction(range);
+            return target.CountAllyHeros(range) >= target.CountEnemyHeros(range);
         }
 
         public static bool EnemiesMoreThanAllies(this GameObject target, int range = -1)
         {
             range = range.Equals(-1) ? Config.SafeValue : range;
-            return target.CountEnemyHeroesInRangeWithPrediction(range) >= target.CountEnemyAlliesInRangeWithPrediction(range);
+            return target.CountEnemyHeros(range) >= target.CountAllyHeros(range);
         }
 
         /// <summary>
@@ -610,7 +626,7 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
         /// </summary>
         public static bool IsActive(this Obj_AI_Base target)
         {
-            return target.IsValid && !target.IsDead && target.Path.LastOrDefault().Distance(ObjectsManager.AllySpawn) >= 10
+            return target.IsValid && !target.IsDead && target.Path.LastOrDefault().Distance(ObjectsManager.AllySpawn) >= 50
                 && (target.IsAttackingPlayer || target.IsAttackPlayer() || (target.IsMoving && target.Path.LastOrDefault().Distance(target) > 35)
                 || target.Spellbook.IsAutoAttacking || target.Spellbook.IsCastingSpell || target.Spellbook.IsChanneling || target.Spellbook.IsCharging);
         }
@@ -728,7 +744,7 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
                         circle = new Geometry.Polygon.Circle(point, skillshot.Width);
                         foreach (var p in circle.Points.OrderBy(a => a.Distance(pred.CastPosition)))
                         {
-                            if (p.CountEnemyHeroesInRangeWithPrediction(skillshot.Width) >= hitcount)
+                            if (p.CountEnemyHeros(skillshot.Width) >= hitcount)
                             {
                                 if (target == null)
                                 {

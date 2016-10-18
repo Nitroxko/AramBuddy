@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using AramBuddy.MainCore.Utility.MiscUtil;
 using AramBuddy.Plugins.KappaEvade;
@@ -119,11 +120,19 @@ namespace AramBuddy
             Game.OnUpdate += delegate
                 {
                     // Used to Invoke the Incoming Damage Event When there is SkillShot Incoming
-                    foreach (var spell in Collision.NewSpells)
+                    foreach (var ally in EntityManager.Heroes.Allies.Where(a => a.IsValidTarget()))
                     {
-                        foreach (var ally in EntityManager.Heroes.Allies.Where(a => !a.IsDead && a.IsValidTarget() && a.IsInDanger(spell)))
+                        foreach (var spell in Collision.NewSpells)
                         {
-                            OnIncomingDamage?.Invoke(new InComingDamageEventArgs(spell.Caster, ally, spell.Caster.GetSpellDamage(ally, spell.spell.slot), InComingDamageEventArgs.Type.SkillShot));
+                            if(ally.IsInDanger(spell))
+                                InvokeOnIncomingDamage(new InComingDamageEventArgs(spell.Caster, ally, spell.Caster.GetSpellDamage(ally, spell.spell.slot), InComingDamageEventArgs.Type.SkillShot));
+                        }
+                        foreach (var b in DamageBuffs)
+                        {
+                            var dmgbuff = ally.Buffs.FirstOrDefault(buff => buff.SourceName.Equals(b.Champion) && buff.Name.Equals(b.BuffName) && buff.IsActive && buff.EndTime - Game.Time < 0.25f);
+                            var caster = dmgbuff?.Caster as AIHeroClient;
+                            if(caster != null)
+                                InvokeOnIncomingDamage(new InComingDamageEventArgs(caster, ally, caster.GetSpellDamage(ally, b.Slot), InComingDamageEventArgs.Type.TargetedSpell));
                         }
                     }
                 };
@@ -132,7 +141,7 @@ namespace AramBuddy
                 {
                     // Used to Invoke the Incoming Damage Event When there is a TargetedSpell Incoming
                     if (target.IsAlly)
-                        OnIncomingDamage?.Invoke(new InComingDamageEventArgs(sender, target, sender.GetSpellDamage(target, spell.slot), InComingDamageEventArgs.Type.TargetedSpell));
+                        InvokeOnIncomingDamage(new InComingDamageEventArgs(sender, target, sender.GetSpellDamage(target, spell.slot), InComingDamageEventArgs.Type.TargetedSpell));
                 };
 
             Obj_AI_Base.OnBasicAttack += delegate(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
@@ -147,11 +156,11 @@ namespace AramBuddy
                         return;
 
                     if (hero != null)
-                        OnIncomingDamage?.Invoke(new InComingDamageEventArgs(hero, target, hero.GetAutoAttackDamage(target), InComingDamageEventArgs.Type.HeroAttack));
+                        InvokeOnIncomingDamage(new InComingDamageEventArgs(hero, target, hero.GetAutoAttackDamage(target), InComingDamageEventArgs.Type.HeroAttack));
                     if (turret != null)
-                        OnIncomingDamage?.Invoke(new InComingDamageEventArgs(turret, target, turret.GetAutoAttackDamage(target), InComingDamageEventArgs.Type.TurretAttack));
+                        InvokeOnIncomingDamage(new InComingDamageEventArgs(turret, target, turret.GetAutoAttackDamage(target), InComingDamageEventArgs.Type.TurretAttack));
                     if (minion != null)
-                        OnIncomingDamage?.Invoke(new InComingDamageEventArgs(minion, target, minion.GetAutoAttackDamage(target), InComingDamageEventArgs.Type.MinionAttack));
+                        InvokeOnIncomingDamage(new InComingDamageEventArgs(minion, target, minion.GetAutoAttackDamage(target), InComingDamageEventArgs.Type.MinionAttack));
                 };
             Obj_AI_Base.OnProcessSpellCast += delegate(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
                 {
@@ -161,7 +170,7 @@ namespace AramBuddy
                         return;
                     if (!Database.TargetedSpells.TargetedSpellsList.Any(s => s.hero == caster.Hero && s.slot == args.Slot))
                     {
-                        OnIncomingDamage?.Invoke(new InComingDamageEventArgs(caster, target, caster.GetSpellDamage(target, args.Slot), InComingDamageEventArgs.Type.TargetedSpell));
+                        InvokeOnIncomingDamage(new InComingDamageEventArgs(caster, target, caster.GetSpellDamage(target, args.Slot), InComingDamageEventArgs.Type.TargetedSpell));
                     }
                 };
 
@@ -204,5 +213,32 @@ namespace AramBuddy
         /// Fires when There is In Coming Damage to an ally
         /// </summary>
         public static event OnInComingDamage OnIncomingDamage;
+
+        private static void InvokeOnIncomingDamage(InComingDamageEventArgs args)
+        {
+            if (args?.InComingDamage < 1 || args == null)
+                return;
+
+            //Logger.Send("OnIcomingDamage: [Sender=" + args.Sender.BaseSkinName + "] [Target=" + args.Target.BaseSkinName + "] [ICD=" + args.InComingDamage.ToString("F1") + "] [DamageType=" + args.DamageType + "]");
+            OnIncomingDamage?.Invoke(new InComingDamageEventArgs(args.Sender, args.Target, args.InComingDamage, args.DamageType));
+        }
+
+        private static List<DamageBuff> DamageBuffs = new List<DamageBuff>
+            {
+                new DamageBuff("Karthus", "karthusfallenonetarget", SpellSlot.R),
+            };
+
+        internal class DamageBuff
+        {
+            public string Champion;
+            public string BuffName;
+            public SpellSlot Slot;
+            public DamageBuff(string Caster, string buffname, SpellSlot slot)
+            {
+                this.Champion = Caster;
+                this.BuffName = buffname;
+                this.Slot = slot;
+            }
+        }
     }
 }

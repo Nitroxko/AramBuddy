@@ -129,7 +129,7 @@ namespace AramBuddy.Plugins.Champions.Caitlyn
 
                 if (spell.Slot == SpellSlot.R)
                 {
-                    if (target.CountEnemyHeroesInRangeWithPrediction(300) == 0)
+                    if (target.CountEnemyHeros(300) == 0)
                     {
                         R.Cast(target);
                     }
@@ -178,7 +178,7 @@ namespace AramBuddy.Plugins.Champions.Caitlyn
                 {
                     if (spell.Slot == SpellSlot.R)
                     {
-                        if (target.CountEnemyHeroesInRangeWithPrediction(300) == 0)
+                        if (target.CountEnemyHeros(300) == 0)
                             spell.Cast(target);
                     }
                     else

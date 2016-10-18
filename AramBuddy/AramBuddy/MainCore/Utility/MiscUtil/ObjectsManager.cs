@@ -195,7 +195,7 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
             {
                 return
                     HealthRelics.OrderBy(e => e.Distance(Player.Instance))
-                        .FirstOrDefault(e => e.IsValid && ((e.Distance(Player.Instance) < 3000 && e.Position.IsSafe() && e.CountEnemyHeroesInRangeWithPrediction(Config.SafeValue) < 1) || (e.Distance(Player.Instance) <= 500)));
+                        .FirstOrDefault(e => e.IsValid && ((e.Distance(Player.Instance) < 3000 && e.Position.IsSafe() && e.CountEnemyHeros(Config.SafeValue) < 1) || (e.Distance(Player.Instance) <= 500)));
             }
         }
 
@@ -207,7 +207,7 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
             get
             {
                 return ObjectManager.Get<Obj_AI_Base>()
-                    .FirstOrDefault(o => o.IsValid && o.Name.ToLower().Contains("towerclicker") && o.IsInRange(Player.Instance, Player.Instance.GetAutoAttackRange()) && o.CountEnemyHeroesInRangeWithPrediction((int)o.GetAutoAttackRange(Player.Instance)) > 1 && Player.Instance.Hero == Champion.Azir);
+                    .FirstOrDefault(o => o.IsValid && o.Name.ToLower().Contains("towerclicker") && o.IsInRange(Player.Instance, Player.Instance.GetAutoAttackRange()) && o.CountEnemyHeros((int)o.GetAutoAttackRange(Player.Instance)) > 1 && Player.Instance.Hero == Champion.Azir);
             }
         }
 
@@ -245,7 +245,7 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
                         .FirstOrDefault(
                             l =>
                             l.IsValid && !l.IsDead && Player.Instance.Hero != Champion.Thresh && Player.Instance.PredictHealthPercent() <= 50 && l.Distance(Player.Instance) <= 800
-                            && (l.CountEnemyHeroesInRangeWithPrediction(1000) > 0 && Player.Instance.Distance(l) < 500 || l.CountEnemyHeroesInRangeWithPrediction(Config.SafeValue) < 1)
+                            && (l.CountEnemyHeros(1000) > 0 && Player.Instance.Distance(l) < 500 || l.CountEnemyHeros(Config.SafeValue) < 1)
                             && l.IsAlly && l.Name.Equals("ThreshLantern") && l.IsSafe());
             }
         }
@@ -262,7 +262,40 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
                         .FirstOrDefault(
                             l =>
                             l.IsValid && !l.IsDead && Player.Instance.Hero == Champion.Bard && l.Position.IsSafe() && l.IsAlly && l.Distance(Player.Instance) <= 600
-                            && (l.CountEnemyHeroesInRangeWithPrediction(1000) > 0 && Player.Instance.Distance(l) < 600 || l.CountEnemyHeroesInRangeWithPrediction(Config.SafeValue) < 1));
+                            && (l.CountEnemyHeros(1000) > 0 && Player.Instance.Distance(l) < 600 || l.CountEnemyHeros(Config.SafeValue) < 1));
+            }
+        }
+
+        /// <summary>
+        ///     Returns Aram Poros.
+        /// </summary>
+        public static IEnumerable<Obj_AI_Base> AramPoros
+        {
+            get
+            {
+                return ObjectManager.Get<Obj_AI_Base>().Where(o => o.IsValid && !o.IsDead && o.BaseSkinName.Equals("HA_AP_Poro"));
+            }
+        }
+
+        /// <summary>
+        ///     Returns Closest Poro.
+        /// </summary>
+        public static Obj_AI_Base ClosesetPoro
+        {
+            get
+            {
+                return AramPoros.OrderBy(o => o.Distance(Player.Instance)).FirstOrDefault(o => o.IsInRange(Player.Instance, 500));
+            }
+        }
+
+        /// <summary>
+        ///     Returns Biggest Poro.
+        /// </summary>
+        public static Obj_AI_Base BiggestPoro
+        {
+            get
+            {
+                return AramPoros.OrderByDescending(o => o.BoundingRadius).FirstOrDefault();
             }
         }
 
@@ -286,8 +319,8 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
         {
             get
             {
-                return EntityManager.Heroes.Enemies.OrderBy(e => e.Distance(Player.Instance)).ThenByDescending(e => e.CountEnemyAlliesInRangeWithPrediction(Config.SafeValue + 100))
-                    .FirstOrDefault(e => e.IsKillable() && e.CountEnemyAlliesInRangeWithPrediction(Config.SafeValue) > 1 && !e.IsDead && !e.IsZombie && e.IsSafe());
+                return EntityManager.Heroes.Enemies.OrderBy(e => e.Distance(Player.Instance)).ThenByDescending(e => e.CountAllyHeros(Config.SafeValue + 100))
+                    .FirstOrDefault(e => e.IsKillable() && e.CountAllyHeros(Config.SafeValue) > 1 && !e.IsDead && !e.IsZombie && e.IsSafe());
             }
         }
 
@@ -331,8 +364,19 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
                         //.ThenByDescending(Misc.KDA)
                         .ThenByDescending(a => Misc.TeamTotal(a.PredictPosition()))
                         .Where(
-                            a => !a.IsMe && !a.StackedBots() && (Player.Instance.PredictHealthPercent() > 20 || a.CountEnemyHeroesInRangeWithPrediction(Config.SafeValue) <= 1) && a.IsSafe() && !a.Added() &&
+                            a => !a.IsMe && !a.StackedBots() && (Player.Instance.PredictHealthPercent() > 20 || a.CountEnemyHeros(Config.SafeValue) <= 1) && a.IsSafe() &&
                             a.IsValidTarget() && a.PredictHealthPercent() > 20 && !a.IsInFountainRange() && !a.IsZombie() && a.IsActive());
+            }
+        }
+
+        /// <summary>
+        ///     Returns a Safe Ally To Follow.
+        /// </summary>
+        public static Obj_AI_Base SafeAllyToFollow
+        {
+            get
+            {
+                return (Player.Instance.AttackRange < 400 ? SafeAllyToFollow : SafestAllyToFollow2) ?? NearestMinion;
             }
         }
 
@@ -355,7 +399,7 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
             get
             {
                 return EntityManager.Heroes.Allies.OrderBy(a => a.Distance(AllySpawn)).FirstOrDefault(a => a.Distance(AllySpawn) > 3000
-                && !a.IsMe && a.Distance(Player.Instance) > 1750 && a.CountEnemyAlliesInRangeWithPrediction(Config.SafeValue) + 1 >= a.CountEnemyHeroesInRangeWithPrediction(Config.SafeValue) && a.IsValidTarget());
+                && !a.IsMe && a.Distance(Player.Instance) > 1750 && a.CountAllyHeros(Config.SafeValue) + 1 >= a.CountEnemyHeros(Config.SafeValue) && a.IsValidTarget());
             }
         }
 
@@ -378,7 +422,7 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
             get
             {
                 return BestAlliesToFollow.OrderBy(a => a.DistanceFromAllies()).ThenByDescending(a => Misc.TeamTotal(a.PredictPosition()) - Misc.TeamTotal(a.PredictPosition(), true))
-                        .FirstOrDefault(a => a.CountEnemyAlliesInRangeWithPrediction(Config.SafeValue) + 1 >= a.CountEnemyHeroesInRangeWithPrediction(Config.SafeValue)
+                        .FirstOrDefault(a => a.CountAllyHeros(Config.SafeValue) + 1 >= a.CountEnemyHeros(Config.SafeValue)
                         && a.Distance(Player.Instance) > 100 + Player.Instance.BoundingRadius + a.BoundingRadius);
             }
         }
@@ -391,10 +435,10 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
             get
             {
                 return EntityManager.MinionsAndMonsters.AlliedMinions.OrderByDescending(a => a.Distance(AllyNexues))
-                        .FirstOrDefault(m => Player.Instance.PredictHealthPercent() > 25 && (m.CountEnemyHeroesInRangeWithPrediction(Config.SafeValue + 300) == 0
-                        || m.CountEnemyAlliesInRangeWithPrediction(Config.SafeValue + 300) >= m.CountEnemyHeroesInRangeWithPrediction(Config.SafeValue + 300)) &&
+                        .FirstOrDefault(m => Player.Instance.PredictHealthPercent() > 25 && (m.CountEnemyHeros(Config.SafeValue + 300) == 0
+                        || m.CountAllyHeros(Config.SafeValue + 300) >= m.CountEnemyHeros(Config.SafeValue + 300)) &&
                         Misc.TeamTotal(m.PredictPosition()) >= Misc.TeamTotal(m.PredictPosition(), true)
-                        && m.IsSafe() && m.IsValidTarget(3000) && !m.IsZombie && m.PredictHealthPercent() > 20);
+                        && m.IsSafe() && m.IsValidTarget(Config.SafeValue * 2) && !m.IsZombie && m.PredictHealthPercent() > 20);
             }
         }
 
@@ -409,7 +453,7 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
                     EntityManager.MinionsAndMonsters.AlliedMinions.OrderBy(a => a.Distance(Player.Instance))
                         .FirstOrDefault(
                             m =>
-                            m.CountEnemyAlliesInRangeWithPrediction(Config.SafeValue) - m.CountEnemyHeroesInRangeWithPrediction(Config.SafeValue) >= 0 && m.IsSafe() && m.IsValidTarget(2500)
+                            m.CountAllyHeros(Config.SafeValue) - m.CountEnemyHeros(Config.SafeValue) >= 0 && m.IsSafe() && m.IsValidTarget(2500)
                             && m.IsValid && m.IsHPBarRendered && !m.IsDead && !m.IsZombie && m.PredictHealthPercent() > 25
                             && Misc.TeamTotal(m.PredictPosition()) - Misc.TeamTotal(m.PredictPosition(), true) >= 0);
             }
@@ -447,7 +491,7 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
             {
                 var name = Player.Instance.Team == GameObjectTeam.Order ? "ha_ap_orderturret" : "ha_ap_chaosturret";
                 return EntityManager.Turrets.Allies.FirstOrDefault(t => t.IsValidTarget() && t.BaseSkinName.Equals(name, StringComparison.CurrentCultureIgnoreCase)
-                && (t.PredictHealthPercent() > 25 && t.CountEnemyHeroesInRangeWithPrediction(Config.SafeValue) < 3 || t.AlliesMoreThanEnemies(Config.SafeValue)));
+                && (t.PredictHealthPercent() > 25 && t.CountEnemyHeros(Config.SafeValue) < 3 || t.AlliesMoreThanEnemies(Config.SafeValue)));
             }
         }
 
@@ -471,8 +515,8 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
             {
                 return
                     EntityManager.Turrets.Allies.OrderBy(t => t.Distance(Player.Instance))
-                        .FirstOrDefault(t => t.IsValidTarget() && t.CountEnemyHeroesInRangeWithPrediction(Config.SafeValue) < 2
-                        && t.CountEnemyAlliesInRangeWithPrediction(Config.SafeValue) > t.CountEnemyHeroesInRangeWithPrediction(Config.SafeValue));
+                        .FirstOrDefault(t => t.IsValidTarget() && t.CountEnemyHeros(Config.SafeValue) < 2
+                        && t.CountAllyHeros(Config.SafeValue) > t.CountEnemyHeros(Config.SafeValue));
             }
         }
 

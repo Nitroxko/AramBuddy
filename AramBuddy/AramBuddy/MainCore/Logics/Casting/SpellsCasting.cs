@@ -17,9 +17,10 @@ namespace AramBuddy.MainCore.Logics.Casting
             if (spellBase == null || target == null || !enabled)
                 return;
 
-            if(spellBase.DontWaste() && ModesManager.LaneClear) return;
+            if(spellBase.DontWaste() && ModesManager.CurrentMode == ModesManager.Modes.LaneClear || ModesManager.CurrentMode == ModesManager.Modes.Harass)
+                return;
 
-            if (spellBase.IsDangerDash() && target.CountEnemyAlliesInRangeWithPrediction(1000) >= target.CountEnemyHeroesInRangeWithPrediction(1000)
+            if (spellBase.IsDangerDash() && target.CountAllyHeros(1000) >= target.CountEnemyHeros(1000) && ModesManager.CurrentMode != ModesManager.Modes.LaneClear
                 && (target.PredictPosition().UnderEnemyTurret() && Misc.SafeToDive || !target.PredictPosition().UnderEnemyTurret()))
             {
                 if(target.Position.IsSafe() && target.Position.SafeDive())

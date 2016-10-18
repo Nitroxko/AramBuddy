@@ -181,7 +181,7 @@ namespace AramBuddy.Plugins.Champions.Fiora
 
         public override void Flee()
         {
-            if (user.CountEnemyHeroesInRangeWithPrediction(1000) > 0 && Q.IsReady())
+            if (user.CountEnemyHeros(1000) > 0 && Q.IsReady())
             {
                 Q.Cast(user.ServerPosition.Extend(ObjectsManager.AllySpawn.Position.Random(), Q.RangeSquared).To3D());
             }

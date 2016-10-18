@@ -58,7 +58,7 @@ namespace AramBuddy.AutoShop
             }
 
             Logger.Send("Failed To Detect " + ChampionName, Logger.LogLevel.Warn);
-            Logger.Send("Using Default Build !");
+            //Logger.Send("Using Default Build !");
             return "Default";
         }
 
