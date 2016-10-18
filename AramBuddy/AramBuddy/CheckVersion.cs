@@ -29,14 +29,14 @@ namespace AramBuddy
             {
                 Logger.Send("Checking For Updates..");
                 var size = Drawing.Width <= 400 || Drawing.Height <= 400 ? 10F : 40F;
-                text = new Text("YOUR ARAMBUDDY IS OUTDATED", new Font("Euphemia", size, FontStyle.Bold)) { Color = Color.White };
+                text = new Text("ARAMBUDDY OUTDATED! PLEASE UPDATE!", new Font("Euphemia", size, FontStyle.Bold)) { Color = Color.White };
                 using (var WebClient = new WebClient())
                 {
                     using (var request = WebClient.DownloadStringTaskAsync(UpdateMsgPath))
                     {
                         if (request.IsFaulted || request.IsCanceled)
                         {
-                            Logger.Send("Wrong Response, Or Request Was Cancelled", Logger.LogLevel.Warn);
+                            Logger.Send("Wrong response, or request was cancelled.", Logger.LogLevel.Warn);
                             Logger.Send(request?.Exception?.InnerException?.Message, Logger.LogLevel.Warn);
                             Console.WriteLine(request.Result);
                         }
@@ -49,7 +49,7 @@ namespace AramBuddy
                     {
                         if (request2.IsFaulted || request2.IsCanceled)
                         {
-                            Logger.Send("Wrong Response, Or Request Was Cancelled", Logger.LogLevel.Warn);
+                            Logger.Send("Wrong response, or request was cancelled.", Logger.LogLevel.Warn);
                             Logger.Send(request2?.Exception?.InnerException?.Message, Logger.LogLevel.Warn);
                             Console.WriteLine(request2.Result);
                         }
@@ -63,12 +63,12 @@ namespace AramBuddy
                                     text.Draw();
                                 };
                                 Outdated = true;
-                                Logger.Send("There is a new Update Available for AramBuddy!", Logger.LogLevel.Warn);
+                                Logger.Send("Update available for AramBuddy!", Logger.LogLevel.Warn);
                                 Logger.Send("Update Log: " + UpdateMsg);
                             }
                             else
                             {
-                                Logger.Send("Your AramBuddy is updated !");
+                                Logger.Send("AramBuddy is updated to the latest version!");
                             }
                         }
                     }
@@ -78,7 +78,7 @@ namespace AramBuddy
                 {
                     if (UpdateMsg != string.Empty && !Sent && Outdated)
                     {
-                        Chat.Print("<b>AramBuddy: There is a new Update Available for AramBuddy !</b>");
+                        Chat.Print("<b>AramBuddy: Update available for AramBuddy!</b>");
                         Chat.Print("<b>AramBuddy Update Log: " + UpdateMsg + "</b>");
                         Notifications.Show(new SimpleNotification("ARAMBUDDY OUTDATED", "Update Log: " + UpdateMsg), 25000);
                         Sent = true;
@@ -87,7 +87,7 @@ namespace AramBuddy
             }
             catch (Exception ex)
             {
-                Logger.Send("Failed To Check for Updates !", ex, Logger.LogLevel.Error);
+                Logger.Send("Update check failed!", ex, Logger.LogLevel.Error);
             }
         }
     }

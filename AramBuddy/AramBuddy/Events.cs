@@ -101,7 +101,7 @@ namespace AramBuddy
                     // Set gameEndNotified to true, as the event has been completed
                     gameEndNotified = true;
 
-                    Logger.Send("GameEnded [Nexues Distroyed] ! " + (win ? "Victory !" : ""));
+                    Logger.Send("Game finished, nexus destroyed. " + (win ? "Victory!" : ""));
                 };
 
             Chat.OnClientSideMessage += delegate(ChatClientSideMessageEventArgs eventArgs)
@@ -113,7 +113,7 @@ namespace AramBuddy
                         OnGameEnd?.Invoke(win);
                         gameEndNotified = true;
 
-                        Logger.Send("GameEnded [Surrender] ! " + (win ? "Victory !" : ""));
+                        Logger.Send("Game finished, enemy surrendered." + (win ? "Victory!" : ""));
                     }
                 };
 
