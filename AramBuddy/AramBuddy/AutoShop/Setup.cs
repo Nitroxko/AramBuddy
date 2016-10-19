@@ -55,6 +55,7 @@ namespace AramBuddy.AutoShop
                 var service = Config.CurrentBuildService == "" ? "" : "\\" + Program.CurrentPatch + "\\" + Config.CurrentBuildService;
                 Buy.CanShop = !Player.Instance.Buffs.Any(b => b.DisplayName.Equals("aramshopdisableplayer", StringComparison.CurrentCultureIgnoreCase)) || Player.Instance.IsDead;
                 //var useDefaultBuild = false;
+
                 // When the game starts
                 AramBuddy.Events.OnGameStart += Events_OnGameStart;
 
@@ -63,6 +64,11 @@ namespace AramBuddy.AutoShop
                 {
                     // If not, create the index file
                     Buy.CreateIndexFile();
+                }
+
+                if (!Directory.Exists(BuildPath))
+                {
+                    Directory.CreateDirectory(BuildPath);
                 }
 
                 // Loop through all the builds in the build path directory
