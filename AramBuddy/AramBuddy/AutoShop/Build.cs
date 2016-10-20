@@ -118,14 +118,14 @@ namespace AramBuddy.AutoShop
 
                 using (var WebClient = new WebClient())
                 {
-                    using (var request = WebClient.DownloadStringTaskAsync("https://raw.githubusercontent.com/plsfixrito/AramBuddyBuilds/master/" + Program.CurrentPatch + "\\" + Config.CurrentBuildService + "/" + filename))
+                    using (var request = WebClient.DownloadStringTaskAsync("https://raw.githubusercontent.com/plsfixrito/AramBuddyBuilds/master/" + Config.CurrentPatchUsed + "\\" + Config.CurrentBuildService + "/" + filename))
                     {
                         if (request != null && !request.IsCanceled && !request.IsFaulted)
                         {
                             if (request.Result.Contains("data"))
                             {
-                                File.WriteAllText(Setup.BuildPath + "\\" + Program.CurrentPatch + "\\" + Config.CurrentBuildService + "\\" + filename, request.Result);
-                                Setup.Builds.Add(CleanUpChampionName(Player.Instance.ChampionName), File.ReadAllText(Setup.BuildPath + "\\" + Program.CurrentPatch + "\\" + Config.CurrentBuildService + "\\" + filename));
+                                File.WriteAllText(Setup.BuildPath + "\\" + Config.CurrentPatchUsed + "\\" + Config.CurrentBuildService + "\\" + filename, request.Result);
+                                Setup.Builds.Add(CleanUpChampionName(Player.Instance.ChampionName), File.ReadAllText(Setup.BuildPath + "\\" + Config.CurrentPatchUsed + "\\" + Config.CurrentBuildService + "\\" + filename));
                                 Logger.Send("Created Build for " + Player.Instance.ChampionName);
                                 Setup.CustomBuildService();
                             }
@@ -149,7 +149,7 @@ namespace AramBuddy.AutoShop
             catch (Exception ex)
             {
                 // if faild to create build terminate the AutoShop
-                Logger.Send("Failed to create Build from service " + Config.CurrentBuildService + " for " + Player.Instance.ChampionName, Logger.LogLevel.Error);
+                Logger.Send("Failed to create Build from service " + Config.CurrentBuildService + " " + Config.CurrentPatchUsed + " for " + Player.Instance.ChampionName, Logger.LogLevel.Error);
                 Logger.Send(ex.InnerException?.Message, Logger.LogLevel.Error);
                 Logger.Send("Trying To Get Defualt Build !", Logger.LogLevel.Warn);
                 Setup.UseDefaultBuild();

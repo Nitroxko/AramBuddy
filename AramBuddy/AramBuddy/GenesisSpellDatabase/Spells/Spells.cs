@@ -2813,10 +2813,10 @@ namespace GenesisSpellLibrary.Spells
 
         public Ziggs()
         {
-            this.Q = new Spell.Skillshot(SpellSlot.Q, 850, SkillShotType.Linear, 300, 1700, 130) { AllowedCollisionCount = int.MaxValue };
-            this.W = new Spell.Active(SpellSlot.W, 1000);
-            this.E = new Spell.Skillshot(SpellSlot.E, 900, SkillShotType.Circular, 250, 1530, 60);
-            this.R = new Spell.Skillshot(SpellSlot.R, 5300, SkillShotType.Circular, 1000, 2800, 500);
+            this.Q = new Spell.Skillshot(SpellSlot.Q, 850, SkillShotType.Linear, 250, 1700, 130, DamageType.Magical) { AllowedCollisionCount = int.MaxValue };
+            this.W = new Spell.Skillshot(SpellSlot.W, 1000, SkillShotType.Circular, 250, 550, 250, DamageType.Magical);
+            this.E = new Spell.Skillshot(SpellSlot.E, 900, SkillShotType.Circular, 250, 1530, 60, DamageType.Magical);
+            this.R = new Spell.Skillshot(SpellSlot.R, 5300, SkillShotType.Circular, 1000, 2800, 500, DamageType.Magical);
             this.WisCC = true;
             this.EisCC = true;
         }

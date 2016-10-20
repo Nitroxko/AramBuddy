@@ -52,7 +52,7 @@ namespace AramBuddy.AutoShop
         {
             try
             {
-                var service = Config.CurrentBuildService == "" ? "" : "\\" + Program.CurrentPatch + "\\" + Config.CurrentBuildService;
+                var service = Config.CurrentBuildService == "" ? "" : "\\" + Config.CurrentPatchUsed + "\\" + Config.CurrentBuildService;
                 Buy.CanShop = !Player.Instance.Buffs.Any(b => b.DisplayName.Equals("aramshopdisableplayer", StringComparison.CurrentCultureIgnoreCase)) || Player.Instance.IsDead;
                 //var useDefaultBuild = false;
 
@@ -116,7 +116,7 @@ namespace AramBuddy.AutoShop
                 if (Builds.Any(b => Build.CleanUpChampionName(b.Key) == Build.CleanUpChampionName(Player.Instance.ChampionName)) && Builds.FirstOrDefault(b => Build.CleanUpChampionName(b.Key) == Build.CleanUpChampionName(Player.Instance.ChampionName)).Value.TryParseData(out CurrentChampionBuild))
                 {
                     // If the parse is successful, notify the user that the initialization process is finished
-                    Logger.Send(Program.CurrentPatch + " " + Player.Instance.ChampionName + " Build Loaded !");
+                    Logger.Send(Config.CurrentPatchUsed + " " + Player.Instance.ChampionName + " Build Loaded !");
                     Logger.Send("AutoShop has been fully and succesfully initialized!");
                     
                     // and set up event listeners

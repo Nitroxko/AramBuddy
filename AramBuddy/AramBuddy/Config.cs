@@ -43,7 +43,8 @@ namespace AramBuddy
         public static float Tyler1g => MiscMenu.SliderValue("gold");
 
         //AutoShop things
-        public static int CurrentBuildServiceid = BuildMenu.Get<ComboBox>("buildsource").CurrentValue;
+        public static string CurrentPatchUsed { get { return BuildMenu.Get<ComboBox>("buildpatch").SelectedText; } }
+        public static int CurrentBuildServiceid {get {return BuildMenu.Get<ComboBox>("buildsource").CurrentValue;} }
 
         public static string CurrentBuildService
         {
@@ -54,11 +55,11 @@ namespace AramBuddy
                     case 0:
                         return "MetaSrc";
                     case 1:
-                        return "Championgg";
+                        return "LoLSkill";
                     case 2:
                         return "KoreanBuilds";
                     case 3:
-                        return "LoLSkill";
+                        return "Championgg";
                     default:
                         return "";
                 }

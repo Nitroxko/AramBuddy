@@ -62,6 +62,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AutoShop\Build.cs" />
+    <Compile Include="AutoShop\BuildServices.cs" />
     <Compile Include="AutoShop\Events.cs" />
     <Compile Include="AutoShop\Sequences\Buy.cs" />
     <Compile Include="AutoShop\Sequences\Parse.cs" />
