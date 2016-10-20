@@ -29,7 +29,7 @@ namespace AramBuddy
     {
         public static Dictionary<string, string[]> CurrentPatchs = new Dictionary<string, string[]>
             {
-            {"6.21.1", new []{ "MetaSrc", "LoLSkill", "User Builds" } },
+            {"6.21.1", new []{ "MetaSrc", "LoLSkill", "KoreanBuilds", "User Builds" } },
             {"6.20.1", new []{ "MetaSrc", "LoLSkill", "KoreanBuilds", "Championgg", "User Builds" } }
             };
 
@@ -158,7 +158,7 @@ namespace AramBuddy
             {
                 if (Orbwalker.MovementDelay < 200)
                 {
-                    Orbwalker.MovementDelay += new Random().Next(200, 375) + Game.Ping;
+                    Orbwalker.MovementDelay += new Random().Next(200, 400);
                 }
                 
                 if (AutoShop.Setup.CurrentChampionBuild.BuildData.Length > 0)
