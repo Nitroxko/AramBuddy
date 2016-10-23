@@ -45,25 +45,6 @@ namespace AramBuddy
         //AutoShop things
         public static string CurrentPatchUsed { get { return BuildMenu.Get<ComboBox>("buildpatch").SelectedText; } }
         public static int CurrentBuildServiceid {get {return BuildMenu.Get<ComboBox>("buildsource").CurrentValue;} }
-
-        public static string CurrentBuildService
-        {
-            get
-            {
-                switch (CurrentBuildServiceid)
-                {
-                    case 0:
-                        return "MetaSrc";
-                    case 1:
-                        return "LoLSkill";
-                    case 2:
-                        return "KoreanBuilds";
-                    case 3:
-                        return "Championgg";
-                    default:
-                        return "";
-                }
-            }
-        }
+        public static string CurrentBuildService { get { return BuildMenu.Get<ComboBox>("buildsource").SelectedText;} }
     }
 }
