@@ -1,12 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
+using AramBuddy.MainCore.Utility;
 using AramBuddy.MainCore.Utility.MiscUtil;
-using AramBuddy.Plugins.KappaEvade;
 using EloBuddy;
 using EloBuddy.SDK;
+using EloBuddy.SDK.Enumerations;
+using EloBuddy.SDK.Events;
 using EloBuddy.SDK.Menu;
 using SharpDX;
+using EloBuddy.SDK.Menu.Values;
 
 namespace AramBuddy.Plugins.Champions.MasterYi
 {
@@ -19,16 +21,32 @@ namespace AramBuddy.Plugins.Champions.MasterYi
             ComboMenu = MenuIni.AddSubMenu("Combo");
             HarassMenu = MenuIni.AddSubMenu("Harass");
             LaneClearMenu = MenuIni.AddSubMenu("LaneClear");
-            KillStealMenu = MenuIni.AddSubMenu("KillSteal");
-            foreach (var spell in SpellList)
+            KillStealMenu = MenuIni.AddSubMenu("KillSteal");     
+            HarassMenu.CreateCheckBox(Q.Slot, "Use " + Q.Slot);
+            HarassMenu.CreateSlider(Q.Slot + "mana", Q.Slot + " Mana Manager", 60);
+            LaneClearMenu.CreateCheckBox(Q.Slot, "Use " + Q.Slot);
+            LaneClearMenu.CreateSlider(Q.Slot + "mana", Q.Slot + " Mana Manager", 60);
+            LaneClearMenu.CreateCheckBox(E.Slot, "Use " + E.Slot);        
+            ComboMenu.AddGroupLabel("Combo Settings");
+            ComboMenu.CreateCheckBox(Q.Slot,"Use Q");
+            ComboMenu.CreateCheckBox(W.Slot,"Use W");
+            ComboMenu.CreateCheckBox(E.Slot,"Use E");
+            ComboMenu.CreateCheckBox("WAA", "Use W to reset AA");
+            ComboMenu.AddGroupLabel("Ultimate Settings");
+            ComboMenu.CreateCheckBox("R","Use R");
+            KillStealMenu.CreateCheckBox(Q.Slot, "Use " + Q.Slot);
+
+            Orbwalker.OnPostAttack += Orbwalker_OnPostAttack;
+        }
+
+        private static void Orbwalker_OnPostAttack(AttackableUnit e, EventArgs args)
+        {
+            if (W.IsReady() && user.Distance(e) <= user.GetAutoAttackRange() - 50 && ComboMenu.CheckBoxValue("WAA") && Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Combo))
             {
-                ComboMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
-                if (spell == Q || spell == E)
+                if (W.Cast())
                 {
-                    HarassMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
-                    HarassMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
-                    LaneClearMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
-                    LaneClearMenu.CreateSlider(spell.Slot + "mana", spell.Slot + " Mana Manager", 60);
+                    Orbwalker.ResetAutoAttack();
+                    EloBuddy.Player.IssueOrder(GameObjectOrder.AttackTo, e);
                 }
             }
         }
@@ -40,7 +58,23 @@ namespace AramBuddy.Plugins.Champions.MasterYi
 
         public override void Combo()
         {
-            
+            var target = TargetSelector.GetTarget(Q.Range, DamageType.Physical);
+            if (target == null || !target.IsKillable(Q.Range))
+                return;
+            if (ComboMenu.CheckBoxValue(SpellSlot.Q) && Q.IsReady())
+            {
+                Q.Cast(target);
+            }
+            if (ComboMenu.CheckBoxValue(SpellSlot.E) && E.IsReady())
+            {
+                E.Cast();
+            }
+            if (ComboMenu.CheckBoxValue(SpellSlot.R) && R.IsReady())
+            {
+                R.Cast();
+            }
+
+
         }
 
         public override void Flee()
@@ -55,12 +89,31 @@ namespace AramBuddy.Plugins.Champions.MasterYi
 
         public override void KillSteal()
         {
-            
+            foreach (var target in EntityManager.Heroes.Enemies.Where(e => e != null && e.IsKillable()))
+            {
+                if (Q.IsReady() && target.IsKillable(Q.Range) && Q.WillKill(target) && KillStealMenu.CheckBoxValue(SpellSlot.Q))
+                {
+                    Q.Cast(target);
+                }
+
+            }
         }
 
         public override void LaneClear()
         {
-            
+            foreach (var target in EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => m != null && m.IsKillable()))
+            {
+                if(Q.IsReady() && LaneClearMenu.CheckBoxValue(SpellSlot.Q) && LaneClearMenu.CompareSlider(Q.Slot + "mana", user.ManaPercent))
+                    Q.Cast(target);
+            }
+        }
+        public static bool getCheckBoxItem(Menu m, string item)
+        {
+            return m[item].Cast<CheckBox>().CurrentValue;
+        }
+        public static int getSliderItem(Menu m, string item)
+        {
+            return m[item].Cast<Slider>().CurrentValue;
         }
     }
 }
