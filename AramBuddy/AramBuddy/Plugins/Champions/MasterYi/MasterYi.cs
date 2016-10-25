@@ -41,12 +41,18 @@ namespace AramBuddy.Plugins.Champions.MasterYi
 
         private static void Orbwalker_OnPostAttack(AttackableUnit e, EventArgs args)
         {
+            if (!(e is AIHeroClient)) return;
+            var target = TargetSelector.GetTarget(300, DamageType.Physical);
+            var champ = (AIHeroClient)e;
+             if (champ == null || champ.Type != GameObjectType.AIHeroClient || !champ.IsValid) return;
+            if (target != null)
             if (W.IsReady() && user.Distance(e) <= user.GetAutoAttackRange() - 50 && ComboMenu.CheckBoxValue("WAA") && Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Combo))
             {
+                    W.Cast();
                 if (W.Cast())
                 {
                     Orbwalker.ResetAutoAttack();
-                    EloBuddy.Player.IssueOrder(GameObjectOrder.AttackTo, e);
+                    Player.IssueOrder(GameObjectOrder.AttackTo, e);
                 }
             }
         }
@@ -84,18 +90,31 @@ namespace AramBuddy.Plugins.Champions.MasterYi
 
         public override void Harass()
         {
-           
+            var target = TargetSelector.GetTarget(Q.Range, DamageType.Physical);
+            if (target == null || !target.IsKillable(Q.Range))
+                return;
+            if (ComboMenu.CheckBoxValue(SpellSlot.Q) && Q.IsReady() && HarassMenu.CompareSlider(Q.Slot + "mana", user.ManaPercent))
+            {
+                Q.Cast(target);
+            }
+            if (ComboMenu.CheckBoxValue(SpellSlot.E) && E.IsReady())
+            {
+                E.Cast();
+            }
+
         }
 
         public override void KillSteal()
         {
-            foreach (var target in EntityManager.Heroes.Enemies.Where(e => e != null && e.IsKillable()))
+            foreach (var target in EntityManager.Heroes.Enemies.Where(e => e.IsValidTarget(Q.Range) && !e.HasBuff("JudicatorIntervention") && !e.HasBuff("kindredrnodeathbuff") && !e.HasBuff("Undying Rage") && !e.IsDead && !e.IsZombie))
             {
-                if (Q.IsReady() && target.IsKillable(Q.Range) && Q.WillKill(target) && KillStealMenu.CheckBoxValue(SpellSlot.Q))
+                if (KillStealMenu.CheckBoxValue(SpellSlot.Q) && Q.IsReady() && target.IsValidTarget(Q.Range))
                 {
-                    Q.Cast(target);
+                    if (target.Health + target.AttackShield < Player.Instance.GetSpellDamage(target, SpellSlot.Q))
+                    {
+                        Q.Cast(target);
+                    }
                 }
-
             }
         }
 
@@ -106,14 +125,6 @@ namespace AramBuddy.Plugins.Champions.MasterYi
                 if(Q.IsReady() && LaneClearMenu.CheckBoxValue(SpellSlot.Q) && LaneClearMenu.CompareSlider(Q.Slot + "mana", user.ManaPercent))
                     Q.Cast(target);
             }
-        }
-        public static bool getCheckBoxItem(Menu m, string item)
-        {
-            return m[item].Cast<CheckBox>().CurrentValue;
-        }
-        public static int getSliderItem(Menu m, string item)
-        {
-            return m[item].Cast<Slider>().CurrentValue;
         }
     }
 }
