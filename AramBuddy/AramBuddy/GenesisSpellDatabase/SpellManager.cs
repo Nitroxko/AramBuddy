@@ -187,11 +187,19 @@ namespace GenesisSpellLibrary
 
         public static void PrepareSpells(AIHeroClient hero)
         {
-            var spells = SpellLibrary.GetSpells(hero.Hero);
-            //This only needs to be called once per champion, anymore is a memory leak.
-            if (spells != null)
+            try
             {
-                SpellsDictionary.Add(spells);
+                var spells = SpellLibrary.GetSpells(hero.Hero);
+                //This only needs to be called once per champion, anymore is a memory leak.
+                if (spells != null)
+                {
+                    SpellsDictionary.Add(spells);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Exception has been cought; Notify the user of the error and print the exception to the console
+                Logger.Send($"{Player.Instance.ChampionName} Is not Added to the Database yet.", ex, Logger.LogLevel.Error);
             }
         }
     }
