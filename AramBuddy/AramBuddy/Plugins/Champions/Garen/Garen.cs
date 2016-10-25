@@ -19,12 +19,10 @@ namespace AramBuddy.Plugins.Champions.Garen
             HarassMenu = MenuIni.AddSubMenu("Harass");
             LaneClearMenu = MenuIni.AddSubMenu("LaneClear");
             KillStealMenu = MenuIni.AddSubMenu("KillSteal");
-            
+                        
             AutoMenu.CreateCheckBox("Q", "Flee Q");
-            //AutoMenu.CreateCheckBox("GapW", "Anti-GapCloser W");
             AutoMenu.CreateCheckBox("IntQ", "Interrupter Q");
-            //AutoMenu.CreateCheckBox("TDmgW", "W against targeted Spells");
-            //AutoMenu.CreateCheckBox("SDmgW", "W against Skillshots");
+
             foreach (var spell in SpellList)
             {
                 ComboMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
@@ -36,40 +34,20 @@ namespace AramBuddy.Plugins.Champions.Garen
                 KillStealMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
             }
 
-            //Gapcloser.OnGapcloser += Gapcloser_OnGapcloser;
             Interrupter.OnInterruptableSpell += Interrupter_OnInterruptableSpell;
             Orbwalker.OnPostAttack += Orbwalker_OnPostAttack;
-            //SpellsDetector.OnTargetedSpellDetected += SpellsDetector_OnTargetedSpellDetected;
-            //Game.OnTick += Garen_SkillshotDetector;
-        }
-
-        private static void Garen_SkillshotDetector(EventArgs args)
-        {
-            if (!AutoMenu.CheckBoxValue("SDmgW") || !W.IsReady())
-                return;
-            if (Collision.NewSpells.Any(s => user.IsInDanger(s)))
-            {
-                W.Cast();
-            }
-        }
-
-        private static void SpellsDetector_OnTargetedSpellDetected(Obj_AI_Base sender, Obj_AI_Base target, GameObjectProcessSpellCastEventArgs args, Database.TargetedSpells.TSpell spell)
-        {
-            if (target.IsMe && spell.DangerLevel >= 3 && AutoMenu.CheckBoxValue("TDmgW") && W.IsReady())
-            {
-                W.Cast();
-            }
         }
 
         private static void Orbwalker_OnPostAttack(AttackableUnit target, EventArgs args)
         {
             var t = target as AIHeroClient;
-            foreach (var spell in
-                SpellList.Where(s => s.IsReady() && ComboMenu.CheckBoxValue(s.Slot)).Where(spell => t.IsKillable(Player.Instance.GetAutoAttackRange()) && spell.IsReady() && spell.Slot == SpellSlot.Q))
-            {
-                spell.Cast();
-                Player.IssueOrder(GameObjectOrder.AttackUnit, target);
-            }
+            if (t == null) return;
+
+            if (!Q.IsReady() || !ComboMenu.CheckBoxValue("Q") || !t.IsKillable(Player.Instance.GetAutoAttackRange()))
+                return;
+
+            Q.Cast();
+            Player.IssueOrder(GameObjectOrder.AttackUnit, t);
         }
 
         private static void Interrupter_OnInterruptableSpell(Obj_AI_Base sender, Interrupter.InterruptableSpellEventArgs e)
@@ -79,16 +57,6 @@ namespace AramBuddy.Plugins.Champions.Garen
             {
                 Q.Cast();
                 Player.IssueOrder(GameObjectOrder.AttackUnit, sender);
-            }
-        }
-
-        private static void Gapcloser_OnGapcloser(AIHeroClient sender, Gapcloser.GapcloserEventArgs e)
-        {
-            if (sender == null || !sender.IsEnemy || !sender.IsKillable(1000))
-                return;
-            if (AutoMenu.CheckBoxValue("GapW") && W.IsReady() && e.End.IsInRange(Player.Instance, Player.Instance.GetAutoAttackRange()))
-            {
-                W.Cast();
             }
         }
 
