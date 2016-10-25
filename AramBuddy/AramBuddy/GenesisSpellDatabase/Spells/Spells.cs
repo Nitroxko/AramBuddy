@@ -892,6 +892,28 @@ namespace GenesisSpellLibrary.Spells
         }
     }
 
+    public class Ivern : SpellBase
+    {
+        public sealed override Spell.SpellBase Q { get; set; }
+
+        public sealed override Spell.SpellBase W { get; set; }
+
+        public sealed override Spell.SpellBase E { get; set; }
+
+        public sealed override Spell.SpellBase R { get; set; }
+
+        public Ivern()
+        {
+            Q = new Spell.Skillshot(SpellSlot.Q, 1100, SkillShotType.Linear, 250, 1300, 65, DamageType.Magical) { AllowedCollisionCount = 0};
+            W = new Spell.SimpleSkillshot(SpellSlot.W, 1200, DamageType.Magical);
+            E = new Spell.Targeted(SpellSlot.E, 750, DamageType.Magical);
+            R = new Spell.Targeted(SpellSlot.R, 750, DamageType.Magical);
+            this.QisCC = true;
+            this.WisSaver = true;
+            this.EisSaver = true;
+        }
+    }
+
     public class Janna : SpellBase
     {
         public sealed override Spell.SpellBase Q { get; set; }

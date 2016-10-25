@@ -22,6 +22,8 @@ namespace AramBuddy.Plugins.Champions.Caitlyn
             KillStealMenu = MenuIni.AddSubMenu("KillSteal");
             
             AutoMenu.CreateCheckBox("E", "Flee E");
+            AutoMenu.CreateCheckBox("DashW", "Anti-Dash W");
+            AutoMenu.CreateCheckBox("DashE", "Anti-Dash E");
             AutoMenu.CreateCheckBox("GapW", "Anti-GapCloser W");
             AutoMenu.CreateCheckBox("GapE", "Anti-GapCloser E");
             AutoMenu.CreateCheckBox("IntW", "Interrupter W");
@@ -113,7 +115,7 @@ namespace AramBuddy.Plugins.Champions.Caitlyn
                 else
                 {
                     var skillshot = spell as Spell.Skillshot;
-                    skillshot.Cast(target, HitChance.Medium);
+                    skillshot?.Cast(target, HitChance.Medium);
                 }
             }
         }
@@ -121,7 +123,7 @@ namespace AramBuddy.Plugins.Champions.Caitlyn
         public override void Harass()
         {
             foreach (var spell in
-                SpellList.Where(s => s.IsReady() && HarassMenu.CheckBoxValue(s.Slot) && HarassMenu.CompareSlider(s.Slot + "mana", user.ManaPercent)))
+                SpellList.Where(s => s.IsReady() && s != R && HarassMenu.CheckBoxValue(s.Slot) && HarassMenu.CompareSlider(s.Slot + "mana", user.ManaPercent)))
             {
                 var target = TargetSelector.GetTarget(R.Range, DamageType.Physical);
                 if (target == null || !target.IsKillable(spell.Range))
@@ -144,14 +146,14 @@ namespace AramBuddy.Plugins.Champions.Caitlyn
                 else
                 {
                     var skillshot = spell as Spell.Skillshot;
-                    skillshot.Cast(target, HitChance.Medium);
+                    skillshot?.Cast(target, HitChance.Medium);
                 }
             }
         }
 
         public override void LaneClear()
         {
-            var linefarmloc = EntityManager.MinionsAndMonsters.GetLineFarmLocation(EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => m.IsKillable(Q.Range)), Q.SetSkillshot().Width, (int)Q.Range);
+            var linefarmloc = Q.SetSkillshot().GetBestLinearCastPosition(Q.LaneMinions());
             if (Q.IsReady() && linefarmloc.HitNumber > 1 && LaneClearMenu.CheckBoxValue(SpellSlot.Q) && LaneClearMenu.CompareSlider(Q.Slot + "mana", user.ManaPercent))
             {
                 Q.Cast(linefarmloc.CastPosition);
@@ -184,7 +186,7 @@ namespace AramBuddy.Plugins.Champions.Caitlyn
                     else
                     {
                         var skillshot = spell as Spell.Skillshot;
-                        skillshot.Cast(target, HitChance.Medium);
+                        skillshot?.Cast(target, HitChance.Medium);
                     }
                 }
             }

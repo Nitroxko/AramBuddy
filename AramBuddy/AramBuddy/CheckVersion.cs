@@ -37,7 +37,7 @@ namespace AramBuddy
                         if (request.IsFaulted || request.IsCanceled)
                         {
                             Logger.Send("Wrong response, or request was cancelled.", Logger.LogLevel.Warn);
-                            Logger.Send(request?.Exception?.InnerException?.Message, Logger.LogLevel.Warn);
+                            Logger.Send(request.Exception?.InnerException?.Message, Logger.LogLevel.Warn);
                             Console.WriteLine(request.Result);
                         }
                         else
@@ -50,7 +50,7 @@ namespace AramBuddy
                         if (request2.IsFaulted || request2.IsCanceled)
                         {
                             Logger.Send("Wrong response, or request was cancelled.", Logger.LogLevel.Warn);
-                            Logger.Send(request2?.Exception?.InnerException?.Message, Logger.LogLevel.Warn);
+                            Logger.Send(request2.Exception?.InnerException?.Message, Logger.LogLevel.Warn);
                             Console.WriteLine(request2.Result);
                         }
                         else
