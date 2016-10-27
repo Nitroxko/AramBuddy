@@ -97,6 +97,7 @@
     <Compile Include="Plugins\Champions\Garen\Garen.cs" />
     <Compile Include="Plugins\Champions\Jhin\Jhin.cs" />
     <Compile Include="Plugins\Champions\Kalista\Kalista.cs" />
+    <Compile Include="Plugins\Champions\Katarina\Katarina.cs" />
     <Compile Include="Plugins\Champions\Leblanc\Leblanc.cs" />
     <Compile Include="Plugins\Champions\Lulu\Lulu.cs" />
     <Compile Include="Plugins\Champions\Lux\Lux.cs" />
