@@ -12,9 +12,9 @@ namespace AramBuddy.Plugins.Champions.Katarina
 {
     class Katarina : Base
     {
+
         public static bool CastingUlt = false;
         public static int LastUltCast = 0;
-        public static int LastJumpCast = 0;
         static Katarina()
         {
             MenuIni = MainMenu.AddMenu(MenuName, MenuName);
@@ -134,17 +134,13 @@ namespace AramBuddy.Plugins.Champions.Katarina
             }
         }
         public static void FreezePlayer()
-        {
-            Orbwalker.DisableAttacking = true;
-            Orbwalker.DisableMovement = true;
+        { 
             CastingUlt = true;
             LastUltCast = Environment.TickCount;
         }
 
         public static void UnfreezePlayer()
         {
-            Orbwalker.DisableAttacking = false;
-            Orbwalker.DisableMovement = false;
             CastingUlt = false;
         }
     }
