@@ -78,8 +78,11 @@ namespace AramBuddy.MainCore.Logics.Casting
                 }
                 else
                 {
-                    args.Process = false;
-                    Logger.Send("Blocked " + args.Slot + " - Case Player Channeling Important Spell " + Player.Instance.Hero);
+                    if (IsCastingImportantSpell)
+                    {
+                        args.Process = false;
+                        Logger.Send("Blocked " + args.Slot + " - Case Player Channeling Important Spell " + Player.Instance.Hero);
+                    }
                 }
             }
         }
