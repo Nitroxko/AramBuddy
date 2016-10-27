@@ -99,8 +99,7 @@ namespace AramBuddy.Plugins.Champions.Leblanc
                     WReturn.Cast();
                 }
 
-                var wTarget = TargetSelector.SelectedTarget ??
-                              TargetSelector.GetTarget(W.Range, DamageType.Magical);
+                var wTarget = TargetSelector.GetTarget(W.Range, DamageType.Magical, Player.Instance.Position);
 
                 if (wTarget != null && HarassMenu.CheckBoxValue(SpellSlot.W) && !Q.IsLearned && W.IsReady() &&
                     Player.Instance.Spellbook.GetSpell(SpellSlot.W).Name.ToLower() == "leblancslide")
@@ -108,8 +107,7 @@ namespace AramBuddy.Plugins.Champions.Leblanc
                     W.Cast(wTarget);
                 }
 
-                var eTarget = TargetSelector.SelectedTarget ??
-                              TargetSelector.GetTarget(E.Range, DamageType.Magical);
+                var eTarget = TargetSelector.GetTarget(E.Range, DamageType.Magical, Player.Instance.Position);
 
                 if (eTarget != null && HarassMenu.CheckBoxValue(SpellSlot.E) && !Q.IsLearned && E.IsReady())
                 {
@@ -117,7 +115,7 @@ namespace AramBuddy.Plugins.Champions.Leblanc
                 }
             }
 
-            var target = TargetSelector.SelectedTarget ?? TargetSelector.GetTarget(Q.Range, DamageType.Magical);
+            var target = TargetSelector.GetTarget(Q.Range, DamageType.Magical, Player.Instance.Position);
 
             if (target == null)
             {
@@ -146,11 +144,11 @@ namespace AramBuddy.Plugins.Champions.Leblanc
 
         public override void KillSteal()
         {
-            foreach (var target in EntityManager.Heroes.Enemies.Where(e => e.IsValidTarget(Q.Range) && !e.HasBuff("JudicatorIntervention") && !e.HasBuff("kindredrnodeathbuff") && !e.HasBuff("Undying Rage") && !e.IsDead && !e.IsZombie))
+            foreach (var target in EntityManager.Heroes.Enemies.Where(e => e.IsValidTarget(Q.Range) && Q.WillKill(e)))
             {
                 if (KillStealMenu.CheckBoxValue(SpellSlot.Q) && Q.IsReady() && target.IsValidTarget(Q.Range))
                 {
-                    if (target.Health + target.AttackShield < Player.Instance.GetSpellDamage(target, SpellSlot.Q))
+                    if (Q.WillKill(target))
                     {
                         Q.Cast(target);
                     }
@@ -223,8 +221,7 @@ namespace AramBuddy.Plugins.Champions.Leblanc
                     WReturn.Cast();
                 }
 
-                var wTarget = TargetSelector.SelectedTarget ??
-                              TargetSelector.GetTarget(W.Range, DamageType.Magical);
+                var wTarget = TargetSelector.GetTarget(W.Range, DamageType.Magical, Player.Instance.Position);
 
                 if (wTarget != null && ComboMenu.CheckBoxValue(SpellSlot.W) && !Q.IsLearned && W.IsReady() &&
                     Player.Instance.Spellbook.GetSpell(SpellSlot.W).Name.ToLower() == "leblancslide")
@@ -232,8 +229,7 @@ namespace AramBuddy.Plugins.Champions.Leblanc
                    W.Cast(wTarget);
                 }
 
-                var eTarget = TargetSelector.SelectedTarget ??
-                              TargetSelector.GetTarget(E.Range, DamageType.Magical);
+                var eTarget = TargetSelector.GetTarget(E.Range, DamageType.Magical, Player.Instance.Position);
 
                 if (eTarget != null && ComboMenu.CheckBoxValue(SpellSlot.E) && !Q.IsLearned && E.IsReady())
                 {
@@ -241,7 +237,7 @@ namespace AramBuddy.Plugins.Champions.Leblanc
                 }
             }
 
-            var target = TargetSelector.SelectedTarget ?? TargetSelector.GetTarget(Q.Range, DamageType.Magical);
+            var target = TargetSelector.GetTarget(Q.Range, DamageType.Magical, Player.Instance.Position);
 
             if (target == null)
             {
@@ -270,14 +266,12 @@ namespace AramBuddy.Plugins.Champions.Leblanc
 
         private static void Post6Combo()
         {
-            var range = Q.Range;
-            var target = TargetSelector.SelectedTarget ?? TargetSelector.GetTarget(range, DamageType.Magical);
+            var target = TargetSelector.GetTarget(Q.Range, DamageType.Magical, Player.Instance.Position);
 
             if (Player.Instance.Spellbook.GetSpell(SpellSlot.W).Name.ToLower() == "leblancslidereturn" &&
                 !W.IsReady())
             {
-                target = TargetSelector.SelectedTarget ??
-                         TargetSelector.GetTarget(E.Range, DamageType.Magical);
+                target = TargetSelector.GetTarget(E.Range, DamageType.Magical, Player.Instance.Position);
 
                 if (target == null)
                 {

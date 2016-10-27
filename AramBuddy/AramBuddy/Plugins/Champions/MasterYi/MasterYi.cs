@@ -42,13 +42,11 @@ namespace AramBuddy.Plugins.Champions.MasterYi
         private static void Orbwalker_OnPostAttack(AttackableUnit e, EventArgs args)
         {
             if (!(e is AIHeroClient)) return;
-            var target = TargetSelector.GetTarget(300, DamageType.Physical);
             var champ = (AIHeroClient)e;
              if (champ == null || champ.Type != GameObjectType.AIHeroClient || !champ.IsValid) return;
-            if (target != null)
             if (W.IsReady() && user.Distance(e) <= user.GetAutoAttackRange() - 50 && ComboMenu.CheckBoxValue("WAA") && Orbwalker.ActiveModesFlags.HasFlag(Orbwalker.ActiveModes.Combo))
             {
-                    W.Cast();
+                    
                 if (W.Cast())
                 {
                     Orbwalker.ResetAutoAttack();
@@ -110,7 +108,7 @@ namespace AramBuddy.Plugins.Champions.MasterYi
             {
                 if (KillStealMenu.CheckBoxValue(SpellSlot.Q) && Q.IsReady() && target.IsValidTarget(Q.Range))
                 {
-                    if (target.Health + target.AttackShield < Player.Instance.GetSpellDamage(target, SpellSlot.Q))
+                    if (Q.WillKill(target))
                     {
                         Q.Cast(target);
                     }

@@ -129,8 +129,6 @@ namespace AramBuddy.Plugins.Champions.Katarina
 
                 if (W.IsReady() && target.IsKillable(W.Range) && LaneClearMenu.CheckBoxValue(SpellSlot.W))
                     W.Cast();
-                if (E.IsReady() && LaneClearMenu.CheckBoxValue(SpellSlot.E))
-                    E.Cast(target);
 
 
             }
