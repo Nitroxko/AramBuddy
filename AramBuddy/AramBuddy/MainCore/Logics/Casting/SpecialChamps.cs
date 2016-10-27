@@ -11,6 +11,7 @@ namespace AramBuddy.MainCore.Logics.Casting
     {
         public static bool IsCastingImportantSpell;
         public static float LastStartTick;
+        public static bool PluginChecks;
 
         public class ImportantSpells
         {
@@ -52,6 +53,9 @@ namespace AramBuddy.MainCore.Logics.Casting
 
         public static void Init()
         {
+            if (PluginChecks)
+                return;
+
             Obj_AI_Base.OnProcessSpellCast += Obj_AI_Base_OnProcessSpellCast;
             Game.OnTick += Game_OnTick;
             Player.OnIssueOrder += Player_OnIssueOrder;
@@ -60,25 +64,22 @@ namespace AramBuddy.MainCore.Logics.Casting
 
         private static void Spellbook_OnCastSpell(Spellbook sender, SpellbookCastSpellEventArgs args)
         {
-            if (!IsCastingImportantSpell)
+            if (!sender.Owner.IsMe)
                 return;
 
             var me = Importantspells.FirstOrDefault(s => s.champ == Player.Instance.Hero);
             if (me != null)
             {
-                if (sender.Owner.IsMe)
+                if (args.Slot == me.slot)
                 {
-                    if (args.Slot == me.slot)
-                    {
-                        LastStartTick = Core.GameTickCount;
-                        IsCastingImportantSpell = true;
-                        Logger.Send("[" + Player.Instance.Hero + "] Player Is Channeling Important Spell");
-                    }
-                    else
-                    {
-                        args.Process = false;
-                        Logger.Send("Blocked " + args.Slot + " - Case Player Channeling Important Spell " + Player.Instance.Hero);
-                    }
+                    LastStartTick = Core.GameTickCount;
+                    IsCastingImportantSpell = true;
+                    Logger.Send("[" + Player.Instance.Hero + "] Player Is Channeling Important Spell");
+                }
+                else
+                {
+                    args.Process = false;
+                    Logger.Send("Blocked " + args.Slot + " - Case Player Channeling Important Spell " + Player.Instance.Hero);
                 }
             }
         }
