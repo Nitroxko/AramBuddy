@@ -19,6 +19,14 @@ namespace AramBuddy.MainCore
         public static Vector3 LastPickPosition;
         public static bool RunningItDownMid;
 
+        private static int PingUpdates = 1;
+        private static int PingsStore = Game.Ping;
+        private static int LastPing = Game.Ping;
+
+        public static int NormalPing { get { return PingsStore / PingUpdates; } }
+
+        public static bool Lagging { get { return Game.Ping > NormalPing * 2; } }
+
         /// <summary>
         ///     Init bot functions.
         /// </summary>
@@ -29,6 +37,9 @@ namespace AramBuddy.MainCore
                 // Initialize Genesis Spell Library.
                 SpellManager.Initialize();
                 SpellLibrary.Initialize();
+
+                // Initialize The ModesManager
+                ModesManager.Init();
 
                 // Initialize ObjectsManager.
                 ObjectsManager.Init();
@@ -96,7 +107,7 @@ namespace AramBuddy.MainCore
                 LastPickPosition = Pathing.Position;
                 LastUpdate = Core.GameTickCount;
             }
-
+            
             foreach (var hero in EntityManager.Heroes.AllHeroes.Where(a => a.IsValidTarget() && !DetectedBots.Contains(a)))
             {
                 if (ObjectsManager.HealthRelics.Any(hr => hero.Path.LastOrDefault().Distance(hr.Position) <= 3))
@@ -109,6 +120,13 @@ namespace AramBuddy.MainCore
                     DetectedBots.Add(hero);
                     //Logger.Send("BOT DETECTED: [" + hero.ChampionName + " - " + hero.Name  + "] Case: Stacked bots", Logger.LogLevel.Warn);
                 }
+            }
+
+            if (LastPing != Game.Ping)
+            {
+                PingUpdates++;
+                PingsStore += Game.Ping;
+                LastPing = Game.Ping;
             }
 
             if (Misc.TeamFight)
@@ -143,8 +161,7 @@ namespace AramBuddy.MainCore
                 Pathing.Position = ObjectsManager.AllySpawn.Position.Random();
             }
 
-            RunningItDownMid = !Player.Instance.IsZombie() && ObjectsManager.EnemySpawn != null && Config.Tyler1 && Player.Instance.Gold >= Config.Tyler1g
-                && !AutoShop.Sequences.Buy.FullBuild && Core.GameTickCount - LastTeamFight > 1500
+            RunningItDownMid = Config.Tyler1 && Player.Instance.Gold >= Config.Tyler1g && !Player.Instance.IsZombie() && ObjectsManager.EnemySpawn != null && !AutoShop.Sequences.Buy.FullBuild && Core.GameTickCount - LastTeamFight > 1500
                 && (ObjectsManager.AllySpawn != null && Player.Instance.Distance(ObjectsManager.AllySpawn) > 4000 || EntityManager.Heroes.Enemies.Count(e => !e.IsDead && e.IsValid) == 0)
                 && EntityManager.Heroes.Allies.Count(a => a.IsActive()) > 2 && (Orbwalker.GetTarget() != null
                 && !(Orbwalker.GetTarget().Type == GameObjectType.obj_HQ || Orbwalker.GetTarget().Type == GameObjectType.obj_BarracksDampener) || Orbwalker.GetTarget() == null);
@@ -156,7 +173,7 @@ namespace AramBuddy.MainCore
             }
             
             // Moves to the Bot selected Position.
-            if (Pathing.Position != Vector3.Zero && Pathing.Position.IsValid() && !Pathing.Position.IsZero)
+            if (Pathing.Position.IsValid() && !Pathing.Position.IsZero)
             {
                 Pathing.MoveTo(Pathing.Position);
             }

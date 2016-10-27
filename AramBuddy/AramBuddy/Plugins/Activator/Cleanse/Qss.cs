@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using AramBuddy.MainCore.Utility;
 using AramBuddy.MainCore.Utility.MiscUtil;
 using EloBuddy;
 using EloBuddy.SDK;
 using EloBuddy.SDK.Menu;
-using EloBuddy.SDK.Spells;
+using EloBuddy.SDK.Menu.Values;
 using static AramBuddy.Plugins.Activator.Items.Database;
 
 namespace AramBuddy.Plugins.Activator.Cleanse
@@ -24,127 +23,94 @@ namespace AramBuddy.Plugins.Activator.Cleanse
             BuffType.Suppression, BuffType.Taunt
         };
 
-        private class SaveBuffs
-        {
-            public readonly AIHeroClient Owner;
-            public readonly BuffType buff;
-
-            public SaveBuffs(AIHeroClient owner, BuffType type)
-            {
-                this.Owner = owner;
-                this.buff = type;
-            }
-        }
-
-        private static readonly List<SaveBuffs> SavedBuffs = new List<SaveBuffs>();
-
         private static Menu Clean;
 
-        public static void Init()
+        internal static void Init()
         {
             try
             {
-                Clean = Load.MenuIni.AddSubMenu("Qss");
-                Clean.CreateCheckBox("ally", "Qss Allies");
-                Clean.AddSeparator(0);
-                Clean.AddGroupLabel("Items");
-                Clean.CreateCheckBox("Cleanse", "Use Summoner Cleanse");
-                SelfQss.ForEach(i => Clean.CreateCheckBox(i.Id.ToString(), "Use " + i.ItemInfo.Name));
-                AllyQss.ForEach(i => Clean.CreateCheckBox(i.Id.ToString(), "Use " + i.ItemInfo.Name));
-                Clean.AddSeparator(0);
-                Clean.AddGroupLabel("Buffs To Qss");
-                BuffsToQss.ForEach(b => Clean.CreateCheckBox(b.ToString(), "Qss " + b));
+                Clean = Load.MenuIni.AddSubMenu("Cleanse");
 
-                Game.OnTick += Game_OnTick;
+                Clean.AddGroupLabel("Cleanse Settings");
+                Clean.CreateCheckBox("enable", "Enable Cleanse");
+                foreach (var item in SelfQss)
+                {
+                    Clean.CreateCheckBox(item.ItemInfo.Name, "Use " + item.ItemInfo.Name);
+                }
+                foreach (var item in AllyQss)
+                {
+                    Clean.CreateCheckBox(item.ItemInfo.Name, "Use " + item.ItemInfo.Name);
+                }
+
+                Clean.AddGroupLabel("Allies Settings");
+                foreach (var ally in EntityManager.Heroes.Allies)
+                {
+                    Clean.CreateCheckBox(ally.Name(), "Use For " + ally.Name());
+                    Clean.CreateSlider(ally.Name() + "hp", "Use For " + ally.Name() + " Under {0}% HP", TargetSelector.GetPriority(ally) * 10);
+                }
+
+                Clean.AddGroupLabel("Buffs to Qss");
+                foreach (var buff in BuffsToQss)
+                {
+                    Clean.CreateCheckBox(buff.ToString(), "Qss " + buff);
+                }
+
+                Clean.AddGroupLabel("Humanizer Settings");
+                var min = Clean.CreateSlider("QssMin", "Qss Min Delay {0}", 100, 0, 400);
+                var max = Clean.CreateSlider("QssMax", "Qss Max Delay {0}", 500, 0, 1500);
+                min.OnValueChange += delegate (ValueBase<int> sender, ValueBase<int>.ValueChangeArgs args)
+                {
+                    if (args.NewValue >= max.CurrentValue)
+                    {
+                        max.MinValue = args.NewValue + 100;
+                    }
+                };
+                max.OnValueChange += delegate (ValueBase<int> sender, ValueBase<int>.ValueChangeArgs args)
+                {
+                    if (args.NewValue >= min.MaxValue)
+                    {
+                        min.MaxValue = args.NewValue - 100;
+                    }
+                };
+
                 Obj_AI_Base.OnBuffGain += Obj_AI_Base_OnBuffGain;
-                Obj_AI_Base.OnBuffLose += Obj_AI_Base_OnBuffLose;
             }
             catch (Exception ex)
             {
-                Logger.Send("Activator Qss Error While Init", ex, Logger.LogLevel.Error);
-            }
-        }
-
-        private static void Game_OnTick(EventArgs args)
-        {
-            try
-            {
-                SavedBuffs.RemoveAll(b => b.Owner.IsDead);
-
-                if (Player.Instance.IsDead) return;
-
-                foreach (var saved in SavedBuffs.Where(a => a.Owner != null && Clean.CheckBoxValue(a.buff.ToString()) && a.Owner.IsKillable()))
-                {
-                    CastQss(saved.Owner);
-                    return;
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.Send("Activator Qss Error At Game_OnTick", ex, Logger.LogLevel.Error);
-            }
-        }
-
-        private static void CastQss(Obj_AI_Base target)
-        {
-            try
-            {
-                foreach (var i in SelfQss.Where(a => a.ItemReady(Clean)))
-                {
-                    if (target.IsMe)
-                    {
-                        i.Cast();
-                        return;
-                    }
-                }
-                foreach (var i in AllyQss.Where(a => a.ItemReady(Clean)))
-                {
-                    if (target.IsMe || (target.IsAlly && !target.IsMe && Clean.CheckBoxValue("ally")))
-                    {
-                        i.Cast(target);
-                        return;
-                    }
-                }
-
-                if (target.IsMe && SummonerSpells.Cleanse.IsReady() && Clean.CheckBoxValue("Cleanse"))
-                {
-                    SummonerSpells.Cleanse.Cast();
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.Send("Activator Qss Error At CastQss", ex, Logger.LogLevel.Error);
-            }
-        }
-
-        private static void Obj_AI_Base_OnBuffLose(Obj_AI_Base sender, Obj_AI_BaseBuffLoseEventArgs args)
-        {
-            try
-            {
-                var caster = sender as AIHeroClient;
-                if (caster == null || !caster.IsAlly || !BuffsToQss.Contains(args.Buff.Type))
-                    return;
-                SavedBuffs.Remove(new SaveBuffs(caster, args.Buff.Type));
-            }
-            catch (Exception ex)
-            {
-                Logger.Send("Activator Qss Error At Obj_AI_Base_OnBuffLose", ex, Logger.LogLevel.Error);
+                Logger.Send("Error At AramBuddy.Plugins.Activator.Cleanse.Init", ex, Logger.LogLevel.Error);
             }
         }
 
         private static void Obj_AI_Base_OnBuffGain(Obj_AI_Base sender, Obj_AI_BaseBuffGainEventArgs args)
         {
-            try
+            var caster = sender as AIHeroClient;
+            if (!Clean.CheckBoxValue("enable") || caster == null || !BuffsToQss.Contains(args.Buff.Type))
+                return;
+
+            if (!caster.IsAlly || caster.Distance(Player.Instance) > 1000 || !Clean.CheckBoxValue(args.Buff.Type.ToString())
+                || !Clean.CheckBoxValue(caster.Name()) || caster.HealthPercent > Clean.SliderValue(caster.Name() + "hp"))
+                return;
+
+            var delay = new Random().Next(Clean.SliderValue("QssMin"), Clean.SliderValue("QssMax"));
+            if (caster.IsMe)
             {
-                var caster = sender as AIHeroClient;
-                if (caster == null || !caster.IsAlly || !BuffsToQss.Contains(args.Buff.Type))
+                foreach (var item in SelfQss.Where(i => i.ItemReady(Clean)))
+                {
+                    Core.DelayAction(() => item.Cast(), delay);
                     return;
-                SavedBuffs.Add(new SaveBuffs(caster, args.Buff.Type));
+                }
+                foreach (var item in AllyQss.Where(i => i.ItemReady(Clean)))
+                {
+                    Core.DelayAction(() => item.Cast(caster), delay);
+                    return;
+                }
             }
-            catch (Exception ex)
-            {
-                Logger.Send("Activator Qss Error At Obj_AI_Base_OnBuffGain", ex, Logger.LogLevel.Error);
-            }
+            else
+                foreach (var item in AllyQss.Where(i => i.ItemReady(Clean)))
+                {
+                    Core.DelayAction(() => item.Cast(caster), delay);
+                    return;
+                }
         }
     }
 }

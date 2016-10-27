@@ -29,7 +29,7 @@ namespace AramBuddy
     {
         public static Dictionary<string, string[]> CurrentPatchs = new Dictionary<string, string[]>
             {
-            {"6.21.1", new []{ "MetaSrc", "LoLSkill", "KoreanBuilds", "User Builds" } },
+            {"6.21.1", new []{ "MetaSrc", "LoLSkill", "KoreanBuilds", "Championgg", "User Builds" } },
             {"6.20.1", new []{ "MetaSrc", "LoLSkill", "KoreanBuilds", "Championgg", "User Builds" } }
             };
 
@@ -378,7 +378,8 @@ namespace AramBuddy
                 var LastTurretAttack = " | LastTurretAttack: " + (Core.GameTickCount - Brain.LastTurretAttack);
                 var SafeToDive = " | SafeToDive: " + Misc.SafeToDive;
                 var castingimportantspell = " | IsCastingImportantSpell: " + MainCore.Logics.Casting.SpecialChamps.IsCastingImportantSpell;
-                var lagging = " | Lagging: " + (Game.Ping > 666);
+                var lagging = " | Lagging: " + Brain.Lagging;
+                var normalbing = " | NormalPing: " + Brain.NormalPing;
                 var SafeToAttack = " | SafeToAttack: " + Misc.SafeToAttack;
                 var IsSafe = /*" | IsSafe: " + (Player.Instance.IsSafe() && Pathing.Position.IsSafe())*/ "";
                 var LastTeamFight = " | LastTeamFight: " + (int)(Core.GameTickCount - Brain.LastTeamFight);
@@ -390,7 +391,7 @@ namespace AramBuddy
                     AllyTeamTotal + EnemyTeamTotal + "\n"
                     + ActiveMode + Alone + AttackObject + "\n"
                     + SafeToDive + SafeToAttack + IsSafe + "\n"
-                    + castingimportantspell + lagging + "\n"
+                    + castingimportantspell + lagging + normalbing + "\n"
                     + LastTurretAttack + LastTeamFight + "\n"
                     + MovementCommands + MoveTo + "\n"
                     + nextitem + fullbuild + "\n");
@@ -413,7 +414,7 @@ namespace AramBuddy
                     Circle.Draw(Color.White, 100, Pathing.Position);
                 }
 
-                if (!DisableSpellsCasting)
+                if (!DisableSpellsCasting && ModesManager.Spelllist != null)
                 {
                     foreach (var spell in ModesManager.Spelllist.Where(s => s != null))
                     {

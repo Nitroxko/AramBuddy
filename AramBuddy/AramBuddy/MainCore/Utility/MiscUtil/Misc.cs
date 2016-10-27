@@ -57,10 +57,12 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
                 var allyturrets = EntityManager.Turrets.Allies.Where(t => !t.IsDead && t.PredictHealth() > 0 && t.CountAllyHeros((int)t.GetAutoAttackRange()) > 1 && t.Distance(Player.Instance) <= 1000).
                     Sum(turret => turret.PredictHealth() + turret.TotalAttackDamage + turret.GetAutoAttackDamage(Player.Instance, true));
 
-                var enemyminions = EntityManager.MinionsAndMonsters.EnemyMinions.Where(m => !m.IsDead && m.IsValid && !m.IsCC() && m.PredictHealth() > 0 && m.IsInRange(Position, Config.SafeValue) && m.CountEnemyHeros(700) > 1)
-                    .Sum(minion => (minion.PredictHealth() * 0.30f) + minion.Armor + minion.SpellBlock + minion.TotalMagicalDamage + minion.TotalAttackDamage - minion.Distance(Position) * 0.35f);
+                var enemyminions = EntityManager.MinionsAndMonsters.EnemyMinions.Where( 
+                        m => !m.IsDead && m.IsValid && !m.IsCC() && m.PredictHealth() > 0 && m.IsInRange(Position, Config.SafeValue) && m.CountEnemyHeros(700) > 0)
+                        .Sum(minion => (minion.PredictHealth() * 0.30f) + minion.Armor + minion.SpellBlock + minion.TotalMagicalDamage + minion.TotalAttackDamage - minion.Distance(Position) * 0.35f);
+
                 var allyminions = EntityManager.MinionsAndMonsters.AlliedMinions.Where(m => !m.IsDead && m.IsValid && !m.IsCC() && m.PredictHealth() > 0 && m.IsInRange(Position, Config.SafeValue)
-                && m.CountAllyHeros(700) > 1) .Sum(minion => (minion.PredictHealth() * 0.30f) + minion.Armor + minion.SpellBlock + minion.TotalMagicalDamage + minion.TotalAttackDamage - minion.Distance(Position) * 0.35f);
+                && m.CountAllyHeros(700) > 0).Sum(minion => (minion.PredictHealth() * 0.30f) + minion.Armor + minion.SpellBlock + minion.TotalMagicalDamage + minion.TotalAttackDamage - minion.Distance(Position) * 0.35f);
 
                 var enemyheros = EntityManager.Heroes.Enemies.Where(e => !e.IsDead && e.IsValid && !e.IsCC() && e.IsInRange(Position, Config.SafeValue))
                         .Sum(enemy => enemy.PredictHealth() + (enemy.Mana * 0.25f) + enemy.Armor + enemy.SpellBlock + enemy.TotalMagicalDamage + enemy.TotalAttackDamage + enemy.GetAutoAttackDamage(Player.Instance, true) - enemy.Distance(Position) * 0.35f);
@@ -168,7 +170,7 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
         /// </summary>
         public static bool UnderEnemyTurret(this Obj_AI_Base target)
         {
-            return EntityManager.Turrets.AllTurrets.Any(t => !t.IsDead && t.Team != target.Team && t.IsValidTarget() && t.IsInRange(target, t.GetAutoAttackRange(target)));
+            return EntityManager.Turrets.AllTurrets.Any(t => t.Team != target.Team && t.IsValidTarget() && t.IsInRange(target, t.GetAutoAttackRange(target)));
         }
 
         /// <summary>
@@ -234,6 +236,16 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
         public static float KDA(this AIHeroClient target)
         {
             return target.ChampionsKilled + target.Assists / target.Deaths;
+        }
+
+        public static float DistanceFromAllHeros(Vector3 pos)
+        {
+            return EntityManager.Heroes.AllHeroes.Where(a => a.IsValidTarget()).Sum(a => pos.Distance(a));
+        }
+
+        public static float DistanceFromAllHeros(this Obj_AI_Base target)
+        {
+            return DistanceFromAllHeros(target.ServerPosition);
         }
 
         public static float DistanceFromAllies(Vector3 pos)
@@ -500,7 +512,7 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
         {
             get
             {
-                return /*Game.FPS < 60 && !Game.FPS.Equals(25) ? Game.FPS * 2 : Game.FPS*/ 100;
+                return Game.FPS < 60 && !Game.FPS.Equals(25) ? Game.FPS * 2 : Game.FPS;
             }
         }
         
@@ -626,8 +638,8 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
         /// </summary>
         public static bool IsActive(this Obj_AI_Base target)
         {
-            return target.IsValid && !target.IsDead && target.Path.LastOrDefault().Distance(ObjectsManager.AllySpawn) >= 50
-                && (target.IsAttackingPlayer || target.IsAttackPlayer() || (target.IsMoving && target.Path.LastOrDefault().Distance(target) > 35)
+            return target.IsValid && !target.IsDead && (target.IsAttackingPlayer || target.IsAttackPlayer()
+                || (target.IsMoving && target.Path.LastOrDefault().Distance(target) > 35)
                 || target.Spellbook.IsAutoAttacking || target.Spellbook.IsCastingSpell || target.Spellbook.IsChanneling || target.Spellbook.IsCharging);
         }
 
@@ -652,6 +664,21 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
         public static Spell.Skillshot SetSkillshot(this Spell.SpellBase spell)
         {
             return spell as Spell.Skillshot;
+        }
+
+        public static Vector2 CenterOfVectors(Vector2[] vectors)
+        {
+            Vector2 sum = Vector2.Zero;
+            if (vectors == null || vectors.Length == 0)
+            {
+                return sum;
+            }
+
+            foreach (var vector in vectors)
+            {
+                sum += vector;
+            }
+            return sum / vectors.Length;
         }
 
         /// <summary>
@@ -823,6 +850,14 @@ namespace AramBuddy.MainCore.Utility.MiscUtil
         public static Vector3 PredictPosition(this Obj_AI_Base target, int Time = 250)
         {
             return Prediction.Position.PredictUnitPosition(target, Time).To3D();
+        }
+
+        /// <summary>
+        ///     Returns The predicted position for the target.
+        /// </summary>
+        public static Vector2 PredictPosition2D(this Obj_AI_Base target, int Time = 250)
+        {
+            return Prediction.Position.PredictUnitPosition(target, Time);
         }
 
         /// <summary>

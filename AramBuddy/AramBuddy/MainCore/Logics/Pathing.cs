@@ -381,7 +381,7 @@ namespace AramBuddy.MainCore.Logics
         public static bool RangedLogic()
         {
             // TeamFighting Logic.
-            if (Core.GameTickCount - Brain.LastTeamFight < 1000 && Player.Instance.PredictHealthPercent() > 25 && !ModesManager.Flee && ObjectsManager.NearestEnemy != null
+            if (Core.GameTickCount - Brain.LastTeamFight < 1500 && Player.Instance.PredictHealthPercent() > 25 && ModesManager.CurrentMode != ModesManager.Modes.Flee && ObjectsManager.NearestEnemy != null
                 && EntityManager.Heroes.Allies.Any(a => a.IsValidTarget() && a.Distance(ObjectsManager.NearestEnemy) < Player.Instance.Distance(ObjectsManager.NearestEnemy) && !a.IsMe)
                 && TeamTotal(ObjectsManager.NearestEnemy.PredictPosition()) >= TeamTotal(ObjectsManager.NearestEnemy.PredictPosition(), true) && ObjectsManager.NearestEnemy.CountAllyHeros(SafeValue) > 1)
             {
@@ -414,7 +414,7 @@ namespace AramBuddy.MainCore.Logics
             {
                 if (ObjectsManager.FarthestAllyTurret.CountEnemyHeros((int)ObjectsManager.FarthestAllyTurret.GetAutoAttackRange() + 50) > 0)
                 {
-                    var enemy = EntityManager.Heroes.Enemies.OrderBy(o => o.Distance(ObjectsManager.FarthestAllyTurret)).FirstOrDefault(e => e.IsKillable(3000));
+                    var enemy = EntityManager.Heroes.Enemies.OrderBy(o => o.Distance(ObjectsManager.AllySpawn)).FirstOrDefault(e => e.IsKillable(3000));
                     if (enemy != null && enemy.UnderEnemyTurret() && TeamTotal(enemy.PredictPosition()) >= TeamTotal(enemy.PredictPosition(), true))
                     {
                         Program.Moveto = "DefendingTower";
@@ -542,7 +542,7 @@ namespace AramBuddy.MainCore.Logics
         public static void MoveTo(Vector3 pos)
         {
             var pos2 = pos;
-            var rnd = new Random().Next(500, 1500);
+            var rnd = new Random().Next(750, 2000);
             if (Player.Instance.Distance(pos) > rnd)
             {
                 pos2 = Player.Instance.ServerPosition.Extend(pos, rnd).To3D();
