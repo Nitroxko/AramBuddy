@@ -206,8 +206,7 @@ namespace AramBuddy.Plugins.Champions.Blitzcrank
 
         public override void Harass()
         {
-            foreach (var spell in SpellList.Where(s => s.IsReady() && HarassMenu.CheckBoxValue(s.Slot)
-                                                       && s != R))
+            foreach (var spell in SpellList.Where(s => s.IsReady() && s != R && HarassMenu.CheckBoxValue(s.Slot)))
             {
                 var target = TargetSelector.GetTarget(Q.Range, DamageType.Magical);
 
@@ -259,8 +258,8 @@ namespace AramBuddy.Plugins.Champions.Blitzcrank
                     var spell in
                         SpellList.Where(
                             s =>
-                                s.WillKill(target) && s != R && s.IsReady() && target.IsKillable(s.Range) &&
-                                KillStealMenu.CheckBoxValue(s.Slot) && s != W
+                                s.WillKill(target) && s != R && s.IsReady() && target.IsKillable(s.Range) && s != W &&
+                                KillStealMenu.CheckBoxValue(s.Slot)
                             ))
 
                     switch (spell.Slot)
