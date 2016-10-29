@@ -33,7 +33,6 @@ namespace AramBuddy.Plugins.Champions.Katarina
                     KillStealMenu.CreateCheckBox(spell.Slot, "Use " + spell.Slot);
                 }
                 ComboMenu.CreateCheckBox(R.Slot, "Use " + R.Slot);
-
             }
         }
         public override void Active()
@@ -52,7 +51,7 @@ namespace AramBuddy.Plugins.Champions.Katarina
                 if (Q.IsReady() && Player.Instance.IsInRange(target, Q.Range))
                     Q.Cast(target);
 
-            if (ComboMenu.CheckBoxValue(E.Slot) && Player.Instance.Distance(target) >= W.Range / 2 && !CastingUlt)
+            if (ComboMenu.CheckBoxValue(E.Slot) && target.IsSafe() && Player.Instance.Distance(target) >= W.Range / 2f && !CastingUlt)
                 if (E.IsReady() && Player.Instance.IsInRange(target, E.Range))
                     E.Cast(target);
 
@@ -100,7 +99,7 @@ namespace AramBuddy.Plugins.Champions.Katarina
                 if (W.IsReady() && Player.Instance.IsInRange(target, W.Range))
                     W.Cast();
             if (HarassMenu.CheckBoxValue(E.Slot) && !CastingUlt)
-                if (E.IsReady() && Player.Instance.IsInRange(target, E.Range))
+                if (E.IsReady() && target.IsSafe() && Player.Instance.IsInRange(target, E.Range))
                     E.Cast(target);
         }
 
@@ -129,10 +128,9 @@ namespace AramBuddy.Plugins.Champions.Katarina
 
                 if (W.IsReady() && target.IsKillable(W.Range) && LaneClearMenu.CheckBoxValue(SpellSlot.W))
                     W.Cast();
-
-
             }
         }
+
         public static void FreezePlayer()
         { 
             CastingUlt = true;

@@ -116,64 +116,7 @@ namespace AramBuddy
                         Logger.Send("Game finished [Surrender Vote]." + (win ? "Victory!" : ""));
                     }
                 };
-
-            Game.OnUpdate += delegate
-                {
-                    // Used to Invoke the Incoming Damage Event When there is SkillShot Incoming
-                    foreach (var ally in EntityManager.Heroes.Allies.Where(a => a.IsValidTarget()))
-                    {
-                        foreach (var spell in Collision.NewSpells)
-                        {
-                            if(ally.IsInDanger(spell))
-                                InvokeOnIncomingDamage(new InComingDamageEventArgs(spell.Caster, ally, spell.Caster.GetSpellDamage(ally, spell.spell.slot), InComingDamageEventArgs.Type.SkillShot));
-                        }
-                        foreach (var b in DamageBuffs)
-                        {
-                            var dmgbuff = ally.Buffs.FirstOrDefault(buff => buff.SourceName.Equals(b.Champion) && buff.Name.Equals(b.BuffName) && buff.IsActive && buff.EndTime - Game.Time < 0.25f);
-                            var caster = dmgbuff?.Caster as AIHeroClient;
-                            if(caster != null)
-                                InvokeOnIncomingDamage(new InComingDamageEventArgs(caster, ally, caster.GetSpellDamage(ally, b.Slot), InComingDamageEventArgs.Type.TargetedSpell));
-                        }
-                    }
-                };
-
-            SpellsDetector.OnTargetedSpellDetected += delegate(AIHeroClient sender, AIHeroClient target, GameObjectProcessSpellCastEventArgs args, Database.TargetedSpells.TSpell spell)
-                {
-                    // Used to Invoke the Incoming Damage Event When there is a TargetedSpell Incoming
-                    if (target.IsAlly)
-                        InvokeOnIncomingDamage(new InComingDamageEventArgs(sender, target, sender.GetSpellDamage(target, spell.slot), InComingDamageEventArgs.Type.TargetedSpell));
-                };
-
-            Obj_AI_Base.OnBasicAttack += delegate(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
-                {
-                    // Used to Invoke the Incoming Damage Event When there is an AutoAttack Incoming
-                    var target = args.Target as AIHeroClient;
-                    var hero = sender as AIHeroClient;
-                    var turret = sender as Obj_AI_Turret;
-                    var minion = sender as Obj_AI_Minion;
-
-                    if (target == null || !target.IsAlly)
-                        return;
-
-                    if (hero != null)
-                        InvokeOnIncomingDamage(new InComingDamageEventArgs(hero, target, hero.GetAutoAttackDamage(target), InComingDamageEventArgs.Type.HeroAttack));
-                    if (turret != null)
-                        InvokeOnIncomingDamage(new InComingDamageEventArgs(turret, target, turret.GetAutoAttackDamage(target), InComingDamageEventArgs.Type.TurretAttack));
-                    if (minion != null)
-                        InvokeOnIncomingDamage(new InComingDamageEventArgs(minion, target, minion.GetAutoAttackDamage(target), InComingDamageEventArgs.Type.MinionAttack));
-                };
-            Obj_AI_Base.OnProcessSpellCast += delegate(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
-                {
-                    var caster = sender as AIHeroClient;
-                    var target = args.Target as AIHeroClient;
-                    if (caster == null || target == null || !caster.IsEnemy || !target.IsAlly || args.IsAutoAttack())
-                        return;
-                    if (!Database.TargetedSpells.TargetedSpellsList.Any(s => s.hero == caster.Hero && s.slot == args.Slot))
-                    {
-                        InvokeOnIncomingDamage(new InComingDamageEventArgs(caster, target, caster.GetSpellDamage(target, args.Slot), InComingDamageEventArgs.Type.TargetedSpell));
-                    }
-                };
-
+            
             #endregion
 
             // Invoke the OnGameStart event
@@ -190,6 +133,67 @@ namespace AramBuddy
                         Logger.Send("Game started!");
                     }
                 };
+
+            #endregion
+
+            #region OnInComingDamageEvent
+
+            Game.OnUpdate += delegate
+            {
+                // Used to Invoke the Incoming Damage Event When there is SkillShot Incoming
+                foreach (var ally in EntityManager.Heroes.Allies.Where(a => a.IsValidTarget()))
+                {
+                    foreach (var spell in Collision.NewSpells)
+                    {
+                        if (ally.IsInDanger(spell))
+                            InvokeOnIncomingDamage(new InComingDamageEventArgs(spell.Caster, ally, spell.Caster.GetSpellDamage(ally, spell.spell.slot), InComingDamageEventArgs.Type.SkillShot));
+                    }
+                    foreach (var b in DamageBuffs)
+                    {
+                        var dmgbuff = ally.Buffs.FirstOrDefault(buff => buff.SourceName.Equals(b.Champion) && buff.Name.Equals(b.BuffName) && buff.IsActive && buff.EndTime - Game.Time < 0.25f);
+                        var caster = dmgbuff?.Caster as AIHeroClient;
+                        if (caster != null)
+                            InvokeOnIncomingDamage(new InComingDamageEventArgs(caster, ally, caster.GetSpellDamage(ally, b.Slot), InComingDamageEventArgs.Type.TargetedSpell));
+                    }
+                }
+            };
+
+            SpellsDetector.OnTargetedSpellDetected += delegate (AIHeroClient sender, AIHeroClient target, GameObjectProcessSpellCastEventArgs args, Database.TargetedSpells.TSpell spell)
+            {
+                // Used to Invoke the Incoming Damage Event When there is a TargetedSpell Incoming
+                if (target.IsAlly)
+                    InvokeOnIncomingDamage(new InComingDamageEventArgs(sender, target, sender.GetSpellDamage(target, spell.slot), InComingDamageEventArgs.Type.TargetedSpell));
+            };
+
+            Obj_AI_Base.OnBasicAttack += delegate (Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
+            {
+                // Used to Invoke the Incoming Damage Event When there is an AutoAttack Incoming
+                var target = args.Target as AIHeroClient;
+                var hero = sender as AIHeroClient;
+                var turret = sender as Obj_AI_Turret;
+                var minion = sender as Obj_AI_Minion;
+
+                if (target == null || !target.IsAlly)
+                    return;
+
+                if (hero != null)
+                    InvokeOnIncomingDamage(new InComingDamageEventArgs(hero, target, hero.GetAutoAttackDamage(target), InComingDamageEventArgs.Type.HeroAttack));
+                if (turret != null)
+                    InvokeOnIncomingDamage(new InComingDamageEventArgs(turret, target, turret.GetAutoAttackDamage(target), InComingDamageEventArgs.Type.TurretAttack));
+                if (minion != null)
+                    InvokeOnIncomingDamage(new InComingDamageEventArgs(minion, target, minion.GetAutoAttackDamage(target), InComingDamageEventArgs.Type.MinionAttack));
+            };
+            Obj_AI_Base.OnProcessSpellCast += delegate (Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
+            {
+                var caster = sender as AIHeroClient;
+                var target = args.Target as AIHeroClient;
+                if (caster == null || target == null || !caster.IsEnemy || !target.IsAlly || args.IsAutoAttack())
+                    return;
+                if (!Database.TargetedSpells.TargetedSpellsList.Any(s => s.hero == caster.Hero && s.slot == args.Slot))
+                {
+                    InvokeOnIncomingDamage(new InComingDamageEventArgs(caster, target, caster.GetSpellDamage(target, args.Slot), InComingDamageEventArgs.Type.TargetedSpell));
+                }
+            };
 
             #endregion
         }
@@ -226,6 +230,8 @@ namespace AramBuddy
         private static List<DamageBuff> DamageBuffs = new List<DamageBuff>
             {
                 new DamageBuff("Karthus", "karthusfallenonetarget", SpellSlot.R),
+                new DamageBuff("Tristana", "tristanaechargesound", SpellSlot.E),
+                new DamageBuff("Zilean", "ZileanQEnemyBomb", SpellSlot.Q),
             };
 
         internal class DamageBuff
