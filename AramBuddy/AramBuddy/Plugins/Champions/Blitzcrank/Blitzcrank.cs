@@ -58,26 +58,23 @@ namespace AramBuddy.Plugins.Champions.Blitzcrank
         {
             if (user.IsDead) return;
             {
-                foreach (var spell in SpellList.Where(s => s.IsReady()))
+                foreach (var enemy in EntityManager.Heroes.Enemies.Where(e => e.UnderEnemyTurret()))
                 {
-                    foreach (var enemy in EntityManager.Heroes.Enemies.Where(e => e.IsKillable(spell.Range)))
+                    if (Q.IsReady() && AutoMenu.CheckBoxValue("TurretQ") && enemy.IsKillable(Q.Range) &&
+                        user.ServerPosition.UnderAlliedTurret())
                     {
-                        if (spell.Slot == SpellSlot.Q && AutoMenu.CheckBoxValue("TurretQ") &&
-                            user.ServerPosition.UnderAlliedTurret())
+                        Q.Cast(enemy, HitChance.Medium);
+                    }
+                    if (!enemy.ServerPosition.UnderAlliedTurret()) continue;
+                    {
+                        if (E.IsReady() && enemy.IsKillable(E.Range) && AutoMenu.CheckBoxValue("TurretE"))
                         {
-                            Q.Cast(enemy, HitChance.Medium);
+                            E.Cast();
+                            Player.IssueOrder(GameObjectOrder.AttackUnit, enemy);
                         }
-                        if (!enemy.ServerPosition.UnderAlliedTurret()) continue;
+                        if (R.IsReady() && enemy.IsKillable(E.Range) && AutoMenu.CheckBoxValue("TurretR"))
                         {
-                            if (spell.Slot == SpellSlot.E && AutoMenu.CheckBoxValue("TurretE"))
-                            {
-                                E.Cast();
-                                Player.IssueOrder(GameObjectOrder.AttackUnit, enemy);
-                            }
-                            if (spell.Slot == SpellSlot.R && AutoMenu.CheckBoxValue("TurretR"))
-                            {
-                                R.Cast();
-                            }
+                            R.Cast();
                         }
                     }
                 }
@@ -137,8 +134,10 @@ namespace AramBuddy.Plugins.Champions.Blitzcrank
                     if (AutoMenu.CheckBoxValue("GapE") && E.IsReady() && e.End.IsInRange(user, E.Range))
                     {
                         if (sender.IsKillable(E.Range))
+                        {
                             E.Cast();
-                        Player.IssueOrder(GameObjectOrder.AttackUnit, sender);
+                            Player.IssueOrder(GameObjectOrder.AttackUnit, sender);
+                        }
                     }
                     if (AutoMenu.CheckBoxValue("GapR") && R.IsReady() && e.End.IsInRange(user, R.Range))
                     {
@@ -191,8 +190,10 @@ namespace AramBuddy.Plugins.Champions.Blitzcrank
                 if (spell.Slot == SpellSlot.E)
                 {
                     if (target.IsKillable(E.Range))
+                    {
                         E.Cast();
-                    Player.IssueOrder(GameObjectOrder.AttackUnit, target);
+                        Player.IssueOrder(GameObjectOrder.AttackUnit, target);
+                    }
                 }
 
                 if (spell.Slot != SpellSlot.R) continue;
@@ -205,8 +206,7 @@ namespace AramBuddy.Plugins.Champions.Blitzcrank
 
         public override void Harass()
         {
-            foreach (var spell in SpellList.Where(s => s.IsReady() && HarassMenu.CheckBoxValue(s.Slot)
-                                                       && s != R))
+            foreach (var spell in SpellList.Where(s => s.IsReady() && s != R && HarassMenu.CheckBoxValue(s.Slot)))
             {
                 var target = TargetSelector.GetTarget(Q.Range, DamageType.Magical);
 
@@ -229,8 +229,10 @@ namespace AramBuddy.Plugins.Champions.Blitzcrank
                 if (spell.Slot != SpellSlot.E) continue;
                 {
                     if (target.IsKillable(E.Range))
+                    {
                         E.Cast();
-                    Player.IssueOrder(GameObjectOrder.AttackUnit, target);
+                        Player.IssueOrder(GameObjectOrder.AttackUnit, target);
+                    }
                 }
             }
         }
@@ -256,8 +258,8 @@ namespace AramBuddy.Plugins.Champions.Blitzcrank
                     var spell in
                         SpellList.Where(
                             s =>
-                                s.WillKill(target) && s != R && s.IsReady() && target.IsKillable(s.Range) &&
-                                KillStealMenu.CheckBoxValue(s.Slot) && s != W
+                                s.WillKill(target) && s != R && s.IsReady() && target.IsKillable(s.Range) && s != W &&
+                                KillStealMenu.CheckBoxValue(s.Slot)
                             ))
 
                     switch (spell.Slot)
