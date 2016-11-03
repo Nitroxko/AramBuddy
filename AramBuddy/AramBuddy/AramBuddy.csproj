@@ -103,6 +103,7 @@
     <Compile Include="Plugins\Champions\Lux\Lux.cs" />
     <Compile Include="Plugins\Champions\MasterYi\MasterYi.cs" />
     <Compile Include="Plugins\Champions\Orianna\Orianna.cs" />
+    <Compile Include="Plugins\Champions\Rumble\Rumble.cs" />
     <Compile Include="Plugins\Champions\Sona\Sona.cs" />
     <Compile Include="Plugins\Champions\Soraka\Soraka.cs" />
     <Compile Include="Plugins\Champions\Syndra\Syndra.cs" />
